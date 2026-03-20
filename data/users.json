@@ -1,0 +1,26 @@
+{
+    "users": [
+        {
+            "name": "Thijs",
+            "color": [
+                255,
+                200,
+                80
+            ],
+            "password": [
+                "UP",
+                "LEFT",
+                "DOWN",
+                "RIGHT"
+            ]
+        },
+        {
+            "name": "Wytze",
+            "color": [
+                120,
+                200,
+                255
+            ]
+        }
+    ]
+}
