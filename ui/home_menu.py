@@ -7,6 +7,7 @@ from games.adventure.game import AdventureGame
 from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
+from ui.settings_menu import SettingsMenu
 
 
 class HomeMenu(Scene):
@@ -17,6 +18,7 @@ class HomeMenu(Scene):
             ("Test", AdventureGame),
             ("Hello", RacerGame),
             ("Monkey", MonkeyStacker),
+            ("Settings", SettingsMenu),
         ]
 
         self.selected = 0
