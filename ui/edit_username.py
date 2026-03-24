@@ -3,19 +3,20 @@ import json
 import os
 from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
-from config import *
+from config import AppStyles
 
 
 class EditUsername(Scene):
     def __init__(self, manager, current_user, parent_scene):
         super().__init__(manager)
+        self.styles = AppStyles()
         self.current_user = current_user
         self.parent_scene = parent_scene
         self.new_name = current_user.get("name", "")
         
-        self.title_font = create_font(FONT_EDIT_TITLE_SIZE, bold=True)
-        self.name_font = create_font(FONT_EDIT_NAME_SIZE)
-        self.input_font = create_font(FONT_EDIT_INPUT_SIZE, bold=True)
+        self.title_font = self.styles.create_font(self.styles.FONT_EDIT_TITLE_SIZE, bold=True)
+        self.name_font = self.styles.create_font(self.styles.FONT_EDIT_NAME_SIZE)
+        self.input_font = self.styles.create_font(self.styles.FONT_EDIT_INPUT_SIZE, bold=True)
 
         self.keyboard = [
             list("QWERTYUIOP"),
@@ -97,7 +98,7 @@ class EditUsername(Scene):
         surface.blit(title, title_rect)
         
         # Current input
-        input_text = self.name_font.render(f"Name: {self.new_name}_", True, CARD_SELECTED)
+        input_text = self.name_font.render(f"Name: {self.new_name}_", True, self.styles.CARD_SELECTED)
         input_rect = input_text.get_rect(center=(BASE_WIDTH // 2, 50))
         surface.blit(input_text, input_rect)
         
@@ -111,7 +112,7 @@ class EditUsername(Scene):
                 
                 # Highlight selected
                 if row_idx == self.kb_row and col_idx == self.kb_col:
-                    pygame.draw.rect(surface, CARD_SELECTED, (x, y, width, height))
+                    pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, width, height))
                     color = (50, 50, 50)
                 else:
                     pygame.draw.rect(surface, (200, 200, 200), (x, y, width, height))

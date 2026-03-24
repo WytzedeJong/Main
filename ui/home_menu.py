@@ -2,7 +2,7 @@ import pygame
 import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
-from config import *
+from config import AppStyles
 from games.adventure.game import AdventureGame
 from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
@@ -13,7 +13,7 @@ from ui.settings_menu import SettingsMenu
 class HomeMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-
+        self.styles = AppStyles()
         self.games = [
             ("Test", AdventureGame),
             ("Hello", RacerGame),
@@ -23,13 +23,13 @@ class HomeMenu(Scene):
 
         self.selected = 0
 
-        self.title_font = create_font(FONT_HOME_TITLE_SIZE, bold=True)
-        self.time_font = create_font(FONT_HOME_TIME_SIZE)
-        self.card_font = create_font(FONT_HOME_CARD_SIZE, bold=True)
+        self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
+        self.time_font = self.styles.create_font(self.styles.FONT_HOME_TIME_SIZE)
+        self.card_font = self.styles.create_font(self.styles.FONT_HOME_CARD_SIZE, bold=True)
 
-        self.card_width = CARD_WIDTH
-        self.card_height = CARD_HEIGHT
-        self.spacing = CARD_SPACING
+        self.card_width = self.styles.CARD_WIDTH
+        self.card_height = self.styles.CARD_HEIGHT
+        self.spacing = self.styles.CARD_SPACING
 
 
 
@@ -55,9 +55,9 @@ class HomeMenu(Scene):
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
             ratio = y / BASE_HEIGHT
-            r = int(BG_TOP[0] * (1 - ratio) + BG_BOTTOM[0] * ratio)
-            g = int(BG_TOP[1] * (1 - ratio) + BG_BOTTOM[1] * ratio)
-            b = int(BG_TOP[2] * (1 - ratio) + BG_BOTTOM[2] * ratio)
+            r = int(self.styles.BG_TOP[0] * (1 - ratio) + self.styles.BG_BOTTOM[0] * ratio)
+            g = int(self.styles.BG_TOP[1] * (1 - ratio) + self.styles.BG_BOTTOM[1] * ratio)
+            b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def draw_card(self, surface, x, y, width, height, text, is_selected):
@@ -65,10 +65,10 @@ class HomeMenu(Scene):
         shadow.fill((0, 0, 0, 60))
         surface.blit(shadow, (x + 6, y + 6))
 
-        color = CARD_SELECTED if is_selected else CARD_COLOR
+        color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
 
-        label = self.card_font.render(text, True, TEXT_COLOR)
+        label = self.card_font.render(text, True, self.styles.TEXT_COLOR)
         label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
         surface.blit(label, label_rect)
 
@@ -79,11 +79,11 @@ class HomeMenu(Scene):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
 
-        title = self.title_font.render("WinMan", True, TEXT_COLOR)
+        title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
 
         now = datetime.datetime.now().strftime("%H:%M")
-        time_text = self.time_font.render(now, True, TEXT_COLOR)
+        time_text = self.time_font.render(now, True, self.styles.TEXT_COLOR)
         base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
 
 
@@ -95,8 +95,8 @@ class HomeMenu(Scene):
             x = start_x + i * (self.card_width + self.spacing)
             self.draw_card(base_surface, x, y, self.card_width, self.card_height, name, i == self.selected)
 
-        a_text = self.card_font.render("", True, TEXT_COLOR)
-        b_text = self.card_font.render("", True, TEXT_COLOR)
+        a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
+        b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
 
         base_surface.blit(a_text, (145, BASE_HEIGHT - 45))
         base_surface.blit(b_text, (385, BASE_HEIGHT - 45))

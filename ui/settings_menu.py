@@ -1,7 +1,7 @@
 import pygame
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
-from config import *
+from config import AppStyles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
 
@@ -11,8 +11,9 @@ from ui.edit_username import EditUsername
 class SettingsMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.title_font = create_font(FONT_SETTINGS_TITLE_SIZE, bold=True)
-        self.menu_font = create_font(FONT_SETTINGS_MENU_SIZE)
+        self.styles = AppStyles()
+        
+        self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
         self.show_sett = False
         width, height = 300, 250
@@ -25,6 +26,7 @@ class SettingsMenu(Scene):
         self.onoff = ['on','off' ]
         self.selected = 0
         self.current_profile_submenu = None  # Voor delete callback
+        self.text_size_value = 20  
 
     def handle_profile_customization(self, option):
         
@@ -98,6 +100,13 @@ class SettingsMenu(Scene):
             if event.key == pygame.K_UP:
                 self.selected = (self.selected - 1) % len(self.options)
             
+            # Handle LEFT/RIGHT for Text size slider
+            if self.options[self.selected] == "Text size":
+                if event.key == pygame.K_LEFT:
+                    self.text_size_value = max(12, self.text_size_value - 1)
+                if event.key == pygame.K_RIGHT:
+                    self.text_size_value = min(30, self.text_size_value + 1)
+            
             if event.key == pygame.K_RETURN:
                 selected_option = self.options[self.selected]
                 
@@ -115,10 +124,6 @@ class SettingsMenu(Scene):
                 
                 elif selected_option == "Language":
                     submenu = SubMenu(self.manager, "Language", ["English", "Dutch", "Deutsch", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Text size":
-                    submenu = SubMenu(self.manager, "Text Size", ["Small", "Normal", "Big", "Extra Large", "Back"], self)
                     self.manager.set_scene(submenu)
                 
                 elif selected_option == "Brightness":
@@ -148,21 +153,49 @@ class SettingsMenu(Scene):
     def update(self, dt):
         pass
 
+    def draw_text_size_slider(self, surface, x, y):
+        slider_width = 100
+        slider_height = 8
+        
+        # Map value (12-40) to percentage (0-100)
+        percentage = ((self.text_size_value - 12) / (40 - 12)) * 100
+        
+        # Background bar
+        pygame.draw.rect(surface, (100, 100, 100), (x, y - 4, slider_width, slider_height))
+        
+        # Filled portion
+        filled_width = int(slider_width * (percentage / 100))
+        pygame.draw.rect(surface, (76, 175, 80), (x, y - 4, filled_width, slider_height))
+        
+        # Border
+        pygame.draw.rect(surface, (255, 255, 255), (x, y - 4, slider_width, slider_height), 1)
+
     def draw(self, surface):
-        surface.fill((50, 50, 50))
-        t_color = (255,255,255)
+        surface.fill((self.styles.BACKGROUND))
+        t_color = (self.styles.TEXT_SET)
         title = self.title_font.render("Settings", True, t_color)
         title_rect = title.get_rect(center=(BASE_WIDTH // 2, 30))  # Horizontally centered
         surface.blit(title, title_rect)
         
+        # Create menu font dynamically based on text_size_value
+        menu_font = self.styles.create_font(self.text_size_value)
+        
         center_x = BASE_WIDTH // 2 - 150
-        y = 80
+        y = 70
         for i, option in enumerate(self.options):
-            color = CARD_SELECTED if i == self.selected else t_color
-            text = self.menu_font.render(option, True, color)
-            text_rect = text.get_rect(topleft=(center_x + 20, y))
-            surface.blit(text, text_rect)
-            y += 20
+            color = self.styles.CARD_SELECTED if i == self.selected else t_color
+            text = menu_font.render(option, True, color)
+            
+            # Special handling for Text size - draw slider next to it
+            if option == "Text size":
+                text_rect = text.get_rect(topleft=(center_x + 20, y))
+                surface.blit(text, text_rect)
+                self.draw_text_size_slider(surface, center_x + 155, y + 6)
+            else:
+                text_rect = text.get_rect(topleft=(center_x + 20, y))
+                surface.blit(text, text_rect)
+            
+            y += (20 + (self.text_size_value/10))
             
     def draw_custom(self, surface):
         surface.fill

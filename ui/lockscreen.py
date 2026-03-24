@@ -5,13 +5,15 @@ from datetime import datetime
 
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
-from config import *
+from config import AppStyles
 
 
 class LockScreen(Scene):
 
     def __init__(self, manager):
         super().__init__(manager)
+
+        self.styles = AppStyles()
 
         self.users = []
         self.load_users()
@@ -59,10 +61,10 @@ class LockScreen(Scene):
         self.icons = ["Monkey", "Penguin", "lorem", "lorem", "lorem", "lorem"]
 
 
-        self.title_font = create_font(FONT_LOCK_TITLE_SIZE, bold=True)
-        self.name_font = create_font(FONT_LOCK_NAME_SIZE)
-        self.input_font = create_font(FONT_LOCK_INPUT_SIZE, bold=True)
-        self.time_font = create_font(FONT_LOCK_TIME_SIZE)
+        self.title_font = self.styles.create_font(self.styles.FONT_LOCK_TITLE_SIZE, bold=True)
+        self.name_font = self.styles.create_font(self.styles.FONT_LOCK_NAME_SIZE)
+        self.input_font = self.styles.create_font(self.styles.FONT_LOCK_INPUT_SIZE, bold=True)
+        self.time_font = self.styles.create_font(self.styles.FONT_LOCK_TIME_SIZE)
 
 
     def load_settings(self):
@@ -435,7 +437,7 @@ class LockScreen(Scene):
                 pygame.draw.rect(surface, color, rect, border_radius=3)
                 pygame.draw.rect(surface, (0, 0, 0), rect, 1, border_radius=3)
 
-                f = create_font(FONT_LOCK_KEYBOARD_SIZE, bold=sel)
+                f = self.styles.create_font(self.styles.FONT_LOCK_KEYBOARD_SIZE, bold=sel)
                 label = f.render(
                     key,
                     True,

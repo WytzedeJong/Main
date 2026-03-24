@@ -5,13 +5,15 @@ import os
 
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
-from config import BG_TOP, BG_BOTTOM, TEXT_COLOR
+from config import AppStyles
 
 
 class MonkeyStacker(Scene):
 
     def __init__(self, manager):
         super().__init__(manager)
+
+        self.styles = AppStyles
 
         self.tile = 16
         self.grid_w = BASE_WIDTH // self.tile
@@ -379,9 +381,9 @@ class MonkeyStacker(Scene):
 
             ratio = y / BASE_HEIGHT
 
-            r = int(BG_TOP[0]*(1-ratio)+BG_BOTTOM[0]*ratio)
-            g = int(BG_TOP[1]*(1-ratio)+BG_BOTTOM[1]*ratio)
-            b = int(BG_TOP[2]*(1-ratio)+BG_BOTTOM[2]*ratio)
+            r = int(self.styles.BG_TOP[0]*(1-ratio)+self.styles.BG_BOTTOM[0]*ratio)
+            g = int(self.styles.BG_TOP[1]*(1-ratio)+self.styles.BG_BOTTOM[1]*ratio)
+            b = int(self.styles.BG_TOP[2]*(1-ratio)+self.styles.BG_BOTTOM[2]*ratio)
 
             pygame.draw.line(surface,(r,g,b),(0,y),(BASE_WIDTH,y))
 
