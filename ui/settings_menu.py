@@ -3,6 +3,7 @@ from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import *
 from ui.submenu import SubMenu
+from ui.edit_username import EditUsername
 
 
 ## mogelijk proleem: knoppen op het apparaat zijn geen keyboard keys dus moet nog checken of pygame.KEYDOWN dan werkt op een manier.
@@ -12,8 +13,6 @@ class SettingsMenu(Scene):
         super().__init__(manager)
         self.title_font = pygame.font.SysFont("arial", 28, bold=True)
         self.menu_font = pygame.font.SysFont("arial", 15)
-
-
 
         self.show_sett = False
         width, height = 300, 250
@@ -25,6 +24,16 @@ class SettingsMenu(Scene):
         self.options = ["Profile customization", "Language", "Text size", "Brightness", "Volume", "Version", "Change password", "Set to default", "Terug"]
         self.onoff = ['on','off' ]
         self.selected = 0
+
+    def handle_profile_customization(self, option):
+        """Callback voor Profile customization submenu"""
+        if option == "Change username":
+            current_user = self.manager.current_user
+            if current_user:
+                edit_scene = EditUsername(self.manager, current_user, self)
+                self.manager.set_scene(edit_scene)
+            return True  # Handled
+        return False  # Not handled, use default logic
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -42,7 +51,10 @@ class SettingsMenu(Scene):
                     self.manager.set_scene(HomeMenu(self.manager))
                 
                 elif selected_option == "Profile customization":
-                    submenu = SubMenu(self.manager, "Profile Customization", ["Profile picture", "Change username", "Change theme", "Delete profile", "Terug"], self)
+                    submenu = SubMenu(self.manager, "Profile Customization", 
+                                     ["Profile picture", "Change username", "Change theme", "Delete profile", "Terug"], 
+                                     self, 
+                                     action_callback=self.handle_profile_customization)
                     self.manager.set_scene(submenu)
                 
                 elif selected_option == "Language":

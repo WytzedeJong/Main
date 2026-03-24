@@ -1,6 +1,7 @@
 class SceneManager:
     def __init__(self):
         self.scene = None
+        self.current_user = None
 
     def set_scene(self, scene):
         self.scene = scene

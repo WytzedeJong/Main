@@ -163,6 +163,7 @@ class LockScreen(Scene):
                 user = self.users[self.selected_index]
 
                 if self.input_sequence == user.get("password", []):
+                    self.manager.current_user = user
                     self.success_timer = self.success_delay
                 else:
                     self.input_sequence = []
