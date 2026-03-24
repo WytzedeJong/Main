@@ -42,7 +42,7 @@ class SettingsMenu(Scene):
                     self.manager.set_scene(HomeMenu(self.manager))
                 
                 elif selected_option == "Profile customization":
-                    submenu = SubMenu(self.manager, "Profile Customization", ["Photo", "Name", "Terug"], self)
+                    submenu = SubMenu(self.manager, "Profile Customization", ["Profile picture", "Change username", "Change theme", "Delete profile", "Terug"], self)
                     self.manager.set_scene(submenu)
                 
                 elif selected_option == "Language":

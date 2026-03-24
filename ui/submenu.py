@@ -24,8 +24,9 @@ class SubMenu(Scene):
                 self.selected = (self.selected - 1) % len(self.options)
             
             if event.key == pygame.K_RETURN:
-                # Hier kun je logica toevoegen per optie
-                pass
+                selected_option = self.options[self.selected]
+                if selected_option == "Terug":
+                    self.manager.set_scene(self.parent_scene)
             
             if event.key == pygame.K_ESCAPE:
                 # Terug naar settings
@@ -49,3 +50,4 @@ class SubMenu(Scene):
             text_rect = text.get_rect(center=(BASE_WIDTH // 2, y))
             surface.blit(text, text_rect)
             y += 25
+        
