@@ -2,7 +2,7 @@ import pygame
 import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
-from config import AppStyles
+from config import styles
 from games.adventure.game import AdventureGame
 from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
@@ -13,7 +13,8 @@ from ui.settings_menu import SettingsMenu
 class HomeMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.styles = AppStyles()
+        # Use shared styles instance so theme changes apply across scenes
+        self.styles = styles
         self.games = [
             ("Test", AdventureGame),
             ("Hello", RacerGame),

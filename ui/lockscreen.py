@@ -5,7 +5,7 @@ from datetime import datetime
 
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
-from config import AppStyles
+from config import styles
 
 
 class LockScreen(Scene):
@@ -13,7 +13,8 @@ class LockScreen(Scene):
     def __init__(self, manager):
         super().__init__(manager)
 
-        self.styles = AppStyles()
+        # Use shared styles instance so theme toggles affect the lockscreen
+        self.styles = styles
 
         self.users = []
         self.load_users()
@@ -320,7 +321,7 @@ class LockScreen(Scene):
 
     def draw(self, surface):
 
-        surface.fill((240, 240, 240))
+        surface.fill(self.styles.BACKGROUND)
         self.draw_top(surface)
 
         shake_x = 0
@@ -351,11 +352,11 @@ class LockScreen(Scene):
 
     def draw_top(self, surface):
 
-        title = self.title_font.render("WinMan", True, (0, 0, 0))
+        title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         surface.blit(title, (15, 15))
 
         now = datetime.now().strftime("%H:%M")
-        t = self.time_font.render(now, True, (0, 0, 0))
+        t = self.time_font.render(now, True, self.styles.TEXT_COLOR)
         surface.blit(t, t.get_rect(topright=(BASE_WIDTH - 15, 15)))
 
 
@@ -379,7 +380,7 @@ class LockScreen(Scene):
             pygame.draw.ellipse(surface, u["color"], rect)
             pygame.draw.ellipse(surface, (0, 0, 0), rect, 2)
 
-            name = self.name_font.render(u["name"], True, (0, 0, 0))
+            name = self.name_font.render(u["name"], True, self.styles.TEXT_COLOR)
             surface.blit(name, name.get_rect(center=(x, y + 65)))
 
 
@@ -387,15 +388,15 @@ class LockScreen(Scene):
 
         cx = BASE_WIDTH // 2
 
-        title = self.name_font.render("NAAM INVOEREN", True, (100, 100, 100))
+        title = self.name_font.render("NAAM INVOEREN", True, self.styles.TEXT_COLOR)
         surface.blit(title, title.get_rect(center=(cx, 50)))
 
         box = pygame.Rect(cx - 110, 65, 220, 36)
 
-        pygame.draw.rect(surface, (255, 255, 255), box, border_radius=4)
-        pygame.draw.rect(surface, (0, 120, 215), box, 2, border_radius=4)
+        pygame.draw.rect(surface, self.styles.CARD_COLOR, box, border_radius=4)
+        pygame.draw.rect(surface, self.styles.TEXT_COLOR, box, 2, border_radius=4)
 
-        txt = self.input_font.render(self.new_name, True, (0, 0, 0))
+        txt = self.input_font.render(self.new_name, True, self.styles.TEXT_COLOR)
         surface.blit(txt, (box.x + 8, box.y + 6))
 
         self.draw_keyboard(surface)

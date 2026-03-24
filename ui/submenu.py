@@ -1,7 +1,7 @@
 import pygame
 from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
-from config import AppStyles
+from config import styles
 
 
 class SubMenu(Scene):
@@ -13,9 +13,8 @@ class SubMenu(Scene):
         self.action_callback = action_callback  # Callback for special actions
         self.selected = 0
         
-        # Initialize styles
-        self.styles = AppStyles()
-        
+        # Use shared styles instance so theme changes apply app-wide
+        self.styles = styles
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
         self.menu_font = self.styles.create_font(self.styles.FONT_SETTINGS_MENU_SIZE)
 
@@ -55,7 +54,7 @@ class SubMenu(Scene):
         
         y = 100
         for i, option in enumerate(self.options):
-            color = CARD_SELECTED if i == self.selected else self.styles.TEXT_SET
+            color = self.styles.CARD_SELECTED if i == self.selected else self.styles.TEXT_SET
             text = self.menu_font.render(str(option), True, color)
             text_rect = text.get_rect(center=(BASE_WIDTH // 2, y))
             surface.blit(text, text_rect)

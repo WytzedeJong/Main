@@ -1,7 +1,7 @@
 import pygame
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
-from config import AppStyles
+from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
 
@@ -11,8 +11,8 @@ from ui.edit_username import EditUsername
 class SettingsMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.styles = AppStyles()
-        
+        # use shared styles instance from config.py so theme changes propagate
+        self.styles = styles
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
         self.show_sett = False
@@ -55,6 +55,17 @@ class SettingsMenu(Scene):
             from ui.lockscreen import LockScreen
             self.manager.set_scene(LockScreen(self.manager))
             return True  # Handled
+        
+        elif option == "Change theme":
+            # Toggle between standard and dark by using the shared styles instance
+            # If you want different toggle logic add a flag on manager or styles
+            print("themes ingedrukt check")
+            # simple toggle based on BACKGROUND currently set
+            if getattr(self.styles, 'BACKGROUND', (255, 255, 255)) == (255, 255, 255):
+                self.styles.dark_color()
+            else:
+                self.styles.set_standaard_kleuren()
+            return True
         
         return False  # Not handled, use default logic
     
@@ -171,7 +182,7 @@ class SettingsMenu(Scene):
         pygame.draw.rect(surface, (255, 255, 255), (x, y - 4, slider_width, slider_height), 1)
 
     def draw(self, surface):
-        surface.fill((self.styles.BACKGROUND))
+        surface.fill(self.styles.BACKGROUND)
         t_color = (self.styles.TEXT_SET)
         title = self.title_font.render("Settings", True, t_color)
         title_rect = title.get_rect(center=(BASE_WIDTH // 2, 30))  # Horizontally centered
