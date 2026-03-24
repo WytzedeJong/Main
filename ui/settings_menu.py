@@ -155,11 +155,12 @@ class SettingsMenu(Scene):
         title_rect = title.get_rect(center=(BASE_WIDTH // 2, 30))  # Horizontally centered
         surface.blit(title, title_rect)
         
-        y = 100
+        center_x = BASE_WIDTH // 2 - 150
+        y = 80
         for i, option in enumerate(self.options):
             color = CARD_SELECTED if i == self.selected else t_color
             text = self.menu_font.render(option, True, color)
-            text_rect = text.get_rect(center=(BASE_WIDTH // 2, y))  # Gecentreerd
+            text_rect = text.get_rect(topleft=(center_x + 20, y))
             surface.blit(text, text_rect)
             y += 20
             
