@@ -64,6 +64,9 @@ class LockScreen(Scene):
         self.time_font = pygame.font.SysFont("arial", 18)
 
 
+    def load_settings(self):
+        pass
+
     def load_users(self):
         path = os.path.join("data", "users.json")
         if not os.path.exists(path):
