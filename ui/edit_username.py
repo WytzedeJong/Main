@@ -13,9 +13,9 @@ class EditUsername(Scene):
         self.parent_scene = parent_scene
         self.new_name = current_user.get("name", "")
         
-        self.title_font = pygame.font.SysFont("arial", 26, bold=True)
-        self.name_font = pygame.font.SysFont("arial", 18)
-        self.input_font = pygame.font.SysFont("arial", 20, bold=True)
+        self.title_font = create_font(FONT_EDIT_TITLE_SIZE, bold=True)
+        self.name_font = create_font(FONT_EDIT_NAME_SIZE)
+        self.input_font = create_font(FONT_EDIT_INPUT_SIZE, bold=True)
 
         self.keyboard = [
             list("QWERTYUIOP"),

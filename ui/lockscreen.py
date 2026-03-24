@@ -5,6 +5,7 @@ from datetime import datetime
 
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
+from config import *
 
 
 class LockScreen(Scene):
@@ -58,10 +59,10 @@ class LockScreen(Scene):
         self.icons = ["Monkey", "Penguin", "lorem", "lorem", "lorem", "lorem"]
 
 
-        self.title_font = pygame.font.SysFont("arial", 22, bold=True)
-        self.name_font = pygame.font.SysFont("arial", 15)
-        self.input_font = pygame.font.SysFont("arial", 20, bold=True)
-        self.time_font = pygame.font.SysFont("arial", 18)
+        self.title_font = create_font(FONT_LOCK_TITLE_SIZE, bold=True)
+        self.name_font = create_font(FONT_LOCK_NAME_SIZE)
+        self.input_font = create_font(FONT_LOCK_INPUT_SIZE, bold=True)
+        self.time_font = create_font(FONT_LOCK_TIME_SIZE)
 
 
     def load_settings(self):
@@ -434,7 +435,7 @@ class LockScreen(Scene):
                 pygame.draw.rect(surface, color, rect, border_radius=3)
                 pygame.draw.rect(surface, (0, 0, 0), rect, 1, border_radius=3)
 
-                f = pygame.font.SysFont("arial", 12, bold=sel)
+                f = create_font(FONT_LOCK_KEYBOARD_SIZE, bold=sel)
                 label = f.render(
                     key,
                     True,

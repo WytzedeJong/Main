@@ -23,13 +23,13 @@ class HomeMenu(Scene):
 
         self.selected = 0
 
-        self.title_font = pygame.font.SysFont("arial", 28, bold=True)
-        self.time_font = pygame.font.SysFont("arial", 22)
-        self.card_font = pygame.font.SysFont("arial", 18, bold=True)
+        self.title_font = create_font(FONT_HOME_TITLE_SIZE, bold=True)
+        self.time_font = create_font(FONT_HOME_TIME_SIZE)
+        self.card_font = create_font(FONT_HOME_CARD_SIZE, bold=True)
 
-        self.card_width = 100
-        self.card_height = 140
-        self.spacing = 20
+        self.card_width = CARD_WIDTH
+        self.card_height = CARD_HEIGHT
+        self.spacing = CARD_SPACING
 
 
 

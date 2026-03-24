@@ -10,11 +10,11 @@ class SubMenu(Scene):
         self.title = title
         self.options = options
         self.parent_scene = parent_scene
-        self.action_callback = action_callback  # Callback voor speciale acties
+        self.action_callback = action_callback  # Callback for special actions
         self.selected = 0
         
-        self.title_font = pygame.font.SysFont("arial", 28, bold=True)
-        self.menu_font = pygame.font.SysFont("arial", 15)
+        self.title_font = create_font(FONT_SETTINGS_TITLE_SIZE, bold=True)
+        self.menu_font = create_font(FONT_SETTINGS_MENU_SIZE)
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -26,17 +26,18 @@ class SubMenu(Scene):
             
             if event.key == pygame.K_RETURN:
                 selected_option = self.options[self.selected]                
-                # Checken of er een callback is voor deze optie
+                # Check if there is a callback for this option
                 if self.action_callback:
                     handled = self.action_callback(selected_option)
                     if handled:
                         return  # Callback handled it
                 
-                # Standaard: "Terug" logic                if selected_option == "Terug":
+                # Default: "Back" logic
+                if selected_option == "Back":
                     self.manager.set_scene(self.parent_scene)
             
             if event.key == pygame.K_ESCAPE:
-                # Terug naar settings
+                # Back to settings
                 self.manager.set_scene(self.parent_scene)
 
     def update(self, dt):
