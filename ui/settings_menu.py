@@ -69,6 +69,14 @@ class SettingsMenu(Scene):
                 self.styles.green_color()
                 self.current_theme = "green"
                 
+            elif self.current_theme == "green":
+                self.styles.blue_color()
+                self.current_theme = "blue"
+                
+            elif self.current_theme == "blue":
+                self.styles.red_color()
+                self.current_theme = "red"
+                
             else:
                 self.styles.set_standaard_kleuren()
                 self.current_theme = "standard"

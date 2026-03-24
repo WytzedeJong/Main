@@ -104,28 +104,14 @@ class AppStyles:
         self.BACKGROUND = 0, 0, 0,
         self.TEXT_SET = 255,255,255
     def green_color(self):
-        # 1. Gradient achtergrond (zoals gevraagd behouden/finetunen)
-        self.BG_TOP = (204, 232, 173)    # De lichte kleur uit je screenshot
-        self.BG_BOTTOM = (160, 200, 130) # Iets dieper verloop naar beneden
-
-        # 2. Kaarten (gebaseerd op de afbeelding)
-        # De 'donkere' kaarten in je screenshot zijn een soort legergroen
+        self.BG_TOP = (204, 232, 173)    
+        self.BG_BOTTOM = (160, 200, 130) 
         self.CARD_COLOR = (85, 120, 50)     
-        # Voor de geselecteerde kaart maken we hem iets lichter groen
         self.CARD_SELECTED = (110, 150, 70) 
-
-        # 3. Tekst en UI elementen
-        # De tekst "App menu" en de iconen zijn zwart in de afbeelding
         self.TEXT_COLOR = (0, 0, 0)
         self.TEXT_SET = (0, 0, 0)
-        
-        # De blokjes (Tetris-stijl) in de hoeken
         self.DOTS = (50, 80, 30) 
-
-        # 4. Achtergrond voor settings (matching met BG_TOP)
         self.BACKGROUND = (204, 232, 173)
-
-        # 5. Overige instellingen (behouden)
         self.FONT_NAME = "arial"
         self.FONT_TITLE_SIZE = 28
         self.FONT_MENU_SIZE = 15
@@ -138,6 +124,45 @@ class AppStyles:
         self.CARD_SPACING = 20
         self.FONT_SETTINGS_TITLE_SIZE = 28
         self.FONT_SETTINGS_MENU_SIZE = 15
+        
+    def blue_color(self):
+        self.BG_TOP = (135, 185, 220)    
+        self.BG_BOTTOM = (100, 150, 200) 
+        self.CARD_COLOR = (80, 150, 210)     
+        self.CARD_SELECTED = (110, 180, 240) 
+        self.TEXT_COLOR = (0, 0, 0)
+        self.TEXT_SET = (0, 0, 0)
+        self.DOTS = (60, 110, 170) 
+        self.BACKGROUND = (135, 185, 220)
+        self.FONT_NAME = "arial"
+        self.FONT_TITLE_SIZE = 28
+        self.FONT_MENU_SIZE = 15
+        self.FONT_INPUT_SIZE = 20
+        self.FONT_HOME_TITLE_SIZE = 28
+        self.FONT_HOME_TIME_SIZE = 22
+        self.FONT_HOME_CARD_SIZE = 18
+        self.CARD_WIDTH = 100
+        self.CARD_HEIGHT = 140
+        self.CARD_SPACING = 20
+        self.FONT_SETTINGS_TITLE_SIZE = 28
+        self.FONT_SETTINGS_MENU_SIZE = 15
+        
+    def red_color(self):
+        self.BG_TOP = (255, 145, 145)    
+        self.BG_BOTTOM = (240, 110, 110) 
+        self.CARD_COLOR = (255, 40, 40)      
+        self.CARD_SELECTED = (255, 80, 80) 
+        self.TEXT_COLOR = (0, 0, 0)
+        self.TEXT_SET = (0, 0, 0)
+        self.DOTS = (220, 20, 20) 
+        self.BACKGROUND = (255, 145, 145)
+        self.FONT_NAME = "arial"
+        self.FONT_TITLE_SIZE = 28
+        self.FONT_MENU_SIZE = 15
+        self.FONT_HOME_TITLE_SIZE = 28
+        self.CARD_WIDTH = 100
+        self.CARD_HEIGHT = 140
+        self.CARD_SPACING = 20
         
 
 # Helper function to create fonts
