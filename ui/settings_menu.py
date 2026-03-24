@@ -15,6 +15,8 @@ class SettingsMenu(Scene):
         self.styles = styles
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
+        self.current_theme = "standard"
+
         self.show_sett = False
         width, height = 300, 250
         sx = (BASE_WIDTH - width) // 2
@@ -57,14 +59,20 @@ class SettingsMenu(Scene):
             return True  # Handled
         
         elif option == "Change theme":
-            # Toggle between standard and dark by using the shared styles instance
-            # If you want different toggle logic add a flag on manager or styles
-            print("themes ingedrukt check")
-            # simple toggle based on BACKGROUND currently set
-            if getattr(self.styles, 'BACKGROUND', (255, 255, 255)) == (255, 255, 255):
+            print(f"Huidig thema was: {self.current_theme}")
+            
+            if self.current_theme == "standard":
                 self.styles.dark_color()
+                self.current_theme = "dark"
+                
+            elif self.current_theme == "dark":
+                self.styles.green_color()
+                self.current_theme = "green"
+                
             else:
                 self.styles.set_standaard_kleuren()
+                self.current_theme = "standard"
+                
             return True
         
         return False  # Not handled, use default logic

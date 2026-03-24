@@ -69,7 +69,7 @@ class HomeMenu(Scene):
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
 
-        label = self.card_font.render(text, True, self.styles.TEXT_COLOR)
+        label = self.card_font.render(text, True, self.styles.TEXT_SET)
         label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
         surface.blit(label, label_rect)
 

@@ -352,11 +352,11 @@ class LockScreen(Scene):
 
     def draw_top(self, surface):
 
-        title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
+        title = self.title_font.render("WinMan", True, self.styles.TEXT_SET)
         surface.blit(title, (15, 15))
 
         now = datetime.now().strftime("%H:%M")
-        t = self.time_font.render(now, True, self.styles.TEXT_COLOR)
+        t = self.time_font.render(now, True, self.styles.TEXT_SET)
         surface.blit(t, t.get_rect(topright=(BASE_WIDTH - 15, 15)))
 
 
@@ -380,7 +380,7 @@ class LockScreen(Scene):
             pygame.draw.ellipse(surface, u["color"], rect)
             pygame.draw.ellipse(surface, (0, 0, 0), rect, 2)
 
-            name = self.name_font.render(u["name"], True, self.styles.TEXT_COLOR)
+            name = self.name_font.render(u["name"], True, self.styles.TEXT_SET)
             surface.blit(name, name.get_rect(center=(x, y + 65)))
 
 
@@ -388,15 +388,15 @@ class LockScreen(Scene):
 
         cx = BASE_WIDTH // 2
 
-        title = self.name_font.render("NAAM INVOEREN", True, self.styles.TEXT_COLOR)
+        title = self.name_font.render("NAAM INVOEREN", True, self.styles.TEXT_SET)
         surface.blit(title, title.get_rect(center=(cx, 50)))
 
         box = pygame.Rect(cx - 110, 65, 220, 36)
 
         pygame.draw.rect(surface, self.styles.CARD_COLOR, box, border_radius=4)
-        pygame.draw.rect(surface, self.styles.TEXT_COLOR, box, 2, border_radius=4)
+        pygame.draw.rect(surface, self.styles.TEXT_SET, box, 2, border_radius=4)
 
-        txt = self.input_font.render(self.new_name, True, self.styles.TEXT_COLOR)
+        txt = self.input_font.render(self.new_name, True, self.styles.TEXT_SET)
         surface.blit(txt, (box.x + 8, box.y + 6))
 
         self.draw_keyboard(surface)
@@ -537,5 +537,5 @@ class LockScreen(Scene):
             if filled:
                 pygame.draw.circle(surface, (0, 120, 215), (x, y), radius)
 
-            pygame.draw.circle(surface, (0, 0, 0), (x, y), radius, 2)
+            pygame.draw.circle(surface, (self.styles.DOTS), (x, y), radius, 2)
 
