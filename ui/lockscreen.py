@@ -110,6 +110,10 @@ class LockScreen(Scene):
         if event.type != pygame.KEYDOWN or self.success_timer > 0:
             return
 
+        if event.key == pygame.K_ESCAPE:
+            self.handle_back()
+            return
+
         if self.state == "select":
             self.handle_select(event)
         elif self.state == "password":
@@ -124,6 +128,31 @@ class LockScreen(Scene):
             self.handle_create_password(event)
         elif self.state == "confirm_password":
             self.handle_confirm_password(event)
+
+
+    def handle_back(self):
+
+        if self.state == "password":
+            self.state = "select"
+
+        elif self.state == "create_name":
+            self.state = "select"
+
+        elif self.state == "create_color":
+            self.state = "create_name"
+
+        elif self.state == "create_icon":
+            self.state = "create_color"
+
+        elif self.state == "create_password":
+            self.state = "create_icon"
+            self.new_password = []
+            self.anim_dots = []
+
+        elif self.state == "confirm_password":
+            self.state = "create_password"
+            self.confirm_password = []
+            self.anim_dots = []
 
 
     def handle_select(self, event):
@@ -173,9 +202,6 @@ class LockScreen(Scene):
                     self.input_sequence = []
                     self.anim_dots = []
                     self.shake_timer = 0.4
-
-        elif event.key == pygame.K_ESCAPE:
-            self.state = "select"
 
 
     def handle_create_name(self, event):
@@ -538,4 +564,3 @@ class LockScreen(Scene):
                 pygame.draw.circle(surface, (0, 120, 215), (x, y), radius)
 
             pygame.draw.circle(surface, (self.styles.DOTS), (x, y), radius, 2)
-

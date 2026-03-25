@@ -380,10 +380,13 @@ class MonkeyStacker(Scene):
         for y in range(BASE_HEIGHT):
 
             ratio = y / BASE_HEIGHT
-
-            r = int(self.styles.BG_TOP[0]*(1-ratio)+self.styles.BG_BOTTOM[0]*ratio)
-            g = int(self.styles.BG_TOP[1]*(1-ratio)+self.styles.BG_BOTTOM[1]*ratio)
-            b = int(self.styles.BG_TOP[2]*(1-ratio)+self.styles.BG_BOTTOM[2]*ratio)
+            
+            BG_TOP = (120, 200, 180)
+            BG_BOTTOM = (40, 120, 140)
+            
+            r = int(BG_TOP[0]*(1-ratio)+BG_BOTTOM[0]*ratio)
+            g = int(BG_TOP[1]*(1-ratio)+BG_BOTTOM[1]*ratio)
+            b = int(BG_TOP[2]*(1-ratio)+BG_BOTTOM[2]*ratio)
 
             pygame.draw.line(surface,(r,g,b),(0,y),(BASE_WIDTH,y))
 
