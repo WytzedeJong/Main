@@ -3,7 +3,7 @@ import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import *
-from games.adventure.game import AdventureGame
+from games.adventure.game import IceSumo
 from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
@@ -15,7 +15,7 @@ class HomeMenu(Scene):
         super().__init__(manager)
 
         self.games = [
-            ("Test", AdventureGame),
+            ("Ice Sumo", IceSumo),
             ("Hello", RacerGame),
             ("Monkey", MonkeyStacker),
             ("Settings", SettingsMenu),

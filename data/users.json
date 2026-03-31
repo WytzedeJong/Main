@@ -21,6 +21,21 @@
                 200,
                 255
             ]
+        },
+        {
+            "name": "QQQ",
+            "color": [
+                255,
+                203,
+                5
+            ],
+            "icon": "Monkey",
+            "password": [
+                "UP",
+                "UP",
+                "UP",
+                "UP"
+            ]
         }
     ]
 }
