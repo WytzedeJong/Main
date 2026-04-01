@@ -1,276 +1,238 @@
 import pygame
+import json
+import os
 from core.scene import Scene
-from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
+from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
 
 
-## mogelijk proleem: knoppen op het apparaat zijn geen keyboard keys dus moet nog checken of pygame.KEYDOWN dan werkt op een manier.
-
 class SettingsMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        # use shared styles instance from config.py so theme changes propagate
         self.styles = styles
+
+        self.current_theme = "standard"
+        self.selected = 0
+        self.text_size_value = 20
+        self.current_profile_submenu = None
+
+
+        self.scroll_y = 0
+        self.target_scroll_y = 0
+        self.card_height = 50
+        self.spacing = 12
+        self.visible_area_height = BASE_HEIGHT - 100
+
+
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
-        # initialize current theme from logged-in user if available
-        self.current_theme = "standard"
-        current_user = getattr(self.manager, 'current_user', None)
-        if current_user:
-            self.current_theme = current_user.get('theme', 'standard')
+        self.options = [
+            "Profile customization",
+            "Language",
+            "Text size",
+            "Brightness",
+            "Volume",
+            "Version",
+            "Change password",
+            "Set to default",
+            "Back"
+        ]
 
-        self.show_sett = False
-        width, height = 300, 250
-        sx = (BASE_WIDTH - width) // 2
-        sy = (BASE_HEIGHT - height) // 2
-        self.settings_rect = pygame.Rect(sx, sy, width, height)
-        self.close_sett = pygame.Rect(self.settings_rect.right - 70, self.settings_rect.top + 10, 60, 30)
-        
-        self.options = ["Profile customization", "Language", "Text size", "Brightness", "Volume", "Version", "Change password", "Set to default", "Back"]
-        self.onoff = ['on','off' ]
-        self.selected = 0
-        self.current_profile_submenu = None  # Voor delete callback
-        self.text_size_value = 20  
-
-    def handle_user_theme(self, option):
-        if option == "change_theme":
-            import json
-            import os
-            
-            current_user = self.manager.current_user
-            if current_user:
-                # Delete from users.json
-                path = os.path.join("data", "users.json")
-                if os.path.exists(path):
-                    with open(path, "r") as f:
-                        data = json.load(f)
-
-    def handle_profile_customization(self, option):
-        
-        if option == "Change username":
-            current_user = self.manager.current_user
-            if current_user:
-                edit_scene = EditUsername(self.manager, current_user, self)
-                self.manager.set_scene(edit_scene)
-            return True  # Handled
-        
-        elif option == "Delete profile":
-            # Show confirmation popup
-            confirm_submenu = SubMenu(
-                self.manager, 
-                "Delete Profile?", 
-                ["Delete", "Cancel"], 
-                self.current_profile_submenu,  # parent is the profile menu
-                action_callback=self.handle_delete_confirmation
-            )
-            self.manager.set_scene(confirm_submenu)
-            return True  # Handled
-        
-        elif option == "Switch profile":
-            # Terug naar lockscreen om ander profiel te kiezen
-            self.manager.current_user = None
-            from ui.lockscreen import LockScreen
-            self.manager.set_scene(LockScreen(self.manager))
-            return True  # Handled
-        
-        elif option == "Change theme":
-            # cycle themes and persist choice to users.json for current user
-            if self.current_theme == "standard":
-                self.styles.gold_color()
-                self.current_theme = "dark"
-            elif self.current_theme == "dark":
-                self.styles.green_color()
-                self.current_theme = "green"
-            elif self.current_theme == "green":
-                self.styles.blue_color()
-                self.current_theme = "blue"
-            elif self.current_theme == "blue":
-                self.styles.red_color()
-                self.current_theme = "red"
-            else:
-                self.styles.set_standaard_kleuren()
-                self.current_theme = "standard"
-
-            # persist theme for current user
-            import json, os
-            current_user = getattr(self.manager, 'current_user', None)
-            if current_user:
-                # update in-memory user object
-                current_user['theme'] = self.current_theme
-
-                path = os.path.join('data', 'users.json')
-                if os.path.exists(path):
-                    with open(path, 'r') as f:
-                        data = json.load(f)
-
-                    changed = False
-                    for u in data.get('users', []):
-                        if u.get('name') == current_user.get('name'):
-                            u['theme'] = self.current_theme
-                            changed = True
-                            break
-
-                    if changed:
-                        with open(path, 'w') as f:
-                            json.dump(data, f, indent=4)
-
-            return True
-        
-        return False  # Not handled, use default logic
-    
-    def handle_delete_confirmation(self, option):
-        """Callback for delete confirmation"""
-        if option == "Delete":
-            import json
-            import os
-            
-            current_user = self.manager.current_user
-            if current_user:
-                # Delete from users.json
-                path = os.path.join("data", "users.json")
-                if os.path.exists(path):
-                    with open(path, "r") as f:
-                        data = json.load(f)
-                    
-                    # Delete user
-                    data["users"] = [u for u in data.get("users", []) if u.get("name") != current_user.get("name")]
-                    
-                    with open(path, "w") as f:
-                        json.dump(data, f, indent=4)
-                
-                # Reset current_user
-                self.manager.current_user = None
-                
-                # Back to lockscreen
-                from ui.lockscreen import LockScreen
-                self.manager.set_scene(LockScreen(self.manager))
-            return True
-        
-        elif option == "Cancel":
-            self.manager.set_scene(self.current_profile_submenu)
-            return True
-        
-        return False
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_DOWN:
                 self.selected = (self.selected + 1) % len(self.options)
-            
-            if event.key == pygame.K_UP:
+            elif event.key == pygame.K_UP:
                 self.selected = (self.selected - 1) % len(self.options)
-            
-            # Handle LEFT/RIGHT for Text size slider
+
             if self.options[self.selected] == "Text size":
                 if event.key == pygame.K_LEFT:
                     self.text_size_value = max(12, self.text_size_value - 1)
-                if event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT:
                     self.text_size_value = min(30, self.text_size_value + 1)
-            
+
             if event.key == pygame.K_RETURN:
-                selected_option = self.options[self.selected]
-                
-                if selected_option == "Back":
-                    from ui.home_menu import HomeMenu
-                    self.manager.set_scene(HomeMenu(self.manager))
-                
-                elif selected_option == "Profile customization":
-                    profile_submenu = SubMenu(self.manager, "Profile Customization", 
-                                     ["Profile picture", "Change username", "Change theme", "Delete profile", "Switch profile", "Back"], 
-                                     self, 
-                                     action_callback=self.handle_profile_customization)
-                    self.current_profile_submenu = profile_submenu
-                    self.manager.set_scene(profile_submenu)
-                
-                elif selected_option == "Language":
-                    submenu = SubMenu(self.manager, "Language", ["English", "Dutch", "Deutsch", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Brightness":
-                    submenu = SubMenu(self.manager, "Brightness", ["50%", "60%", "70%", "80%", "90%", "100%", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Volume":
-                    submenu = SubMenu(self.manager, "Volume", ["0%", "25%", "50%", "75%", "100%", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Version":
-                    submenu = SubMenu(self.manager, "Version", ["Version 1.0.0", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Change password":
-                    submenu = SubMenu(self.manager, "Change Password", ["Enter new password", "Back"], self)
-                    self.manager.set_scene(submenu)
-                
-                elif selected_option == "Set to default":
-                    submenu = SubMenu(self.manager, "Set to Default", ["Confirm reset?", "Yes", "No"], self)
-                    self.manager.set_scene(submenu)
-            
+                self.handle_selection()
+
             if event.key == pygame.K_ESCAPE:
                 from ui.home_menu import HomeMenu
                 self.manager.set_scene(HomeMenu(self.manager))
 
+    def handle_selection(self):
+        selected_option = self.options[self.selected]
+
+        if selected_option == "Back":
+            from ui.home_menu import HomeMenu
+            self.manager.set_scene(HomeMenu(self.manager))
+
+        elif selected_option == "Profile customization":
+            profile_submenu = SubMenu(
+                self.manager,
+                "Profile Customization",
+                ["Profile picture", "Change username", "Change theme",
+                 "Delete profile", "Switch profile", "Back"],
+                self,
+                action_callback=self.handle_profile_customization
+            )
+            self.current_profile_submenu = profile_submenu
+            self.manager.set_scene(profile_submenu)
+
+        elif selected_option == "Language":
+            submenu = SubMenu(self.manager, "Language", ["English", "Dutch", "Deutsch", "Back"], self)
+            self.manager.set_scene(submenu)
+
+        elif selected_option == "Brightness":
+            submenu = SubMenu(self.manager, "Brightness", ["50%", "60%", "70%", "80%", "90%", "100%", "Back"], self)
+            self.manager.set_scene(submenu)
+
+        elif selected_option == "Volume":
+            submenu = SubMenu(self.manager, "Volume", ["0%", "25%", "50%", "75%", "100%", "Back"], self)
+            self.manager.set_scene(submenu)
+
+        elif selected_option == "Version":
+            submenu = SubMenu(self.manager, "Version", ["Version 1.0.0", "Back"], self)
+            self.manager.set_scene(submenu)
+
+        elif selected_option == "Change password":
+            submenu = SubMenu(self.manager, "Change Password", ["Enter new password", "Back"], self)
+            self.manager.set_scene(submenu)
+
+        elif selected_option == "Set to default":
+            submenu = SubMenu(self.manager, "Set to Default", ["Confirm reset?", "Yes", "No"], self)
+            self.manager.set_scene(submenu)
+
+
+    def handle_profile_customization(self, option):
+        if option == "Change username":
+            current_user = self.manager.current_user
+            if current_user:
+                edit_scene = EditUsername(self.manager, current_user, self)
+                self.manager.set_scene(edit_scene)
+            return True
+
+        elif option == "Delete profile":
+            confirm_submenu = SubMenu(
+                self.manager, "Delete Profile?", ["Delete", "Cancel"],
+                self.current_profile_submenu,
+                action_callback=self.handle_delete_confirmation
+            )
+            self.manager.set_scene(confirm_submenu)
+            return True
+
+        elif option == "Switch profile":
+            self.manager.current_user = None
+            from ui.lockscreen import LockScreen
+            self.manager.set_scene(LockScreen(self.manager))
+            return True
+
+        elif option == "Change theme":
+            themes = ["standard", "dark", "green", "blue", "red"]
+            idx = themes.index(self.current_theme)
+            self.current_theme = themes[(idx + 1) % len(themes)]
+
+            if self.current_theme == "dark":
+                self.styles.gold_color()
+            elif self.current_theme == "green":
+                self.styles.green_color()
+            elif self.current_theme == "blue":
+                self.styles.blue_color()
+            elif self.current_theme == "red":
+                self.styles.red_color()
+            else:
+                self.styles.set_standaard_kleuren()
+            return True
+        return False
+
+    def handle_delete_confirmation(self, option):
+        if option == "Delete":
+            current_user = self.manager.current_user
+            if current_user:
+                path = os.path.join("data", "users.json")
+                if os.path.exists(path):
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                    data["users"] = [u for u in data.get("users", []) if u.get("name") != current_user.get("name")]
+                    with open(path, "w") as f:
+                        json.dump(data, f, indent=4)
+                self.manager.current_user = None
+                from ui.lockscreen import LockScreen
+                self.manager.set_scene(LockScreen(self.manager))
+            return True
+        elif option == "Cancel":
+            self.manager.set_scene(self.current_profile_submenu)
+            return True
+        return False
+
+
     def update(self, dt):
-        pass
+
+        item_y = 60 + self.selected * (self.card_height + self.spacing)
+
+        if item_y < self.scroll_y:
+            self.target_scroll_y = item_y
+        elif item_y + self.card_height > self.scroll_y + self.visible_area_height:
+            self.target_scroll_y = item_y + self.card_height - self.visible_area_height
+
+        self.scroll_y += (self.target_scroll_y - self.scroll_y) * 0.15
+
+
+    def draw_gradient(self, surface):
+        for y in range(BASE_HEIGHT):
+            ratio = y / BASE_HEIGHT
+            r = int(self.styles.BG_TOP[0] * (1 - ratio) + self.styles.BG_BOTTOM[0] * ratio)
+            g = int(self.styles.BG_TOP[1] * (1 - ratio) + self.styles.BG_BOTTOM[1] * ratio)
+            b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
+            pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
+
+    def draw_card(self, surface, x, y, width, height, text, is_selected):
+        pygame.draw.rect(surface, (0, 0, 0, 40), (x + 3, y + 3, width, height), border_radius=12)
+        color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
+        pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
+
+        if is_selected:
+            pygame.draw.rect(surface, self.styles.TEXT_COLOR, (x, y, width, height), 2, border_radius=12)
+
+        font = self.styles.create_font(self.text_size_value)
+        label = font.render(text, True, self.styles.TEXT_SET)
+        surface.blit(label, label.get_rect(center=(x + width // 2, y + height // 2)))
 
     def draw_text_size_slider(self, surface, x, y):
-        slider_width = 100
-        slider_height = 8
-        
-        # Map value (12-40) to percentage (0-100)
-        percentage = ((self.text_size_value - 12) / (40 - 12)) * 100
-        
-        # Background bar
-        pygame.draw.rect(surface, (100, 100, 100), (x, y - 4, slider_width, slider_height))
-        
-        # Filled portion
-        filled_width = int(slider_width * (percentage / 100))
-        pygame.draw.rect(surface, (76, 175, 80), (x, y - 4, filled_width, slider_height))
-        
-        # Border
-        pygame.draw.rect(surface, (255, 255, 255), (x, y - 4, slider_width, slider_height), 1)
+        width = 140
+        pygame.draw.rect(surface, (200, 200, 200), (x, y, width, 12), border_radius=6)
+        percentage = (self.text_size_value - 12) / (30 - 12)
+        pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, int(width * percentage), 12), border_radius=6)
+        val_txt = self.styles.create_font(14).render(str(self.text_size_value), True, self.styles.TEXT_SET)
+        surface.blit(val_txt, (x + width + 10, y - 4))
 
     def draw(self, surface):
-        surface.fill(self.styles.BACKGROUND)
-        t_color = (self.styles.TEXT_SET)
-        title = self.title_font.render("Settings", True, t_color)
-        title_rect = title.get_rect(center=(BASE_WIDTH // 2, 30))  # Horizontally centered
-        surface.blit(title, title_rect)
-        
-        # Create menu font dynamically based on text_size_value
-        menu_font = self.styles.create_font(self.text_size_value)
-        
-        center_x = BASE_WIDTH // 2 - 150
-        y = 70
+        self.draw_gradient(surface)
+
+
+        content_start_y = 50 - self.scroll_y
+
+
+        title = self.title_font.render("Settings", True, self.styles.TEXT_COLOR)
+        title_rect = title.get_rect(center=(BASE_WIDTH // 2, content_start_y))
+
+        if -50 < title_rect.centery < BASE_HEIGHT + 50:
+            surface.blit(title, title_rect)
+
+
+        card_width = 380
+        start_x = (BASE_WIDTH - card_width) // 2
+
+
+        menu_start_y = content_start_y + 45
+
         for i, option in enumerate(self.options):
-            color = self.styles.CARD_SELECTED if i == self.selected else t_color
-            text = menu_font.render(option, True, color)
-            
-            # Special handling for Text size - draw slider next to it
-            if option == "Text size":
-                text_rect = text.get_rect(topleft=(center_x + 20, y))
-                surface.blit(text, text_rect)
-                self.draw_text_size_slider(surface, center_x + 155, y + 6)
-            else:
-                text_rect = text.get_rect(topleft=(center_x + 20, y))
-                surface.blit(text, text_rect)
-            
-            y += (20 + (self.text_size_value/10))
-            
-    def draw_custom(self, surface):
-        surface.fill
+            y_pos = menu_start_y + (i * (self.card_height + self.spacing))
 
-        # if self.show_sett:
-        #     pygame.draw.rect(surface, (0, 100, 0), self.settings_rect)
-        #     sx, sy = self.settings_rect.topleft
-        #     title = self.title_font.render('geluid', True, t_color)
-        #     surface.blit(title, (sx + 10, sy + 10))
+            if -self.card_height < y_pos < BASE_HEIGHT:
+                self.draw_card(surface, start_x, y_pos, card_width, self.card_height, option, i == self.selected)
 
-        #     local_y = sy + 50
-        #     for i, onoff in enumerate(self.onoff):
-        #         color = CARD_SELECTED if i == self.selected else t_color
-        #         text = self.menu_font.render(onoff, True, color)
-        #         surface.blit(text, (sx + 10, local_y))
-        #         local_y += 50
+                if option == "Text size":
+                    slider_x = start_x + card_width - 180
+                    self.draw_text_size_slider(surface, slider_x, y_pos + 19)
