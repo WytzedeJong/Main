@@ -8,7 +8,7 @@ from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
 from ui.settings_menu import SettingsMenu
-#from ui.Games_menu import Game_Menu
+
 
 
 class Game_Menu(Scene):
@@ -20,8 +20,7 @@ class Game_Menu(Scene):
             ("Test", AdventureGame),
             #("Hello", RacerGame),
             ("Monkey", MonkeyStacker),
-            #("Settings", SettingsMenu),
-            #("Games", Game_Menu)
+            #("Pingiun", PinguinSlider)
         ]
 
         self.selected = 0
@@ -52,9 +51,6 @@ class Game_Menu(Scene):
                 pygame.quit()
                 exit()
 
-    # -----------------------
-    # Draw helpers
-    # -----------------------
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
             ratio = y / BASE_HEIGHT
