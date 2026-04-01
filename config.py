@@ -54,15 +54,15 @@ class AppStyles:
         self.BACKGROUND = 255, 255, 255
         self.TEXT_SET = 0, 0, 0
         
-    def dark_color(self):
+    def gold_color(self):
         self.BG_TOP = (120, 200, 180)
         self.BG_BOTTOM = (40, 120, 140)
 
-        # Dark Mode Kleuren
-        self.BG_TOP = (255, 255, 255)   
-        self.BG_BOTTOM = (100, 100, 100)
-        self.CARD_COLOR = (45, 45, 48)     
-        self.CARD_SELECTED = (0, 120, 215)
+        # Gold Mode Kleuren -> done
+        self.BG_TOP = (255, 255, 255)
+        self.BG_BOTTOM = (255,255,255)
+        self.CARD_COLOR = (255, 203, 5)
+        self.CARD_SELECTED = (255, 245, 120)
 
         self.TEXT_COLOR = (30, 40, 50)
         self.DOTS = 255, 255, 255
@@ -101,17 +101,18 @@ class AppStyles:
 
 
         #settings kleuren
-        self.BACKGROUND = 0, 0, 0,
-        self.TEXT_SET = 255,255,255
+        self.BACKGROUND = 255, 255, 255,
+        self.TEXT_SET = 0,0,0
+
     def green_color(self):
-        self.BG_TOP = (204, 232, 173)    
-        self.BG_BOTTOM = (160, 200, 130) 
-        self.CARD_COLOR = (85, 120, 50)     
-        self.CARD_SELECTED = (110, 150, 70) 
+        self.BG_TOP = (255, 255, 255)
+        self.BG_BOTTOM = (255, 255, 255)
+        self.CARD_COLOR = (69, 185, 124)
+        self.CARD_SELECTED = (177, 210, 73)
         self.TEXT_COLOR = (0, 0, 0)
         self.TEXT_SET = (0, 0, 0)
         self.DOTS = (50, 80, 30) 
-        self.BACKGROUND = (204, 232, 173)
+        self.BACKGROUND = (255, 255, 255)
         self.FONT_NAME = "arial"
         self.FONT_TITLE_SIZE = 28
         self.FONT_MENU_SIZE = 15
@@ -126,14 +127,14 @@ class AppStyles:
         self.FONT_SETTINGS_MENU_SIZE = 15
         
     def blue_color(self):
-        self.BG_TOP = (135, 185, 220)    
-        self.BG_BOTTOM = (100, 150, 200) 
-        self.CARD_COLOR = (80, 150, 210)     
-        self.CARD_SELECTED = (110, 180, 240) 
+        self.BG_TOP = (255, 255, 255)
+        self.BG_BOTTOM = (255, 255, 255)
+        self.CARD_COLOR = (69, 148, 211)
+        self.CARD_SELECTED = (30, 188, 197)
         self.TEXT_COLOR = (0, 0, 0)
         self.TEXT_SET = (0, 0, 0)
         self.DOTS = (60, 110, 170) 
-        self.BACKGROUND = (135, 185, 220)
+        self.BACKGROUND = (255, 255, 255)
         self.FONT_NAME = "arial"
         self.FONT_TITLE_SIZE = 28
         self.FONT_MENU_SIZE = 15
@@ -148,14 +149,14 @@ class AppStyles:
         self.FONT_SETTINGS_MENU_SIZE = 15
         
     def red_color(self):
-        self.BG_TOP = (255, 145, 145)    
-        self.BG_BOTTOM = (240, 110, 110) 
-        self.CARD_COLOR = (255, 40, 40)      
-        self.CARD_SELECTED = (255, 80, 80) 
+        self.BG_TOP = (255, 255, 255)
+        self.BG_BOTTOM = (255, 255, 255)
+        self.CARD_COLOR = (238, 49 ,53)
+        self.CARD_SELECTED = (241, 102, 130)
         self.TEXT_COLOR = (0, 0, 0)
         self.TEXT_SET = (0, 0, 0)
         self.DOTS = (220, 20, 20) 
-        self.BACKGROUND = (255, 145, 145)
+        self.BACKGROUND = (255, 255, 255)
         self.FONT_NAME = "arial"
         self.FONT_TITLE_SIZE = 28
         self.FONT_MENU_SIZE = 15
