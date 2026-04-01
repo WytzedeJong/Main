@@ -6,19 +6,17 @@ from config import styles
 from ui.settings_menu import SettingsMenu
 from ui.Games_menu import Game_Menu
 from ui.lockscreen import LockScreen
-from ui.Highscore import Highscore
 
 
-class HomeMenu(Scene):
+
+class Highscore(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-            ("Settings", SettingsMenu),
-            ("Games", Game_Menu), 
-            ("High Scores", Highscore)
-        ]
+            ("Monkeystacker"),
+            ]
 
         self.selected = 0
 

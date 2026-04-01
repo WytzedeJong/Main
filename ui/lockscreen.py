@@ -162,6 +162,8 @@ class LockScreen(Scene):
             self.selected_index = (self.selected_index + 1) % len(display)
         elif event.key == pygame.K_LEFT:
             self.selected_index = (self.selected_index - 1) % len(display)
+        elif event.key == pygame.K_ESCAPE:
+            pygame.event.post(pygame.event.Event(pygame.QUIT))
         elif event.key == pygame.K_RETURN:
 
             selected = display[self.selected_index]
@@ -267,6 +269,7 @@ class LockScreen(Scene):
             self.new_color = self.colors[self.select_grid_index]
             self.state = "create_icon"
             self.select_grid_index = 0
+            
 
 
     def handle_create_icon(self, event):
