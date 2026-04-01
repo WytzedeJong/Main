@@ -62,7 +62,7 @@ class SettingsMenu(Scene):
             print(f"Huidig thema was: {self.current_theme}")
             
             if self.current_theme == "standard":
-                self.styles.dark_color()
+                self.styles.gold_color()
                 self.current_theme = "dark"
                 
             elif self.current_theme == "dark":
@@ -84,18 +84,6 @@ class SettingsMenu(Scene):
             return True
         
         return False  # Not handled, use default logic
-    def handle_user_theme(self, option):
-        if option == "change_theme":
-            import json
-            import os
-            
-            current_user = self.manager.current_user
-            if current_user:
-                # Delete from users.json
-                path = os.path.join("data", "users.json")
-                if os.path.exists(path):
-                    with open(path, "r") as f:
-                        data = json.load(f)
     
     def handle_delete_confirmation(self, option):
         """Callback for delete confirmation"""
