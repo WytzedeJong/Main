@@ -24,7 +24,8 @@ class LockScreen(Scene):
 
         self.input_sequence = []
         self.max_length = 4
-
+        # track the currently logged in user (or 0 when nobody is logged in)
+        self.user = getattr(self.manager, 'current_user', 0) or 0
 
         self.success_timer = 0
         self.success_delay = 0.6
@@ -67,7 +68,13 @@ class LockScreen(Scene):
         self.input_font = self.styles.create_font(self.styles.FONT_LOCK_INPUT_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_LOCK_TIME_SIZE)
 
-
+    def get_user(self):
+        user = self.user
+        return user
+    
+    def set_user(self, user):
+        self.user = user
+    
     def load_settings(self):
         pass
 
@@ -199,7 +206,8 @@ class LockScreen(Scene):
 
                 if self.input_sequence == user.get("password", []):
                     self.manager.current_user = user
-                    # Apply user's saved theme (if any) to shared styles
+                    self.user = user
+
                     theme = user.get("theme", "standard")
                     if theme == "standard":
                         styles.set_standaard_kleuren()
@@ -212,6 +220,7 @@ class LockScreen(Scene):
                     elif theme == "red":
                         styles.red_color()
                     self.success_timer = self.success_delay
+                    self.set_user(user)
                 else:
                     self.input_sequence = []
                     self.anim_dots = []

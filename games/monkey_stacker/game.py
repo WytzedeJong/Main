@@ -7,6 +7,7 @@ from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import AppStyles
 
+from ui.lockscreen import LockScreen
 
 class MonkeyStacker(Scene):
 
@@ -67,8 +68,21 @@ class MonkeyStacker(Scene):
         self._load_highscore()
         self._start_new_game()
 
+        self.user = self.get_user()
 
+    def get_user(self):
+        # prefer manager's current_user if already set
+        user = getattr(self.manager, 'current_user', None)
+        if user:
+            return user
 
+        # fallback: create a LockScreen with the same manager and ask it
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
+    
     def _scores_path(self):
         return os.path.join(os.path.dirname(__file__), "monkey_scores.json")
 
