@@ -7,6 +7,9 @@
                 200,
                 80
             ],
+            "Highscore": [
+                20
+            ],
             "password": [
                 "UP",
                 "LEFT",
@@ -20,6 +23,25 @@
                 120,
                 200,
                 255
+            ]
+        },
+        {
+            "name": "QQQ",
+            "color": [
+                255,
+                203,
+                5
+            ],
+            "icon": "Monkey",
+            "password": [
+                "RIGHT",
+                "RIGHT",
+                "RIGHT",
+                "RIGHT"
+            ],
+            "theme": "standard",
+            "Highscore": [
+                40
             ]
         }
     ]

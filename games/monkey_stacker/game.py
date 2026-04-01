@@ -65,10 +65,11 @@ class MonkeyStacker(Scene):
         self.monkey_color = (170, 110, 65)
 
         self._create_shapes()
+        # determine current user first so highscores can be loaded per-player
+        self.user = self.get_user()
+
         self._load_highscore()
         self._start_new_game()
-
-        self.user = self.get_user()
 
     def get_user(self):
         # prefer manager's current_user if already set
@@ -85,23 +86,135 @@ class MonkeyStacker(Scene):
     
     def _scores_path(self):
         return os.path.join(os.path.dirname(__file__), "monkey_scores.json")
+    
+    def user_highscore(self, score):
+        path = os.path.join("data", "users.json")
+        target_user = self.user 
+        
+        try:
+            with open(path, 'r') as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            print("User data not found")
+            return
+        
+        found = False
+        for player in data["users"]:
+            if player["name"] == target_user:
+                player["Highscore"].append(score)
+                found = True
+                break
+                
+        if found:
+            with open(path, 'w') as file:
+                json.dump(data, file, indent=4)
+            print(f"Score {score} opgeslagen voor {target_user}")
+        else:
+            print(f"Gebruiker {target_user} niet gevonden in JSON")
+                
 
     def _load_highscore(self):
+        # Prefer per-user highscore from data/users.json
+        self.highscore = 0
+
+        # resolve user name
+        uname = None
+        if isinstance(self.user, dict):
+            uname = self.user.get("name")
+        elif isinstance(self.user, str):
+            uname = self.user
+
+        if uname:
+            users_path = os.path.join("data", "users.json")
+            try:
+                with open(users_path, "r", encoding="utf-8") as f:
+                    users_data = json.load(f)
+
+                for player in users_data.get("users", []):
+                    if player.get("name") == uname:
+                        cur = player.get("Highscore")
+                        if isinstance(cur, list) and cur:
+                            try:
+                                self.highscore = max(int(x) for x in cur)
+                            except Exception:
+                                self.highscore = 0
+                        else:
+                            try:
+                                self.highscore = int(cur)
+                            except Exception:
+                                self.highscore = 0
+                        return
+            except Exception:
+                # fall back to legacy path below
+                pass
+
+        # fallback: load legacy monkey_scores.json best value
         try:
             with open(self._scores_path(), "r", encoding="utf-8") as f:
                 data = json.load(f)
             self.highscore = int(data.get("best", 0))
-        except:
+        except Exception:
             self.highscore = 0
 
     def _save_highscore(self):
+        # normalize score to tens
         best = (self.highscore // 10) * 10
-        data = {"best": best}
+
+        # update user's Highscore in data/users.json, keeping only the highest value
+        path = os.path.join("data", "users.json")
 
         try:
+            with open(path, "r", encoding="utf-8") as f:
+                users_data = json.load(f)
+        except Exception:
+            users_data = {"users": []}
+
+        target = self.user
+        target_name = None
+        if isinstance(target, dict):
+            target_name = target.get("name")
+        elif isinstance(target, str):
+            target_name = target
+
+        if target_name:
+            updated = False
+            for player in users_data.get("users", []):
+                if player.get("name") == target_name:
+                    cur = player.get("Highscore")
+                    # determine current best value
+                    if isinstance(cur, list):
+                        try:
+                            cur_val = max(int(x) for x in cur) if cur else 0
+                        except Exception:
+                            cur_val = 0
+                    else:
+                        try:
+                            cur_val = int(cur)
+                        except Exception:
+                            cur_val = 0
+
+                    # update only if new best is higher
+                    if best > cur_val:
+                        player["Highscore"] = [best]
+                    else:
+                        # keep existing highest as a single-item list
+                        player["Highscore"] = [cur_val]
+
+                    updated = True
+                    break
+
+            if updated:
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(users_data, f, indent=4)
+                except Exception:
+                    pass
+
+        # legacy: also save a simple best value to monkey_scores.json for compatibility
+        try:
             with open(self._scores_path(), "w", encoding="utf-8") as f:
-                json.dump(data, f)
-        except:
+                json.dump({"best": best}, f)
+        except Exception:
             pass
 
 
@@ -361,6 +474,7 @@ class MonkeyStacker(Scene):
         self.highscore = max(self.highscore, self.score)
 
         self._save_highscore()
+        
 
     def _is_game_over(self):
 

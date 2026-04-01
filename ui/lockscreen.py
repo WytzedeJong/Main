@@ -24,7 +24,6 @@ class LockScreen(Scene):
 
         self.input_sequence = []
         self.max_length = 4
-        # track the currently logged in user (or 0 when nobody is logged in)
         self.user = getattr(self.manager, 'current_user', 0) or 0
 
         self.success_timer = 0
