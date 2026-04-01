@@ -197,6 +197,18 @@ class LockScreen(Scene):
 
                 if self.input_sequence == user.get("password", []):
                     self.manager.current_user = user
+                    # Apply user's saved theme (if any) to shared styles
+                    theme = user.get("theme", "standard")
+                    if theme == "standard":
+                        styles.set_standaard_kleuren()
+                    elif theme == "dark":
+                        styles.dark_color()
+                    elif theme == "green":
+                        styles.green_color()
+                    elif theme == "blue":
+                        styles.blue_color()
+                    elif theme == "red":
+                        styles.red_color()
                     self.success_timer = self.success_delay
                 else:
                     self.input_sequence = []
@@ -320,7 +332,8 @@ class LockScreen(Scene):
             "name": self.new_name,
             "color": self.new_color,
             "icon": self.new_icon,
-            "password": self.new_password
+            "password": self.new_password,
+            "theme": "standard"
         }
 
         if len(self.users) < 3:

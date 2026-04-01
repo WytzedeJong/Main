@@ -15,7 +15,11 @@ class SettingsMenu(Scene):
         self.styles = styles
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
+        # initialize current theme from logged-in user if available
         self.current_theme = "standard"
+        current_user = getattr(self.manager, 'current_user', None)
+        if current_user:
+            self.current_theme = current_user.get('theme', 'standard')
 
         self.show_sett = False
         width, height = 300, 250
@@ -59,28 +63,46 @@ class SettingsMenu(Scene):
             return True  # Handled
         
         elif option == "Change theme":
-            print(f"Huidig thema was: {self.current_theme}")
-            
+            # cycle themes and persist choice to users.json for current user
             if self.current_theme == "standard":
                 self.styles.dark_color()
                 self.current_theme = "dark"
-                
             elif self.current_theme == "dark":
                 self.styles.green_color()
                 self.current_theme = "green"
-                
             elif self.current_theme == "green":
                 self.styles.blue_color()
                 self.current_theme = "blue"
-                
             elif self.current_theme == "blue":
                 self.styles.red_color()
                 self.current_theme = "red"
-                
             else:
                 self.styles.set_standaard_kleuren()
                 self.current_theme = "standard"
-                
+
+            # persist theme for current user
+            import json, os
+            current_user = getattr(self.manager, 'current_user', None)
+            if current_user:
+                # update in-memory user object
+                current_user['theme'] = self.current_theme
+
+                path = os.path.join('data', 'users.json')
+                if os.path.exists(path):
+                    with open(path, 'r') as f:
+                        data = json.load(f)
+
+                    changed = False
+                    for u in data.get('users', []):
+                        if u.get('name') == current_user.get('name'):
+                            u['theme'] = self.current_theme
+                            changed = True
+                            break
+
+                    if changed:
+                        with open(path, 'w') as f:
+                            json.dump(data, f, indent=4)
+
             return True
         
         return False  # Not handled, use default logic
