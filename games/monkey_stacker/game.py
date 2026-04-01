@@ -145,8 +145,8 @@ class MonkeyStacker(Scene):
 
             if event.key == pygame.K_ESCAPE:
 
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
                 return
 
             if self.state == "start":

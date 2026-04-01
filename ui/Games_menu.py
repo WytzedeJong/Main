@@ -8,20 +8,20 @@ from games.racer.game import RacerGame
 # from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
 from ui.settings_menu import SettingsMenu
-from ui.Games_menu import Game_Menu
+#from ui.Games_menu import Game_Menu
 
 
-class HomeMenu(Scene):
+class Game_Menu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-           # ("Test", AdventureGame),
+            ("Test", AdventureGame),
             #("Hello", RacerGame),
-            #("Monkey", MonkeyStacker),
-            ("Settings", SettingsMenu),
-            ("Games", Game_Menu)
+            ("Monkey", MonkeyStacker),
+            #("Settings", SettingsMenu),
+            #("Games", Game_Menu)
         ]
 
         self.selected = 0
