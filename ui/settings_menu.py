@@ -84,6 +84,18 @@ class SettingsMenu(Scene):
             return True
         
         return False  # Not handled, use default logic
+    def handle_user_theme(self, option):
+        if option == "change_theme":
+            import json
+            import os
+            
+            current_user = self.manager.current_user
+            if current_user:
+                # Delete from users.json
+                path = os.path.join("data", "users.json")
+                if os.path.exists(path):
+                    with open(path, "r") as f:
+                        data = json.load(f)
     
     def handle_delete_confirmation(self, option):
         """Callback for delete confirmation"""
