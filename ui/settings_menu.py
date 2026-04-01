@@ -34,6 +34,19 @@ class SettingsMenu(Scene):
         self.current_profile_submenu = None  # Voor delete callback
         self.text_size_value = 20  
 
+    def handle_user_theme(self, option):
+        if option == "change_theme":
+            import json
+            import os
+            
+            current_user = self.manager.current_user
+            if current_user:
+                # Delete from users.json
+                path = os.path.join("data", "users.json")
+                if os.path.exists(path):
+                    with open(path, "r") as f:
+                        data = json.load(f)
+
     def handle_profile_customization(self, option):
         
         if option == "Change username":

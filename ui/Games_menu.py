@@ -48,8 +48,10 @@ class Game_Menu(Scene):
                 self.manager.set_scene(game_class(self.manager))
 
             if event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                exit()
+                from ui.home_menu import HomeMenu
+                self.manager.set_scene(HomeMenu(self.manager))
+                
+                
 
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
