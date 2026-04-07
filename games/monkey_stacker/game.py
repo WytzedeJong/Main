@@ -3,6 +3,7 @@ import pygame
 import json
 import os
 
+from datetime import datetime
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import AppStyles
@@ -27,6 +28,11 @@ class MonkeyStacker(Scene):
         self.state = "start"
         self.score = 0
         self.highscore = 0
+        
+        #voor het bijhouden van in game tijd
+        self.now = datetime.now()
+        self.start_time = 0
+        self.stop_time = 0
 
         self.swing_center_x = self.grid_w // 2
         self.swing_amplitude = self.grid_w // 2
@@ -274,6 +280,8 @@ class MonkeyStacker(Scene):
 
                 from ui.Games_menu import Game_Menu
                 self.manager.set_scene(Game_Menu(self.manager))
+                #self.stop_time = datetime.now()
+                #print(self.stop_time)
                 return
 
             if self.state == "start":
@@ -353,6 +361,8 @@ class MonkeyStacker(Scene):
     def draw(self, surface):
 
         self._draw_background(surface)
+        #self.start_time = datetime.now()
+        #print(self.start_time)
 
         if self.state == "start":
             self._draw_start_screen(surface)
