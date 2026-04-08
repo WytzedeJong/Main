@@ -21,6 +21,22 @@
                 200,
                 255
             ]
+        },
+        {
+            "name": "QQQ",
+            "color": [
+                69,
+                185,
+                124
+            ],
+            "icon": "Penguin",
+            "password": [
+                "UP",
+                "UP",
+                "UP",
+                "UP"
+            ],
+            "theme": "standard"
         }
     ]
 }
