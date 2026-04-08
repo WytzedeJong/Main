@@ -15,7 +15,7 @@ BASE_ICE_HEIGHT = int(BASE_WINDOW_HEIGHT * 0.8)
 
 MAX_SPEED = 60  # 4x harder than before
 FRICTION = 0.98  # Ice friction (slippery)
-ACCELERATION = 10
+ACCELERATION = 6
 MAX_PLAYERS = 50  # Support many players
 
 class GameState(Enum):
