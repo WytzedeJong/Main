@@ -1,10 +1,10 @@
-from config import AppStyles
+from config import styles
 
 class SceneManager:
     def __init__(self):
         self.scene = None
         self.current_user = None
-        self.styles = AppStyles()
+        self.styles = styles
 
     def set_scene(self, scene):
         self.scene = scene

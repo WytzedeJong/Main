@@ -667,7 +667,11 @@ class AdventureGame(Scene):
                 return
             
             if self.state == GameState.START_SCREEN:
-                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                if event.key == pygame.K_LEFT:
+                    self.selected_players = max(2, self.selected_players - 1)
+                elif event.key == pygame.K_RIGHT:
+                    self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
+                elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                     self.start_game()
             
             if self.state == GameState.WAITING_FOR_INPUT:

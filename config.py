@@ -101,8 +101,8 @@ class AppStyles:
 
 
         #settings kleuren
-        self.BACKGROUND = 255, 255, 255,
-        self.TEXT_SET = 0,0,0
+        self.BACKGROUND = (255, 255, 255)
+        self.TEXT_SET = (0, 0, 0)
 
     def green_color(self):
         self.BG_TOP = (255, 255, 255)

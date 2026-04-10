@@ -3,9 +3,8 @@ import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
-from games.adventure.game import AdventureGame
+from games.Pengu_Slider.game import AdventureGame
 from games.racer.game import RacerGame
-# from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
 from ui.settings_menu import SettingsMenu
 

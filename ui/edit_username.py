@@ -3,13 +3,13 @@ import json
 import os
 from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
-from config import AppStyles
+from config import styles
 
 
 class EditUsername(Scene):
     def __init__(self, manager, current_user, parent_scene):
         super().__init__(manager)
-        self.styles = AppStyles()
+        self.styles = styles
         self.current_user = current_user
         self.parent_scene = parent_scene
         self.new_name = current_user.get("name", "")
