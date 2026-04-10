@@ -7,6 +7,9 @@
                 200,
                 80
             ],
+            "Highscore": [
+                50
+            ],
             "password": [
                 "UP",
                 "LEFT",
