@@ -558,10 +558,14 @@ class DungeonGame(Scene):
         surface.blit(score_text, (10, 80))
 
         tile_colors = [
-            (70, 110, 140),
-            (90, 130, 170),
-            (110, 150, 190),
-            (130, 170, 210),
+            (156, 80, 40),
+            (115, 51, 17),
+            (84, 39, 14),
+            (94, 54, 31),
+            (105, 63, 45),
+            (130, 83, 62),
+            (153, 105, 83),
+            (161, 93, 63),
         ]
 
         cam_x = self.player_x - self.viewport_width // 2
@@ -587,7 +591,8 @@ class DungeonGame(Scene):
                     pygame.draw.rect(surface, (0, 0, 0), rect)
                     continue
 
-                color = tile_colors[(wx + wy) % len(tile_colors)]
+                rng = random.Random(wx * 10000 + wy)
+                color = rng.choice(tile_colors)
 
                 # 🌘 niet zichtbaar nu
                 if (wx, wy) not in self.visible:
