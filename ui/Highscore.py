@@ -15,7 +15,7 @@ class Highscore(Scene):
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-            ("Monkeystacker"),
+            ("Monkeystacker", None),
             ]
 
         self.selected = 0
