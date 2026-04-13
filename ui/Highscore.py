@@ -1,5 +1,7 @@
 import pygame
 import datetime
+import json
+import os
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
@@ -9,15 +11,13 @@ from ui.lockscreen import LockScreen
 
 
 
+
 class Highscore(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
-        self.games = [
-            ("Monkeystacker", None),
-            ]
-
+        self.user = self.get_user()
+        self.game_keys = self.get_members()
         self.selected = 0
 
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
@@ -28,35 +28,94 @@ class Highscore(Scene):
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
         
-        self.user = self.get_user()
+        
+        self.highscores = self.load_highscores()
+        
 
     def get_user(self):
-        # prefer manager's current_user if already set
         user = getattr(self.manager, 'current_user', None)
         if user:
             return user
 
-        # fallback: create a LockScreen with the same manager and ask it
         try:
             lock = LockScreen(self.manager)
             return lock.get_user() or 0
         except Exception:
             return 0
+        
+    def get_members(self):
+        """Haalt de beschikbare highscore keys op (bijv [Monkey, Racer, Adventure])"""
+        path = os.path.join("data", "users.json")
+        
+        # Get username from self.user
+        username = None
+        if isinstance(self.user, dict):
+            username = self.user.get("name")
+        elif isinstance(self.user, str):
+            username = self.user
+        
+        if not username:
+            return []
+        
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            # Zoek de speler in users array
+            for player in data.get("users", []):
+                if player.get("name") == username:
+                    highscores = player.get("highscores", {})
+                    return list(highscores.keys())  # Return keys: ["Monkey", "Racer", "Adventure"]
+            
+            # User niet gevonden
+            return []
+        except Exception as e:
+            print(f"Error loading members: {e}")
+            return []
+
+    def load_highscores(self):
+        highscores = {key: 0 for key in self.game_keys}
+        
+        if not self.user or (isinstance(self.user, int) and self.user == 0):
+            return highscores
+        
+        username = None
+        if isinstance(self.user, dict):
+            username = self.user.get("name")
+        elif isinstance(self.user, str):
+            username = self.user
+        
+        if not username:
+            return highscores
+        
+        path = os.path.join("data", "users.json")
+        
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            for player in data.get("users", []):
+                if player.get("name") == username:
+                    user_scores = player.get("highscores", {})
+                    # Update met de waarden van de user
+                    highscores.update(user_scores)
+                    return highscores
+        except Exception as e:
+            print(f"Error loading highscores: {e}")
+        
+        return highscores
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                self.selected = (self.selected + 1) % len(self.games)
+                self.selected = (self.selected + 1) % len(self.game_keys)
 
             if event.key == pygame.K_LEFT:
-                self.selected = (self.selected - 1) % len(self.games)
-
-            if event.key == pygame.K_RETURN:
-                game_class = self.games[self.selected][1]
-                self.manager.set_scene(game_class(self.manager))
+                self.selected = (self.selected - 1) % len(self.game_keys)
 
             if event.key == pygame.K_ESCAPE:
-                self.manager.set_scene(LockScreen(self.manager))
+                from ui.home_menu import HomeMenu
+                self.manager.set_scene(HomeMenu(self.manager))
 
 
     def draw_gradient(self, surface):
@@ -86,25 +145,32 @@ class Highscore(Scene):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
 
-        title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
+        title = self.title_font.render("Highscores", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
+
+        # Get user name for display
+        username = "Guest"
+        if isinstance(self.user, dict):
+            username = self.user.get("name", "Guest")
+        elif isinstance(self.user, str):
+            username = self.user
 
         now = datetime.datetime.now().strftime("%H:%M")
         time_text = self.time_font.render(now, True, self.styles.TEXT_COLOR)
         base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
 
+        # Display player name
+        player_text = self.card_font.render(f"Player: {username}", True, self.styles.TEXT_COLOR)
+        base_surface.blit(player_text, (30, 60))
 
-        total_width = len(self.games) * self.card_width + (len(self.games) - 1) * self.spacing
+        # Display highscores for each game
+        total_width = len(self.game_keys) * self.card_width + (len(self.game_keys) - 1) * self.spacing
         start_x = (BASE_WIDTH - total_width) // 2
-        y = 80
+        y = 120
 
-        for i, (name, _) in enumerate(self.games):
+        for i, game_name in enumerate(self.game_keys):
             x = start_x + i * (self.card_width + self.spacing)
-            self.draw_card(base_surface, x, y, self.card_width, self.card_height, name, i == self.selected)
-
-        a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
-        b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
-
-        base_surface.blit(a_text, (145, BASE_HEIGHT - 45))
-        base_surface.blit(b_text, (385, BASE_HEIGHT - 45))
+            score = self.highscores.get(game_name, 0)
+            score_text = f"{game_name}:{score}"
+            self.draw_card(base_surface, x, y, self.card_width, self.card_height, score_text, i == self.selected)
 

@@ -1,6 +1,7 @@
 import pygame
 import json
 import os
+import sys
 from datetime import datetime
 
 from core.scene import Scene
@@ -37,6 +38,7 @@ class LockScreen(Scene):
         self.confirm_password = []
         self.new_color = None
         self.new_icon = None
+
 
 
         self.keyboard = [
@@ -95,7 +97,10 @@ class LockScreen(Scene):
     def login_success(self):
         from ui.home_menu import HomeMenu
         self.manager.set_scene(HomeMenu(self.manager))
-
+        
+        
+    def set_style_user(self):
+        pass
 
     def update(self, dt):
         if self.success_timer > 0:
@@ -162,6 +167,8 @@ class LockScreen(Scene):
             self.state = "create_password"
             self.confirm_password = []
             self.anim_dots = []
+        elif self.state == "select":
+            pygame.quit()
 
 
     def handle_select(self, event):
@@ -171,6 +178,9 @@ class LockScreen(Scene):
             self.selected_index = (self.selected_index + 1) % len(display)
         elif event.key == pygame.K_LEFT:
             self.selected_index = (self.selected_index - 1) % len(display)
+        elif event.key == pygame.K_ESCAPE:
+            pygame.quit()
+            sys.exit()
         elif event.key == pygame.K_RETURN:
 
             selected = display[self.selected_index]
@@ -211,8 +221,8 @@ class LockScreen(Scene):
                     theme = user.get("theme", "standard")
                     if theme == "standard":
                         styles.set_standaard_kleuren()
-                    elif theme == "dark":
-                        styles.dark_color()
+                    elif theme == "gold":
+                        styles.gold_color()
                     elif theme == "green":
                         styles.green_color()
                     elif theme == "blue":
