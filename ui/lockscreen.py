@@ -1,6 +1,7 @@
 import pygame
 import json
 import os
+import sys
 from datetime import datetime
 
 from core.scene import Scene
@@ -37,6 +38,7 @@ class LockScreen(Scene):
         self.confirm_password = []
         self.new_color = None
         self.new_icon = None
+
 
 
         self.keyboard = [
@@ -162,6 +164,8 @@ class LockScreen(Scene):
             self.state = "create_password"
             self.confirm_password = []
             self.anim_dots = []
+        elif self.state == "select":
+            pygame.quit()
 
 
     def handle_select(self, event):
@@ -172,7 +176,8 @@ class LockScreen(Scene):
         elif event.key == pygame.K_LEFT:
             self.selected_index = (self.selected_index - 1) % len(display)
         elif event.key == pygame.K_ESCAPE:
-            pygame.event.post(pygame.event.Event(pygame.QUIT))
+            pygame.quit()
+            sys.exit()
         elif event.key == pygame.K_RETURN:
 
             selected = display[self.selected_index]
