@@ -11,12 +11,13 @@ from ui.lockscreen import LockScreen
 
 
 
+
 class Highscore(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
-        self.game_keys = ["Monkey", "Racer", "Adventure"]
+        self.user = self.get_user()
+        self.game_keys = self.get_members()
         self.selected = 0
 
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
@@ -27,8 +28,9 @@ class Highscore(Scene):
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
         
-        self.user = self.get_user()
+        
         self.highscores = self.load_highscores()
+        
 
     def get_user(self):
         user = getattr(self.manager, 'current_user', None)
@@ -40,9 +42,39 @@ class Highscore(Scene):
             return lock.get_user() or 0
         except Exception:
             return 0
+        
+    def get_members(self):
+        """Haalt de beschikbare highscore keys op (bijv [Monkey, Racer, Adventure])"""
+        path = os.path.join("data", "users.json")
+        
+        # Get username from self.user
+        username = None
+        if isinstance(self.user, dict):
+            username = self.user.get("name")
+        elif isinstance(self.user, str):
+            username = self.user
+        
+        if not username:
+            return []
+        
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            # Zoek de speler in users array
+            for player in data.get("users", []):
+                if player.get("name") == username:
+                    highscores = player.get("highscores", {})
+                    return list(highscores.keys())  # Return keys: ["Monkey", "Racer", "Adventure"]
+            
+            # User niet gevonden
+            return []
+        except Exception as e:
+            print(f"Error loading members: {e}")
+            return []
 
     def load_highscores(self):
-        highscores = {"Monkey": 0, "Racer": 0, "Adventure": 0}
+        highscores = {key: 0 for key in self.game_keys}
         
         if not self.user or (isinstance(self.user, int) and self.user == 0):
             return highscores
@@ -65,11 +97,8 @@ class Highscore(Scene):
             for player in data.get("users", []):
                 if player.get("name") == username:
                     user_scores = player.get("highscores", {})
-                    highscores.update({
-                        "Monkey": user_scores.get("Monkey", 0),
-                        "Racer": user_scores.get("Racer", 0),
-                        "Adventure": user_scores.get("Adventure", 0)
-                    })
+                    # Update met de waarden van de user
+                    highscores.update(user_scores)
                     return highscores
         except Exception as e:
             print(f"Error loading highscores: {e}")
@@ -85,7 +114,8 @@ class Highscore(Scene):
                 self.selected = (self.selected - 1) % len(self.game_keys)
 
             if event.key == pygame.K_ESCAPE:
-                self.manager.set_scene(LockScreen(self.manager))
+                from ui.home_menu import HomeMenu
+                self.manager.set_scene(HomeMenu(self.manager))
 
 
     def draw_gradient(self, surface):
@@ -141,6 +171,6 @@ class Highscore(Scene):
         for i, game_name in enumerate(self.game_keys):
             x = start_x + i * (self.card_width + self.spacing)
             score = self.highscores.get(game_name, 0)
-            score_text = f"{game_name}\n{score}"
+            score_text = f"{game_name}:{score}"
             self.draw_card(base_surface, x, y, self.card_width, self.card_height, score_text, i == self.selected)
 

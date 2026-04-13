@@ -107,9 +107,11 @@ class MonkeyStacker(Scene):
         found = False
         for player in data["users"]:
             if player["name"] == target_user:
+                # Zorg dat highscores object bestaat
                 if "highscores" not in player:
-                    player["highscores"] = {"Monkey": 0, "Racer": 0, "Adventure": 0}
-                # Update if new score is higher
+                    player["highscores"] = {}
+                
+                # Update ALLEEN Monkey, laat andere games (Racer, Adventure) ongeroerd
                 current = player["highscores"].get("Monkey", 0)
                 if score > current:
                     player["highscores"]["Monkey"] = score
@@ -186,16 +188,14 @@ class MonkeyStacker(Scene):
             for player in users_data.get("users", []):
                 if player.get("name") == target_name:
                     if "highscores" not in player:
-                        player["highscores"] = {"Monkey": 0, "Racer": 0, "Adventure": 0}
+                        player["highscores"] = {}
                     
-                    # determine current best value
                     cur_val = player["highscores"].get("Monkey", 0)
                     try:
                         cur_val = int(cur_val)
                     except Exception:
                         cur_val = 0
 
-                    # update only if new best is higher
                     if best > cur_val:
                         player["highscores"]["Monkey"] = best
                     else:

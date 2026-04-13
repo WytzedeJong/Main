@@ -15,9 +15,7 @@
             ],
             "theme": "green",
             "highscores": {
-                "Monkey": 150,
-                "Racer": 0,
-                "Adventure": 0
+                "Monkey": 20
             }
         },
         {
