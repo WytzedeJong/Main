@@ -143,8 +143,35 @@ class SettingsMenu(Scene):
                 self.styles.red_color()
             else:
                 self.styles.set_standaard_kleuren()
+            self.handle_theme()
             return True
         return False
+    
+    def handle_theme(self):
+        theme = self.current_theme
+        path = os.path.join("data", "users.json")
+        
+        # Maak bestand aan als het niet bestaat
+        if not os.path.exists(path):
+            os.makedirs("data", exist_ok=True)
+            with open(path, "w") as f:
+                json.dump({"users": []}, f, indent=4)
+        
+        # Lees de data
+        with open(path, "r") as f:
+            data = json.load(f)
+        
+        # Update het thema van de huidige gebruiker
+        for user in data["users"]:
+            if user["name"] == self.manager.current_user["name"]:  
+                user["theme"] = theme
+                break
+        
+        # Schrijf de bijgewerkte data terug
+        with open(path, "w") as f:
+            json.dump(data, f, indent=4)
+        
+        self.users = data.get("users", [])[:3]
 
     def handle_delete_confirmation(self, option):
         if option == "Delete":

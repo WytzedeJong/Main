@@ -7,15 +7,18 @@
                 200,
                 80
             ],
-            "Highscore": [
-                50
-            ],
             "password": [
                 "UP",
                 "LEFT",
                 "DOWN",
                 "RIGHT"
-            ]
+            ],
+            "theme": "green",
+            "highscores": {
+                "Monkey": 150,
+                "Racer": 0,
+                "Adventure": 0
+            }
         },
         {
             "name": "Wytze",
@@ -23,26 +26,12 @@
                 120,
                 200,
                 255
-            ]
-        },
-        {
-            "name": "QQQ",
-            "color": [
-                255,
-                203,
-                5
             ],
-            "icon": "Monkey",
-            "password": [
-                "RIGHT",
-                "RIGHT",
-                "RIGHT",
-                "RIGHT"
-            ],
-            "theme": "standard",
-            "Highscore": [
-                20
-            ]
+            "highscores": {
+                "Monkey": 0,
+                "Racer": 0,
+                "Adventure": 0
+            }
         }
     ]
 }

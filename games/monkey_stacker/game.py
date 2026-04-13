@@ -107,7 +107,12 @@ class MonkeyStacker(Scene):
         found = False
         for player in data["users"]:
             if player["name"] == target_user:
-                player["Highscore"].append(score)
+                if "highscores" not in player:
+                    player["highscores"] = {"Monkey": 0, "Racer": 0, "Adventure": 0}
+                # Update if new score is higher
+                current = player["highscores"].get("Monkey", 0)
+                if score > current:
+                    player["highscores"]["Monkey"] = score
                 found = True
                 break
                 
@@ -138,17 +143,11 @@ class MonkeyStacker(Scene):
 
                 for player in users_data.get("users", []):
                     if player.get("name") == uname:
-                        cur = player.get("Highscore")
-                        if isinstance(cur, list) and cur:
-                            try:
-                                self.highscore = max(int(x) for x in cur)
-                            except Exception:
-                                self.highscore = 0
-                        else:
-                            try:
-                                self.highscore = int(cur)
-                            except Exception:
-                                self.highscore = 0
+                        highscores = player.get("highscores", {})
+                        try:
+                            self.highscore = int(highscores.get("Monkey", 0))
+                        except Exception:
+                            self.highscore = 0
                         return
             except Exception:
                 # fall back to legacy path below
@@ -186,25 +185,21 @@ class MonkeyStacker(Scene):
             updated = False
             for player in users_data.get("users", []):
                 if player.get("name") == target_name:
-                    cur = player.get("Highscore")
+                    if "highscores" not in player:
+                        player["highscores"] = {"Monkey": 0, "Racer": 0, "Adventure": 0}
+                    
                     # determine current best value
-                    if isinstance(cur, list):
-                        try:
-                            cur_val = max(int(x) for x in cur) if cur else 0
-                        except Exception:
-                            cur_val = 0
-                    else:
-                        try:
-                            cur_val = int(cur)
-                        except Exception:
-                            cur_val = 0
+                    cur_val = player["highscores"].get("Monkey", 0)
+                    try:
+                        cur_val = int(cur_val)
+                    except Exception:
+                        cur_val = 0
 
                     # update only if new best is higher
                     if best > cur_val:
-                        player["Highscore"] = [best]
+                        player["highscores"]["Monkey"] = best
                     else:
-                        # keep existing highest as a single-item list
-                        player["Highscore"] = [cur_val]
+                        player["highscores"]["Monkey"] = cur_val
 
                     updated = True
                     break

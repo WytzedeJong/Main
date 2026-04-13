@@ -95,7 +95,10 @@ class LockScreen(Scene):
     def login_success(self):
         from ui.home_menu import HomeMenu
         self.manager.set_scene(HomeMenu(self.manager))
-
+        
+        
+    def set_style_user(self):
+        pass
 
     def update(self, dt):
         if self.success_timer > 0:
@@ -210,8 +213,8 @@ class LockScreen(Scene):
                     theme = user.get("theme", "standard")
                     if theme == "standard":
                         styles.set_standaard_kleuren()
-                    elif theme == "dark":
-                        styles.dark_color()
+                    elif theme == "gold":
+                        styles.gold_color()
                     elif theme == "green":
                         styles.green_color()
                     elif theme == "blue":
