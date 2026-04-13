@@ -27,8 +27,21 @@ class Highscore(Scene):
         self.card_width = self.styles.CARD_WIDTH
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
+        
+        self.user = self.get_user()
 
+    def get_user(self):
+        # prefer manager's current_user if already set
+        user = getattr(self.manager, 'current_user', None)
+        if user:
+            return user
 
+        # fallback: create a LockScreen with the same manager and ask it
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -45,9 +58,7 @@ class Highscore(Scene):
             if event.key == pygame.K_ESCAPE:
                 self.manager.set_scene(LockScreen(self.manager))
 
-    # -----------------------
-    # Draw helpers
-    # -----------------------
+
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
             ratio = y / BASE_HEIGHT

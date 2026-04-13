@@ -7,19 +7,14 @@
                 200,
                 80
             ],
+            "Highscore": [
+                50
+            ],
             "password": [
                 "UP",
                 "LEFT",
                 "DOWN",
                 "RIGHT"
-            ]
-        },
-        {
-            "name": "Wytze",
-            "color": [
-                120,
-                200,
-                255
             ]
         },
         {

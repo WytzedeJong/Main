@@ -24,7 +24,6 @@ class LockScreen(Scene):
 
         self.input_sequence = []
         self.max_length = 4
-        # track the currently logged in user (or 0 when nobody is logged in)
         self.user = getattr(self.manager, 'current_user', 0) or 0
 
         self.success_timer = 0
@@ -118,7 +117,10 @@ class LockScreen(Scene):
             return
 
         if event.key == pygame.K_ESCAPE:
-            self.handle_back()
+            if self.state == "select":
+                pygame.event.post(pygame.event.Event(pygame.QUIT))
+            else:
+                self.handle_back()
             return
 
         if self.state == "select":
@@ -169,8 +171,6 @@ class LockScreen(Scene):
             self.selected_index = (self.selected_index + 1) % len(display)
         elif event.key == pygame.K_LEFT:
             self.selected_index = (self.selected_index - 1) % len(display)
-        elif event.key == pygame.K_ESCAPE:
-            pygame.event.post(pygame.event.Event(pygame.QUIT))
         elif event.key == pygame.K_RETURN:
 
             selected = display[self.selected_index]
