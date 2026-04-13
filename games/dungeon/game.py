@@ -16,6 +16,15 @@ class DungeonGame(Scene):
         self.map_width = self.viewport_width * 10
         self.map_height = self.viewport_height * 10
 
+        self.tile_palettes = [
+                [(156, 80, 40), (115, 51, 17), (84, 39, 14)],
+                [(60, 60, 70), (80, 80, 90), (100, 100, 110)],
+                [(40, 80, 40), (50, 100, 50), (60, 120, 60)],
+                [(176, 43, 14), (133, 40, 21), (207, 56, 27)]
+            ]
+
+        self.tile_colors = random.choice(self.tile_palettes)
+
         # --- Movement ---
         self.move_delay = 0.12
         self.time_since_move = 0.0
@@ -277,6 +286,8 @@ class DungeonGame(Scene):
         # Reset visibility
         self.explored.clear()
         self.visible.clear()
+
+        self.tile_colors = random.choice(self.tile_palettes)
 
         # Reset dots
         self.dots.clear()
@@ -557,15 +568,39 @@ class DungeonGame(Scene):
         score_text = self.font.render(f"Score: {self.score}", True, (255, 255, 0))
         surface.blit(score_text, (10, 80))
 
-        tile_colors = [
-            (156, 80, 40),
-            (115, 51, 17),
-            (84, 39, 14),
-            (94, 54, 31),
-            (105, 63, 45),
-            (130, 83, 62),
-            (153, 105, 83),
-            (161, 93, 63),
+        self.tile_palettes = [
+            [  # Palette 1 (bruin)
+                (156, 80, 40),
+                (115, 51, 17),
+                (84, 39, 14),
+                (94, 54, 31),
+                (105, 63, 45),
+                (130, 83, 62),
+                (153, 105, 83),
+                (161, 93, 63),
+            ],
+            [  # Palette 2 (grijs/blauw)
+                (60, 60, 70),
+                (80, 80, 90),
+                (100, 100, 110),
+                (120, 120, 130),
+                (90, 90, 100),
+                (70, 70, 85),
+            ],
+            [  # Palette 3 (groen)
+                (40, 80, 40),
+                (50, 100, 50),
+                (60, 120, 60),
+                (30, 70, 30),
+                (70, 140, 70),
+            ],
+            [  # Palette 4 (rood)
+                (176, 43, 14),
+                (133, 40, 21),
+                (207, 56, 27),
+                (196, 47, 47),
+                (219, 29, 29),
+                (209, 13, 13),]
         ]
 
         cam_x = self.player_x - self.viewport_width // 2
@@ -592,14 +627,11 @@ class DungeonGame(Scene):
                     continue
 
                 rng = random.Random(wx * 10000 + wy)
-                color = rng.choice(tile_colors)
+                color = rng.choice(self.tile_colors)
 
                 # 🌘 niet zichtbaar nu
                 if (wx, wy) not in self.visible:
                     color = (40, 40, 40)
-
-                # if wx == self.player_x and wy == self.player_y:
-                #     color = (220, 220, 60)
 
                 pygame.draw.rect(surface, color, rect)
 
