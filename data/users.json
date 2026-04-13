@@ -13,9 +13,9 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "green",
+            "theme": "red",
             "highscores": {
-                "Monkey": 20
+                "Monkey": 40
             }
         },
         {
