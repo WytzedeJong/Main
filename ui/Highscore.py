@@ -171,6 +171,11 @@ class Highscore(Scene):
         for i, game_name in enumerate(self.game_keys):
             x = start_x + i * (self.card_width + self.spacing)
             score = self.highscores.get(game_name, 0)
-            score_text = f"{game_name}:{score}"
+            if game_name == 'Pengu':
+                score_text = f"{game_name} wins: {score}"
+
+            else:
+                score_text = f"{game_name}:{score}"
+
             self.draw_card(base_surface, x, y, self.card_width, self.card_height, score_text, i == self.selected)
 
