@@ -13,9 +13,10 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "red",
+            "theme": "blue",
             "highscores": {
-                "Monkey": 40
+                "Monkey": 80,
+                "Pengu": 1
             }
         },
         {
@@ -25,11 +26,7 @@
                 200,
                 255
             ],
-            "highscores": {
-                "Monkey": 0,
-                "Racer": 0,
-                "Adventure": 0
-            }
+            "highscores": {}
         }
     ]
 }
