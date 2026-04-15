@@ -18,7 +18,7 @@ class Game_Menu(Scene):
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-            ("Test", AdventureGame),
+            ("Puzzle", AdventureGame),
             ("Dungeon", DungeonGame),
             ("Monkey", MonkeyStacker),
             #("Pingiun", PinguinSlider)
