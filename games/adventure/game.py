@@ -66,6 +66,9 @@ class AdventureGame(Scene):
         self.selected_origin_anchor = None
         self.message = "Choose a difficulty to start."
         self.win_message = ""
+        self.exit_options = ["Leave", "Reset tray", "Return"]
+        self.exit_dialog_open = False
+        self.exit_dialog_index = 2
 
         self.board_rect = pygame.Rect(0, 0, 0, 0)
         self.tray_rect = pygame.Rect(0, 0, 0, 0)
@@ -80,9 +83,13 @@ class AdventureGame(Scene):
         if event.type != pygame.KEYDOWN:
             return
 
+        if self.exit_dialog_open:
+            self._handle_exit_dialog_events(event.key)
+            return
+
         if event.key == pygame.K_ESCAPE:
-            if self.state == "playing" and self.selected_piece_id is not None:
-                self._cancel_selected_piece()
+            if self.state in ("playing", "won"):
+                self._open_exit_dialog()
                 return
 
             from ui.Games_menu import Game_Menu
@@ -121,6 +128,8 @@ class AdventureGame(Scene):
             self._draw_game_screen(surface)
             if self.state == "won":
                 self._draw_win_overlay(surface)
+            if self.exit_dialog_open:
+                self._draw_exit_dialog(surface)
 
     def _handle_difficulty_events(self, key):
         if key == pygame.K_UP:
@@ -140,6 +149,35 @@ class AdventureGame(Scene):
             self.selected_difficulty = (self.selected_difficulty + 1) % len(self.DIFFICULTIES)
             self._start_game(self.selected_difficulty)
 
+    def _handle_exit_dialog_events(self, key):
+        if key == pygame.K_UP:
+            self.exit_dialog_index = (self.exit_dialog_index - 1) % len(self.exit_options)
+        elif key == pygame.K_DOWN:
+            self.exit_dialog_index = (self.exit_dialog_index + 1) % len(self.exit_options)
+        elif key in (pygame.K_RETURN, pygame.K_b):
+            self._confirm_exit_dialog_choice()
+        elif key == pygame.K_ESCAPE:
+            self._close_exit_dialog()
+
+    def _open_exit_dialog(self):
+        self.exit_dialog_open = True
+        self.exit_dialog_index = 2
+
+    def _close_exit_dialog(self):
+        self.exit_dialog_open = False
+        self.exit_dialog_index = 2
+
+    def _confirm_exit_dialog_choice(self):
+        choice = self.exit_options[self.exit_dialog_index]
+        self._close_exit_dialog()
+
+        if choice == "Leave":
+            from ui.Games_menu import Game_Menu
+
+            self.manager.set_scene(Game_Menu(self.manager))
+        elif choice == "Reset tray":
+            self._reset_tray()
+
     def _start_game(self, difficulty_index):
         config = self.DIFFICULTIES[difficulty_index]
         self.selected_difficulty = difficulty_index
@@ -149,6 +187,8 @@ class AdventureGame(Scene):
         self.selected_piece_id = None
         self.active_anchor = [0, 0]
         self.selected_origin_anchor = None
+        self.exit_dialog_open = False
+        self.exit_dialog_index = 2
         self.message = "Pick a block with B, move it with the D-pad, place it with B."
         self.win_message = ""
 
@@ -394,6 +434,18 @@ class AdventureGame(Scene):
         self.selected_origin_anchor = None
         self.message = "Selected block returned to the tray."
 
+    def _reset_tray(self):
+        for piece in self.pieces:
+            piece["placed_at"] = None
+
+        self.placed_cells = {}
+        self.tray_index = 0
+        self.selected_piece_id = None
+        self.selected_origin_anchor = None
+        self.active_anchor = [0, 0]
+        self.state = "playing"
+        self.message = "Tray reset. Pick a block with B to start again."
+
     def _can_place_piece(self, piece, anchor):
         cols = self.current_difficulty["cols"]
         rows = self.current_difficulty["rows"]
@@ -490,11 +542,11 @@ class AdventureGame(Scene):
             "Press B or Enter to start. Esc returns to the games menu.",
         ]
         for index, line in enumerate(hint_lines):
-            hint = self.body_font.render(line, True, (245, 248, 250))
+            hint = self.body_font.render(line, True, (0, 0, 0)) #245, 248, 250
             surface.blit(hint, hint.get_rect(center=(BASE_WIDTH // 2, 235 + index * 16)))
 
     def _draw_game_screen(self, surface):
-        title = self.title_font.render("Puzzle Blocks", True, (255, 255, 255))
+        title = self.title_font.render("Fill the board to complete", True, (255, 255, 255))
         surface.blit(title, (18, 12))
 
         difficulty = self.current_difficulty["name"]
@@ -569,14 +621,25 @@ class AdventureGame(Scene):
             )
 
             selected = self.selected_piece_id is None and index == self.tray_index
-            fill = (255, 221, 135) if selected else (233, 239, 243)
+            fill = (233, 239, 243)
+            border = (90, 104, 118)
+            border_width = 2
+
             if piece["id"] == self.selected_piece_id:
                 fill = (195, 228, 255)
+                border = (76, 129, 183)
+            elif piece["placed_at"] is not None and selected:
+                fill = (240, 241, 166)
+                border = (76, 138, 88)
+                border_width = 3
             elif piece["placed_at"] is not None:
                 fill = (208, 235, 214)
+            elif selected:
+                fill = (255, 221, 135)
+                border = (176, 123, 40)
 
             pygame.draw.rect(surface, fill, rect, border_radius=8)
-            pygame.draw.rect(surface, (90, 104, 118), rect, 2, border_radius=8)
+            pygame.draw.rect(surface, border, rect, border_width, border_radius=8)
             self._draw_piece_in_slot(surface, piece, rect)
 
     def _draw_piece_in_slot(self, surface, piece, rect):
@@ -631,11 +694,11 @@ class AdventureGame(Scene):
             "D-pad: choose a block or move the selected block",
             "B: pick up from tray / place on the board",
             "L: rotate the selected block",
-            "Esc: return block or leave game",
+            "Esc: open leave menu",
         ]
 
         for index, line in enumerate(lines):
-            label = self.small_font.render(line, True, (247, 249, 251))
+            label = self.small_font.render(line, True, (0,0,0)) #247, 249, 251
             surface.blit(label, (18, 204 + index * 14))
 
     def _status_text(self):
@@ -664,3 +727,40 @@ class AdventureGame(Scene):
         surface.blit(title, title.get_rect(center=(box.centerx, box.y + 28)))
         surface.blit(detail, detail.get_rect(center=(box.centerx, box.y + 56)))
         surface.blit(hint, hint.get_rect(center=(box.centerx, box.y + 82)))
+
+    def _draw_exit_dialog(self, surface):
+        overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((7, 12, 18, 165))
+        surface.blit(overlay, (0, 0))
+
+        box = pygame.Rect(0, 0, 220, 134)
+        box.center = (BASE_WIDTH // 2, BASE_HEIGHT // 2)
+        pygame.draw.rect(surface, (245, 247, 250), box, border_radius=10)
+        pygame.draw.rect(surface, (43, 53, 66), box, 2, border_radius=10)
+
+        title = self.subtitle_font.render("Leave puzzle?", True, (31, 40, 53))
+        hint = self.small_font.render(
+            "Up/Down choose, B confirms, Esc cancels.",
+            True,
+            (62, 70, 83),
+        )
+
+        surface.blit(title, title.get_rect(center=(box.centerx, box.y + 20)))
+        surface.blit(hint, hint.get_rect(center=(box.centerx, box.y + 38)))
+
+        for index, option in enumerate(self.exit_options):
+            option_rect = pygame.Rect(
+                box.x + 18,
+                box.y + 50 + index * 24,
+                box.width - 36,
+                20,
+            )
+            selected = index == self.exit_dialog_index
+            fill = (255, 221, 135) if selected else (232, 237, 241)
+            border = (176, 123, 40) if selected else (94, 106, 118)
+
+            pygame.draw.rect(surface, fill, option_rect, border_radius=8)
+            pygame.draw.rect(surface, border, option_rect, 2, border_radius=8)
+
+            label = self.body_font.render(option, True, (25, 32, 46))
+            surface.blit(label, label.get_rect(center=option_rect.center))
