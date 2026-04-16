@@ -3,7 +3,7 @@ import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
-from games.adventure.game import AdventureGame
+from games.adventure.game import PuzzleGame
 from games.racer.game import RacerGame
 from games.dungeon.game import DungeonGame
 # from games.pinguin_slider.game import PinguinSlider
@@ -18,7 +18,7 @@ class Game_Menu(Scene):
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-            ("Puzzle", AdventureGame),
+            ("Puzzle", PuzzleGame),
             ("Dungeon", DungeonGame),
             ("Monkey", MonkeyStacker),
             #("Pingiun", PinguinSlider)

@@ -8,9 +8,13 @@ import os
 
 
 class DungeonGame(Scene):
+    UI_BASE_WIDTH = BASE_WIDTH * 2
+    UI_BASE_HEIGHT = BASE_HEIGHT * 3
+
     def __init__(self, manager):
         super().__init__(manager)
         self.font = pygame.font.SysFont("arial", 60)
+        self.hud_font = pygame.font.SysFont("arial", 24, bold=True)
 
         # --- Map settings ---
         self.tile_size = 30
@@ -91,6 +95,7 @@ class DungeonGame(Scene):
         self.speed_boost_active = False
         self.speed_boost_time_remaining = 0.0
         self.speed_multiplier = 1.5
+        self.last_time_bonus = 0.0
 
         # Stun state
         self.stunned = False
@@ -309,6 +314,7 @@ class DungeonGame(Scene):
         self.stun_time_remaining = 0.0
         self.speed_boost_active = False
         self.speed_boost_time_remaining = 0.0
+        self.last_time_bonus = 0.0
 
         # Reset enemies
         self.enemies.clear()
@@ -410,6 +416,12 @@ class DungeonGame(Scene):
             self.speed_boost_time_remaining -= dt
             if self.speed_boost_time_remaining <= 0:
                 self.speed_boost_active = False
+                self.speed_boost_time_remaining = 0.0
+
+        if self.last_time_bonus > 0:
+            self.last_time_bonus -= dt
+            if self.last_time_bonus < 0:
+                self.last_time_bonus = 0.0
 
         self.time_since_move += dt
         self.timer -= dt
@@ -463,6 +475,7 @@ class DungeonGame(Scene):
                     powerup_type = self.powerups.pop((self.player_x, self.player_y))
                     if powerup_type == 'time':
                         self.timer += 5.0
+                        self.last_time_bonus = 1.5
                     elif powerup_type == 'speed':
                         self.speed_boost_active = True
                         self.speed_boost_time_remaining = 6.0
@@ -487,91 +500,190 @@ class DungeonGame(Scene):
                         self.stunned = True
                         self.stun_time_remaining = 3.0
 
+    def _create_ui_surface(self):
+        return pygame.Surface((self.UI_BASE_WIDTH, self.UI_BASE_HEIGHT))
+
+    def _blit_scaled_ui(self, surface, ui_surface):
+        scaled_ui = pygame.transform.smoothscale(
+            ui_surface, (BASE_WIDTH, BASE_HEIGHT)
+        )
+        surface.blit(scaled_ui, (0, 0))
+
+    def _draw_instructions_screen(self, surface):
+        ui_surface = self._create_ui_surface()
+        ui_surface.fill((0, 0, 0))
+
+        title_font = pygame.font.SysFont("arial", 80)
+        text_font = pygame.font.SysFont("arial", 40)
+        small_font = pygame.font.SysFont("arial", 35)
+
+        title = title_font.render("DUNGEON EXPLORER", True, (255, 255, 255))
+        ui_surface.blit(
+            title,
+            (self.UI_BASE_WIDTH // 2 - title.get_width() // 2, 30),
+        )
+
+        y_pos = 130
+        line_height = 50
+
+        goal_text = text_font.render(
+            "GOAL: Collect yellow dots to earn points!", True, (255, 255, 0)
+        )
+        ui_surface.blit(goal_text, (50, y_pos))
+        y_pos += line_height
+
+        timer_text = text_font.render("60 second time limit", True, (255, 0, 0))
+        ui_surface.blit(timer_text, (50, y_pos))
+        y_pos += line_height + 20
+
+        enemies_title = text_font.render("ENEMIES:", True, (255, 200, 100))
+        ui_surface.blit(enemies_title, (50, y_pos))
+        y_pos += line_height - 10
+
+        red_text = small_font.render(
+            "Red (slow) - Instant death!", True, (255, 100, 100)
+        )
+        ui_surface.blit(red_text, (100, y_pos))
+        y_pos += 45
+
+        purple_text = small_font.render(
+            "Purple (fast) - Lose 3 points", True, (200, 150, 255)
+        )
+        ui_surface.blit(purple_text, (100, y_pos))
+        y_pos += 45
+
+        orange_text = small_font.render(
+            "Orange (medium) - Slow for 3 seconds", True, (255, 200, 100)
+        )
+        ui_surface.blit(orange_text, (100, y_pos))
+        y_pos += 70
+
+        powerups_title = text_font.render("POWER-UPS:", True, (120, 220, 255))
+        ui_surface.blit(powerups_title, (50, y_pos))
+        y_pos += line_height - 10
+
+        time_label = small_font.render(
+            "Time power-up - adds 5 seconds", True, (100, 255, 100)
+        )
+        self._draw_instruction_powerup_row(
+            ui_surface, "time", time_label, 100, y_pos
+        )
+        y_pos += 60
+
+        speed_label = small_font.render(
+            "Speed power-up - 1.5x speed for 6 seconds", True, (100, 180, 255)
+        )
+        self._draw_instruction_powerup_row(
+            ui_surface, "speed", speed_label, 100, y_pos
+        )
+        y_pos += 75
+
+        controls_title = text_font.render("CONTROLS:", True, (100, 200, 255))
+        ui_surface.blit(controls_title, (50, y_pos))
+        y_pos += line_height - 10
+
+        arrow_text = small_font.render("Arrow keys to move", True, (200, 200, 200))
+        ui_surface.blit(arrow_text, (100, y_pos))
+        y_pos += 45
+
+        esc_text = small_font.render("ESC to return to menu", True, (200, 200, 200))
+        ui_surface.blit(esc_text, (100, y_pos))
+
+        start_text = text_font.render("Press ENTER to start", True, (100, 255, 100))
+        ui_surface.blit(
+            start_text,
+            (
+                self.UI_BASE_WIDTH // 2 - start_text.get_width() // 2,
+                self.UI_BASE_HEIGHT - 80,
+            ),
+        )
+
+        self._blit_scaled_ui(surface, ui_surface)
+
+    def _draw_instruction_powerup_row(self, surface, powerup_type, label, x, y):
+        icon_size = 42
+        image = self.powerup_images.get(powerup_type)
+
+        icon_rect = pygame.Rect(x, y, icon_size, icon_size)
+        if image:
+            icon = pygame.transform.smoothscale(image, (icon_size, icon_size))
+            surface.blit(icon, icon_rect)
+        else:
+            color = (100, 255, 100) if powerup_type == "time" else (100, 180, 255)
+            pygame.draw.circle(surface, color, icon_rect.center, icon_size // 2 - 4)
+            pygame.draw.circle(surface, (255, 255, 255), icon_rect.center, 5)
+
+        surface.blit(label, (x + icon_size + 20, y + 4))
+
+    def _draw_hud(self, surface):
+        hud_rect = pygame.Rect(8, 8, 110, 74)
+        pygame.draw.rect(surface, (0, 0, 0), hud_rect, border_radius=10)
+        pygame.draw.rect(surface, (230, 230, 230), hud_rect, 2, border_radius=10)
+
+        self.hud_font = pygame.font.SysFont("arial", 24, bold=True)
+        timer_text = self.hud_font.render(f"Time: {max(0, int(self.timer))}", True, (255, 80, 80))
+        score_text = self.hud_font.render(f"Score: {self.score}", True, (255, 255, 0))
+        surface.blit(timer_text, (18, 12))
+        surface.blit(score_text, (18, 44))
+
+        status_font = pygame.font.SysFont("arial", 18, bold=True)
+        if self.last_time_bonus > 0:
+            bonus_text = status_font.render("+5 sec", True, (100, 255, 100))
+            surface.blit(bonus_text, (150, 15))
+        elif self.speed_boost_active:
+            boost_text = status_font.render(
+                f"Speed x1.5: {self.speed_boost_time_remaining:.1f}s",
+                True,
+                (100, 180, 255),
+            )
+            surface.blit(boost_text, (235, 16))
+
+    def _draw_game_over_screen(self, surface):
+        ui_surface = self._create_ui_surface()
+        ui_surface.fill((0, 0, 0))
+
+        game_over_text = self.font.render("Time's Up!", True, (255, 255, 255))
+        instruction_text = self.font.render(
+            "Press ENTER to play again", True, (200, 200, 200)
+        )
+        final_score_text = self.font.render(
+            f"Final Score: {self.score}", True, (255, 255, 0)
+        )
+
+        ui_surface.blit(
+            game_over_text,
+            (
+                self.UI_BASE_WIDTH // 2 - game_over_text.get_width() // 2,
+                self.UI_BASE_HEIGHT // 2 - game_over_text.get_height() // 2 - 50,
+            ),
+        )
+        ui_surface.blit(
+            instruction_text,
+            (
+                self.UI_BASE_WIDTH // 2 - instruction_text.get_width() // 2,
+                self.UI_BASE_HEIGHT // 2 - instruction_text.get_height() // 2 + 50,
+            ),
+        )
+        ui_surface.blit(
+            final_score_text,
+            (
+                self.UI_BASE_WIDTH // 2 - final_score_text.get_width() // 2,
+                self.UI_BASE_HEIGHT // 2 - final_score_text.get_height() // 2 + 150,
+            ),
+        )
+
+        self._blit_scaled_ui(surface, ui_surface)
+
     def draw(self, surface):
         if self.show_instructions:
-            surface.fill((0, 0, 0))
-            title_font = pygame.font.SysFont("arial", 80)
-            text_font = pygame.font.SysFont("arial", 40)
-            small_font = pygame.font.SysFont("arial", 35)
-
-            title = title_font.render("DUNGEON EXPLORER", True, (255, 255, 255))
-            surface.blit(title, (BASE_WIDTH // 2 - title.get_width() // 2, 30))
-
-            y_pos = 130
-            line_height = 50
-
-            # Goal
-            goal_text = text_font.render("GOAL: Collect yellow dots to earn points!", True, (255, 255, 0))
-            surface.blit(goal_text, (50, y_pos))
-            y_pos += line_height
-
-            # Timer
-            timer_text = text_font.render("60 second time limit", True, (255, 0, 0))
-            surface.blit(timer_text, (50, y_pos))
-            y_pos += line_height + 20
-
-            # Enemies
-            enemies_title = text_font.render("ENEMIES:", True, (255, 200, 100))
-            surface.blit(enemies_title, (50, y_pos))
-            y_pos += line_height - 10
-
-            red_text = small_font.render("Red (slow) - Instant death!", True, (255, 100, 100))
-            surface.blit(red_text, (100, y_pos))
-            y_pos += 45
-
-            purple_text = small_font.render("Purple (medium) - Lose 3 points", True, (200, 150, 255))
-            surface.blit(purple_text, (100, y_pos))
-            y_pos += 45
-
-            orange_text = small_font.render("Orange (fast) - Stun for 3 seconds", True, (255, 200, 100))
-            surface.blit(orange_text, (100, y_pos))
-            y_pos += 45
-
-            powerup_text = small_font.render("Green - +5 seconds", True, (100, 255, 100))
-            surface.blit(powerup_text, (100, y_pos))
-            y_pos += 45
-
-            speed_text = small_font.render("Blue - 1.5x speed for 6 seconds", True, (100, 180, 255))
-            surface.blit(speed_text, (100, y_pos))
-            y_pos += 60
-
-            # Controls
-            controls_title = text_font.render("CONTROLS:", True, (100, 200, 255))
-            surface.blit(controls_title, (50, y_pos))
-            y_pos += line_height - 10
-
-            arrow_text = small_font.render("Arrow keys to move", True, (200, 200, 200))
-            surface.blit(arrow_text, (100, y_pos))
-            y_pos += 45
-
-            esc_text = small_font.render("ESC to return to menu", True, (200, 200, 200))
-            surface.blit(esc_text, (100, y_pos))
-            y_pos += 70
-
-            # Start instruction
-            start_text = text_font.render("Press ENTER to start", True, (100, 255, 100))
-            surface.blit(start_text, (BASE_WIDTH // 2 - start_text.get_width() // 2, BASE_HEIGHT - 80))
+            self._draw_instructions_screen(surface)
             return
 
         if self.game_over:
-            surface.fill((0, 0, 0))
-            game_over_text = self.font.render("Time's Up!", True, (255, 255, 255))
-            instruction_text = self.font.render("Press ENTER to play again", True, (200, 200, 200))
-            final_score_text = self.font.render(f"Final Score: {self.score}", True, (255, 255, 0))
-            surface.blit(game_over_text, (BASE_WIDTH // 2 - game_over_text.get_width() // 2, BASE_HEIGHT // 2 - game_over_text.get_height() // 2 - 50))
-            surface.blit(instruction_text, (BASE_WIDTH // 2 - instruction_text.get_width() // 2, BASE_HEIGHT // 2 - instruction_text.get_height() // 2 + 50))
-            surface.blit(final_score_text, (BASE_WIDTH // 2 - final_score_text.get_width() // 2, BASE_HEIGHT // 2 - final_score_text.get_height() // 2 + 150))
+            self._draw_game_over_screen(surface)
             return
 
         surface.fill((50, 80, 120))
-
-        # Draw timer
-        timer_text = self.font.render(f"Time: {int(self.timer)}", True, (255, 0, 0))
-        surface.blit(timer_text, (10, 10))
-
-        # Draw score
-        score_text = self.font.render(f"Score: {self.score}", True, (255, 255, 0))
-        surface.blit(score_text, (10, 80))
 
         self.tile_palettes = [
             [  # Palette 1 (bruin)
@@ -711,138 +823,7 @@ class DungeonGame(Scene):
             )
             pygame.draw.rect(surface, (220, 30, 30), player_rect)
 
-    def _scores_path(self):
-        return os.path.join(os.path.dirname(__file__), "dungeon_scores.json")
-    
-    def user_highscore(self, score):
-        path = os.path.join("data", "users.json")
-        target_user = self.user 
-        
-        try:
-            with open(path, 'r') as file:
-                data = json.load(file)
-        except FileNotFoundError:
-            print("User data not found")
-            return
-        
-        found = False
-        for player in data["users"]:
-            if player["name"] == target_user:
-                player["Highscore"].append(score)
-                found = True
-                break
-                
-        if found:
-            with open(path, 'w') as file:
-                json.dump(data, file, indent=4)
-            print(f"Score {score} opgeslagen voor {target_user}")
-        else:
-            print(f"Gebruiker {target_user} niet gevonden in JSON")
-                
-
-    def _load_highscore(self):
-        # Prefer per-user highscore from data/users.json
-        self.highscore = 0
-
-        # resolve user name
-        uname = None
-        if isinstance(self.user, dict):
-            uname = self.user.get("name")
-        elif isinstance(self.user, str):
-            uname = self.user
-
-        if uname:
-            users_path = os.path.join("data", "users.json")
-            try:
-                with open(users_path, "r", encoding="utf-8") as f:
-                    users_data = json.load(f)
-
-                for player in users_data.get("users", []):
-                    if player.get("name") == uname:
-                        cur = player.get("Highscore")
-                        if isinstance(cur, list) and cur:
-                            try:
-                                self.highscore = max(int(x) for x in cur)
-                            except Exception:
-                                self.highscore = 0
-                        else:
-                            try:
-                                self.highscore = int(cur)
-                            except Exception:
-                                self.highscore = 0
-                        return
-            except Exception:
-                # fall back to legacy path below
-                pass
-
-        # fallback: load legacy monkey_scores.json best value
-        try:
-            with open(self._scores_path(), "r", encoding="utf-8") as f:
-                data = json.load(f)
-            self.highscore = int(data.get("best", 0))
-        except Exception:
-            self.highscore = 0
-
-    def _save_highscore(self):
-        # normalize score to tens
-        best = (self.highscore // 10) * 10
-
-        # update user's Highscore in data/users.json, keeping only the highest value
-        path = os.path.join("data", "users.json")
-
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                users_data = json.load(f)
-        except Exception:
-            users_data = {"users": []}
-
-        target = self.user
-        target_name = None
-        if isinstance(target, dict):
-            target_name = target.get("name")
-        elif isinstance(target, str):
-            target_name = target
-
-        if target_name:
-            updated = False
-            for player in users_data.get("users", []):
-                if player.get("name") == target_name:
-                    cur = player.get("Highscore")
-                    # determine current best value
-                    if isinstance(cur, list):
-                        try:
-                            cur_val = max(int(x) for x in cur) if cur else 0
-                        except Exception:
-                            cur_val = 0
-                    else:
-                        try:
-                            cur_val = int(cur)
-                        except Exception:
-                            cur_val = 0
-
-                    # update only if new best is higher
-                    if best > cur_val:
-                        player["Highscore"] = [best]
-                    else:
-                        # keep existing highest as a single-item list
-                        player["Highscore"] = [cur_val]
-
-                    updated = True
-                    break
-
-            if updated:
-                try:
-                    with open(path, "w", encoding="utf-8") as f:
-                        json.dump(users_data, f, indent=4)
-                except Exception:
-                    pass
-
-        # legacy: also save a simple best value to monkey_scores.json for compatibility
-        try:
-            with open(self._scores_path(), "w", encoding="utf-8") as f:
-                json.dump({"best": best}, f)
-        except Exception:
-            pass
+        self._draw_hud(surface)
 
 class Enemy:
     def __init__(self, x, y, enemy_type, walls):

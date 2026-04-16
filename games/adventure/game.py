@@ -6,7 +6,7 @@ from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
 
 
-class AdventureGame(Scene):
+class PuzzleGame(Scene):
     DIFFICULTIES = [
         {
             "name": "Easy",
@@ -79,6 +79,11 @@ class AdventureGame(Scene):
         self.piece_lookup = {}
         self.placed_cells = {}
 
+        # Timer
+        self.start_time = 0
+        self.elapsed_time = 0
+        self.timer_running = False
+
     def handle_events(self, event):
         if event.type != pygame.KEYDOWN:
             return
@@ -89,11 +94,15 @@ class AdventureGame(Scene):
 
         if event.key == pygame.K_ESCAPE:
             if self.state in ("playing", "won"):
-                self._open_exit_dialog()
+                if self.selected_piece_id is not None:
+                    # Er is een stuk geselecteerd → terugleggen i.p.v. menu openen
+                    self._cancel_selected_piece()
+                else:
+                    # Geen stuk geselecteerd → exit dialog openen
+                    self._open_exit_dialog()
                 return
 
             from ui.Games_menu import Game_Menu
-
             self.manager.set_scene(Game_Menu(self.manager))
             return
 
@@ -117,7 +126,10 @@ class AdventureGame(Scene):
             self._handle_direction(event.key)
 
     def update(self, dt):
-        pass
+        """Wordt elke frame aangeroepen"""
+        if self.timer_running and self.state == "playing":
+            current_time = pygame.time.get_ticks()
+            self.elapsed_time = (current_time - self.start_time) // 1000   # in seconden
 
     def draw(self, surface):
         self._draw_background(surface)
@@ -172,8 +184,8 @@ class AdventureGame(Scene):
         self._close_exit_dialog()
 
         if choice == "Leave":
+            self.timer_running = False
             from ui.Games_menu import Game_Menu
-
             self.manager.set_scene(Game_Menu(self.manager))
         elif choice == "Reset tray":
             self._reset_tray()
@@ -193,6 +205,13 @@ class AdventureGame(Scene):
         self.win_message = ""
 
         self.cell_size = config["cell_size"]
+        
+        # === TIMER START ===
+        self.start_time = pygame.time.get_ticks()   # huidige tijd in ms
+        self.elapsed_time = 0
+        self.timer_running = True
+        # ===================
+
         self._build_layout(config)
 
     def _build_layout(self, config):
@@ -414,12 +433,16 @@ class AdventureGame(Scene):
             self.selected_piece_id = None
             self.selected_origin_anchor = None
             self.message = "Block placed."
-            if self._is_solved():
-                self.state = "won"
-                self.win_message = (
-                    f"{self.current_difficulty['name']} puzzle solved. "
-                    "Press B to play again."
-                )
+        if self._is_solved():
+            self.state = "won"
+            self.timer_running = False                     # <--- timer stoppen
+            minutes = self.elapsed_time // 60
+            seconds = self.elapsed_time % 60
+            self.win_message = (
+                f"{self.current_difficulty['name']} puzzle solved in "
+                f"{minutes:02d}:{seconds:02d}. "
+                "Press B to play again."
+            )
         else:
             self.message = "That block does not fit there."
 
@@ -445,6 +468,11 @@ class AdventureGame(Scene):
         self.active_anchor = [0, 0]
         self.state = "playing"
         self.message = "Tray reset. Pick a block with B to start again."
+
+        # Timer resetten bij reset tray
+        self.start_time = pygame.time.get_ticks()
+        self.elapsed_time = 0
+        self.timer_running = True
 
     def _can_place_piece(self, piece, anchor):
         cols = self.current_difficulty["cols"]
@@ -711,22 +739,30 @@ class AdventureGame(Scene):
         overlay.fill((7, 12, 18, 150))
         surface.blit(overlay, (0, 0))
 
-        box = pygame.Rect(0, 0, 280, 108)
+        box = pygame.Rect(0, 0, 300, 130)   # iets breder gemaakt voor timer
         box.center = (BASE_WIDTH // 2, BASE_HEIGHT // 2)
         pygame.draw.rect(surface, (245, 247, 250), box, border_radius=10)
         pygame.draw.rect(surface, (43, 53, 66), box, 2, border_radius=10)
 
-        title = self.title_font.render("Puzzle Solved", True, (31, 40, 53))
+        title = self.title_font.render("Puzzle Solved!", True, (31, 40, 53))
+        
+        # Tijd weergeven
+        minutes = self.elapsed_time // 60
+        seconds = self.elapsed_time % 60
+        time_text = f"Time: {minutes:02d}:{seconds:02d}"
+
         detail = self.body_font.render(self.win_message, True, (62, 70, 83))
+        time_label = self.subtitle_font.render(time_text, True, (76, 129, 183))  # mooie blauwe kleur
+        
         hint = self.small_font.render(
             "Press B to replay, Up/Down to switch difficulty, Esc to leave.",
-            True,
-            (62, 70, 83),
+            True, (62, 70, 83)
         )
 
-        surface.blit(title, title.get_rect(center=(box.centerx, box.y + 28)))
-        surface.blit(detail, detail.get_rect(center=(box.centerx, box.y + 56)))
-        surface.blit(hint, hint.get_rect(center=(box.centerx, box.y + 82)))
+        surface.blit(title, title.get_rect(center=(box.centerx, box.y + 25)))
+        surface.blit(time_label, time_label.get_rect(center=(box.centerx, box.y + 55)))
+        surface.blit(detail, detail.get_rect(center=(box.centerx, box.y + 78)))
+        surface.blit(hint, hint.get_rect(center=(box.centerx, box.y + 102)))
 
     def _draw_exit_dialog(self, surface):
         overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
