@@ -61,9 +61,9 @@ class Game_Menu(Scene):
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def draw_card(self, surface, x, y, width, height, text, is_selected):
-        shadow = pygame.Surface((width, height), pygame.SRCALPHA)
-        shadow.fill((0, 0, 0, 60))
-        surface.blit(shadow, (x + 6, y + 6))
+        #shadow = pygame.Surface((width, height), pygame.SRCALPHA)
+        #shadow.fill((0, 0, 0, 60))
+        #surface.blit(shadow, (x + 4, y + 4))
 
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
@@ -87,13 +87,22 @@ class Game_Menu(Scene):
         base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
 
 
-        total_width = len(self.games) * self.card_width + (len(self.games) - 1) * self.spacing
-        start_x = (BASE_WIDTH - total_width) // 2
-        y = 80
+        
+        start_x = (BASE_WIDTH//2 ) 
+        y_centre = (BASE_HEIGHT//2)
+        
 
         for i, (name, _) in enumerate(self.games):
-            x = start_x + i * (self.card_width + self.spacing)
-            self.draw_card(base_surface, x, y, self.card_width, self.card_height, name, i == self.selected)
+            distance = i - self.selected
+
+            scale = 1 if distance == 0 else 0.9
+            new_width = (self.card_width*scale)
+            new_height = (self.card_height*scale)
+            x = start_x + (distance* (self.card_width + (self.spacing*(scale*scale)))) - (new_width // 2)
+            curr_y = y_centre - (new_height // 2)
+
+        
+            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, i == self.selected)
 
         a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
         b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)

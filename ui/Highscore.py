@@ -44,7 +44,6 @@ class Highscore(Scene):
             return 0
         
     def get_members(self):
-        """Haalt de beschikbare highscore keys op (bijv [Monkey, Racer, Adventure])"""
         path = os.path.join("data", "users.json")
         
         # Get username from self.user
