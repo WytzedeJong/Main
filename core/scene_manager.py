@@ -9,6 +9,8 @@ class SceneManager:
     def set_scene(self, scene):
         self.scene = scene
 
+        # Blokkeer input kort na scene switch
+        self.input_block_timer = 0.15
     def handle_events(self, event):
         if self.scene:
             self.scene.handle_events(event)

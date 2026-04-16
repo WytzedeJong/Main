@@ -11,6 +11,7 @@ GPIO_MAP = {
 }
 
 
+
 class DpadReader:
     def __init__(self, gpio_map: dict[str, int]):
         self.gpio_map = gpio_map
@@ -78,7 +79,7 @@ class DpadReader:
 class InputHandler:
     def __init__(self):
         self.reader = DpadReader(GPIO_MAP)
-
+        self.input_block_timer = 0
         self.current: Dict[str, bool] = {}
         self.previous: Dict[str, bool] = {}
 

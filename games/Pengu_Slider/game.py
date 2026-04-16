@@ -4,9 +4,6 @@ import random
 from enum import Enum
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
-import os
-import json
-from ui.lockscreen import LockScreen
 
 pygame.init()
 
@@ -223,7 +220,6 @@ class AdventureGame(Scene):
         self.colors = self.generate_colors(num_players)
         self.circle_shrink_factor = 1.0  # Track circle radius shrinking per round
         self.wave_offset = 0
-        self._win_counted = False  # Track if win has been counted
         
         # Start screen variables
         self.selected_players = 4
@@ -315,7 +311,6 @@ class AdventureGame(Scene):
         self.state = GameState.WAITING_FOR_INPUT
         self.round_counter = 0
         self.circle_shrink_factor = 1.0  # Reset circle to full size
-        self._win_counted = False  # Reset win counter flag
     
     def draw_start_screen(self):
         """Draw the start screen"""
@@ -608,12 +603,6 @@ class AdventureGame(Scene):
                 
                 if alive_count <= 1:
                     self.state = GameState.GAME_OVER
-                    # Count the win only once when transitioning to GAME_OVER
-                    if not self._win_counted:
-                        alive_players = self.get_alive_players()
-                        if alive_players and alive_players[0].is_human:
-                            self.wincount_up()
-                        self._win_counted = True
                 else:
                     self.state = GameState.WAITING_FOR_INPUT
                     self.round_counter += 1
@@ -801,137 +790,3 @@ class AdventureGame(Scene):
             text_rect.y = 5
             pygame.draw.rect(self.screen, (0, 0, 0), text_rect.inflate(10, 10))
             self.screen.blit(text, (10, 10))
-
-    def get_user(self):
-        # prefer manager's current_user if already set
-        user = getattr(self.manager, 'current_user', None)
-        if user:
-            return user
-
-        # fallback: create a LockScreen with the same manager and ask it
-        try:
-            lock = LockScreen(self.manager)
-            return lock.get_user() or 0
-        except Exception:
-            return 0
-
-    def user_highscore(self, score):
-        self.user = self.get_user()
-        path = os.path.join("data", "users.json")
-        target_user = self.user 
-        
-        try:
-            with open(path, 'r') as file:
-                data = json.load(file)
-        except FileNotFoundError:
-            print("User data not found")
-            return
-        
-        found = False
-        for player in data["users"]:
-            if player["name"] == target_user:
-                # Zorg dat highscores object bestaat
-                if "highscores" not in player:
-                    player["highscores"] = {}
-                
-                
-                current = player["highscores"].get("Pengu", 0)
-                if score > current:
-                    player["highscores"]["Pengu"] = score
-                found = True
-                break
-                
-        if found:
-            with open(path, 'w') as file:
-                json.dump(data, file, indent=4)
-            print(f"Score {score} opgeslagen voor {target_user}")
-        else:
-            print(f"Gebruiker {target_user} niet gevonden in JSON")
-
-    def _save_highscore(self):
-        # normalize score to tens
-        best = (self.highscore // 10) * 10
-
-        # update user's Highscore in data/users.json, keeping only the highest value
-        path = os.path.join("data", "users.json")
-
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                users_data = json.load(f)
-        except Exception:
-            users_data = {"users": []}
-
-        target = self.user
-        target_name = None
-        if isinstance(target, dict):
-            target_name = target.get("name")
-        elif isinstance(target, str):
-            target_name = target
-
-        if target_name:
-            updated = False
-            for player in users_data.get("users", []):
-                if player.get("name") == target_name:
-                    if "highscores" not in player:
-                        player["highscores"] = {}
-                    
-                    cur_val = player["highscores"].get("Pengu", 0)
-                    try:
-                        cur_val = int(cur_val)
-                    except Exception:
-                        cur_val = 0
-
-                    if best > cur_val:
-                        player["highscores"]["Pengu"] = best
-                    else:
-                        player["highscores"]["Pengu"] = cur_val
-
-                    updated = True
-                    break
-
-            if updated:
-                try:
-                    with open(path, "w", encoding="utf-8") as f:
-                        json.dump(users_data, f, indent=4)
-                except Exception:
-                    pass
-
-    def wincount_up(self):
-        path = os.path.join("data", "users.json")
-        user_to_find = self.get_user()
-        
-        print(f"DEBUG: Op zoek naar gebruiker: '{user_to_find}'")
-
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                users_data = json.load(f)
-        except Exception as e:
-            print(f"DEBUG: Kan bestand niet lezen: {e}")
-            return
-
-        found = False
-        if "users" in users_data:
-            for user_entry in users_data['users']:
-                current_username = user_to_find['name'] 
-                
-                if user_entry['name'] == current_username:
-                    score = user_entry['highscores'].get('Pengu', 0)
-                    user_entry['highscores']['Pengu'] = score + 1
-                    
-                    print(f"Succes! Score voor {current_username} is nu {score + 1}")
-                    found = True
-                    break
-        
-        if not found:
-            print(f"DEBUG: Gebruiker '{user_to_find}' is NIET gevonden in de lijst.")
-
-        # Opslaan
-        try:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(users_data, f, indent=4)
-                print(f"DEBUG: Bestand succesvol opgeslagen in {os.path.abspath(path)}")
-        except Exception as e:
-            print(f"DEBUG: Fout bij opslaan: {e}")       
-                        
-
-

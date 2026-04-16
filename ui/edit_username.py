@@ -2,18 +2,22 @@ import pygame
 import json
 import os
 from core.scene import Scene
-from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
+from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from core.input_manager import InputHandler
 
 
 class EditUsername(Scene):
     def __init__(self, manager, current_user, parent_scene):
         super().__init__(manager)
+
+        self.input = InputHandler()
+
         self.styles = styles
         self.current_user = current_user
         self.parent_scene = parent_scene
         self.new_name = current_user.get("name", "")
-        
+
         self.title_font = self.styles.create_font(self.styles.FONT_EDIT_TITLE_SIZE, bold=True)
         self.name_font = self.styles.create_font(self.styles.FONT_EDIT_NAME_SIZE)
         self.input_font = self.styles.create_font(self.styles.FONT_EDIT_INPUT_SIZE, bold=True)
@@ -24,106 +28,98 @@ class EditUsername(Scene):
             list("ZXCVBNM"),
             ["_", "BACK", "OK"]
         ]
+
         self.kb_row = 0
         self.kb_col = 0
 
     def handle_events(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_RIGHT:
-                self.kb_col = (self.kb_col + 1) % len(self.keyboard[self.kb_row])
-            
-            elif event.key == pygame.K_LEFT:
-                self.kb_col = (self.kb_col - 1) % len(self.keyboard[self.kb_row])
-            
-            elif event.key == pygame.K_DOWN:
-                self.kb_row = (self.kb_row + 1) % len(self.keyboard)
-                self.kb_col = min(self.kb_col, len(self.keyboard[self.kb_row]) - 1)
-            
-            elif event.key == pygame.K_UP:
-                self.kb_row = (self.kb_row - 1) % len(self.keyboard)
-                self.kb_col = min(self.kb_col, len(self.keyboard[self.kb_row]) - 1)
-            
-            elif event.key == pygame.K_RETURN:
-                key = self.keyboard[self.kb_row][self.kb_col]
-                
-                if key == "_":
-                    if len(self.new_name) < 10:
-                        self.new_name += "_"
-                
-                elif key == "BACK":
-                    self.new_name = self.new_name[:-1]
-                
-                elif key == "OK":
-                    if self.new_name.strip():
-                        self.save_username()
-                        self.manager.set_scene(self.parent_scene)
-                
-                else:
-                    if len(self.new_name) < 10:
-                        self.new_name += key
-            
-            elif event.key == pygame.K_ESCAPE:
-                self.manager.set_scene(self.parent_scene)
+        pass
+
+    def update(self, dt):
+        self.input.update()
+
+        row = self.keyboard[self.kb_row]
+
+        if self.input.just_pressed("RIGHT"):
+            self.kb_col = (self.kb_col + 1) % len(row)
+
+        if self.input.just_pressed("LEFT"):
+            self.kb_col = (self.kb_col - 1) % len(row)
+
+        if self.input.just_pressed("DOWN"):
+            self.kb_row = (self.kb_row + 1) % len(self.keyboard)
+            self.kb_col = min(self.kb_col, len(self.keyboard[self.kb_row]) - 1)
+
+        if self.input.just_pressed("UP"):
+            self.kb_row = (self.kb_row - 1) % len(self.keyboard)
+            self.kb_col = min(self.kb_col, len(self.keyboard[self.kb_row]) - 1)
+
+        if self.input.just_pressed("L") or self.input.just_pressed("ENTER"):
+            key = self.keyboard[self.kb_row][self.kb_col]
+
+            if key == "_":
+                if len(self.new_name) < 10:
+                    self.new_name += "_"
+
+            elif key == "BACK":
+                self.new_name = self.new_name[:-1]
+
+            elif key == "OK":
+                if self.new_name.strip():
+                    self.save_username()
+                    self.manager.set_scene(self.parent_scene)
+
+            else:
+                if len(self.new_name) < 10:
+                    self.new_name += key
+
+        if self.input.just_pressed("B"):
+            self.manager.set_scene(self.parent_scene)
 
     def save_username(self):
-        # Update current user object
         old_name = self.current_user.get("name", "")
         self.current_user["name"] = self.new_name
-        
-        # Save to file - use SAME path as lockscreen (root data folder)
+
         path = os.path.join("data", "users.json")
-        
+
         if os.path.exists(path):
             with open(path, "r") as f:
                 data = json.load(f)
-            
-            # Find and update user
+
             for user in data.get("users", []):
                 if user.get("name") == old_name:
                     user["name"] = self.new_name
                     break
-            
+
             with open(path, "w") as f:
                 json.dump(data, f, indent=4)
 
-    def update(self, dt):
-        pass
-
     def draw(self, surface):
         surface.fill((50, 50, 50))
-        
-        # Title
+
         title = self.title_font.render("Change Username", True, (255, 255, 255))
-        title_rect = title.get_rect(center=(BASE_WIDTH // 2, 20))
-        surface.blit(title, title_rect)
-        
-        # Current input
+        surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 20)))
+
         input_text = self.name_font.render(f"Name: {self.new_name}_", True, self.styles.CARD_SELECTED)
-        input_rect = input_text.get_rect(center=(BASE_WIDTH // 2, 50))
-        surface.blit(input_text, input_rect)
-        
-        # Keyboard
+        surface.blit(input_text, input_text.get_rect(center=(BASE_WIDTH // 2, 50)))
+
         y = 90
-        for row_idx, row in enumerate(self.keyboard):
+        for r, row in enumerate(self.keyboard):
             x = 40
-            for col_idx, key in enumerate(row):
+            for c, key in enumerate(row):
                 width = 28 if key in ["_", "OK"] else (50 if key == "BACK" else 25)
                 height = 25
-                
-                # Highlight selected
-                if row_idx == self.kb_row and col_idx == self.kb_col:
-                    pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, width, height))
-                    color = (50, 50, 50)
-                else:
-                    pygame.draw.rect(surface, (200, 200, 200), (x, y, width, height))
-                    color = (50, 50, 50)
-                
+
+                selected = (r == self.kb_row and c == self.kb_col)
+
+                color = self.styles.CARD_SELECTED if selected else (200, 200, 200)
+                text_color = (50, 50, 50) if selected else (0, 0, 0)
+
+                pygame.draw.rect(surface, color, (x, y, width, height))
                 pygame.draw.rect(surface, (100, 100, 100), (x, y, width, height), 1)
-                
-                text = self.name_font.render(key, True, color)
-                text_rect = text.get_rect(center=(x + width // 2, y + height // 2))
-                surface.blit(text, text_rect)
-                
+
+                label = self.name_font.render(key, True, text_color)
+                surface.blit(label, label.get_rect(center=(x + width // 2, y + height // 2)))
+
                 x += width + 5
-            
             y += 30

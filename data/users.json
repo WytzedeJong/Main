@@ -13,10 +13,9 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "blue",
+            "theme": "red",
             "highscores": {
-                "Monkey": 80,
-                "Pengu": 1
+                "Monkey": 40
             }
         },
         {
@@ -26,7 +25,27 @@
                 200,
                 255
             ],
-            "highscores": {}
+            "highscores": {
+                "Monkey": 0,
+                "Racer": 0,
+                "Adventure": 0
+            }
+        },
+        {
+            "name": "BBB",
+            "color": [
+                177,
+                210,
+                73
+            ],
+            "icon": "Pinguin",
+            "password": [
+                "UP",
+                "LEFT",
+                "DOWN",
+                "RIGHT"
+            ],
+            "theme": "standard"
         }
     ]
 }

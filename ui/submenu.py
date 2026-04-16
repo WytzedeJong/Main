@@ -2,11 +2,15 @@ import pygame
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from core.input_manager import InputHandler
 
 
 class SubMenu(Scene):
     def __init__(self, manager, title, options, parent_scene, action_callback=None):
         super().__init__(manager)
+
+        self.input = InputHandler()
+
         self.title = title
         self.options = options
         self.parent_scene = parent_scene
@@ -17,37 +21,46 @@ class SubMenu(Scene):
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
         self.menu_font = self.styles.create_font(self.styles.FONT_SETTINGS_MENU_SIZE)
 
-
         self.scroll_y = 0
         self.target_scroll_y = 0
         self.card_height = 50
         self.spacing = 12
         self.visible_area_height = BASE_HEIGHT - 100
 
-
     def handle_events(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                self.selected = (self.selected + 1) % len(self.options)
+        # Niet meer nodig (InputHandler wordt gebruikt)
+        pass
 
-            elif event.key == pygame.K_UP:
-                self.selected = (self.selected - 1) % len(self.options)
-
-            elif event.key == pygame.K_RETURN:
-                selected_option = self.options[self.selected]
-                if self.action_callback:
-                    handled = self.action_callback(selected_option)
-                    if handled:
-                        return
-
-                if selected_option == "Back":
-                    self.manager.set_scene(self.parent_scene)
-
-            elif event.key == pygame.K_ESCAPE:
-                self.manager.set_scene(self.parent_scene)
+    def handle_back(self):
+        self.manager.set_scene(self.parent_scene)
 
     def update(self, dt):
+        self.input.update()
 
+        # Navigatie
+        if self.input.just_pressed("DOWN"):
+            self.selected = (self.selected + 1) % len(self.options)
+
+        if self.input.just_pressed("UP"):
+            self.selected = (self.selected - 1) % len(self.options)
+
+        # Selectie
+        if self.input.just_pressed("L") or self.input.just_pressed("ENTER"):
+            selected_option = self.options[self.selected]
+
+            if self.action_callback:
+                handled = self.action_callback(selected_option)
+                if handled:
+                    return
+
+            if selected_option == "Back":
+                self.handle_back()
+
+        # Terug knop
+        if self.input.just_pressed("B"):
+            self.handle_back()
+
+        # Scroll logic
         item_y = 60 + self.selected * (self.card_height + self.spacing)
 
         if item_y < self.scroll_y:
@@ -79,15 +92,13 @@ class SubMenu(Scene):
     def draw(self, surface):
         self.draw_gradient(surface)
 
-
         content_start_y = 50 - self.scroll_y
-
 
         title_text = self.title_font.render(self.title, True, self.styles.TEXT_COLOR)
         title_rect = title_text.get_rect(center=(BASE_WIDTH // 2, content_start_y))
+
         if -50 < title_rect.centery < BASE_HEIGHT + 50:
             surface.blit(title_text, title_rect)
-
 
         card_width = 340
         start_x = (BASE_WIDTH - card_width) // 2

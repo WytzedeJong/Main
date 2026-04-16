@@ -7,24 +7,26 @@ from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
 
+from core.input_manager import InputHandler
+
 
 class SettingsMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
 
+        self.input = InputHandler()
+
         self.current_theme = "standard"
         self.selected = 0
         self.text_size_value = 20
         self.current_profile_submenu = None
-
 
         self.scroll_y = 0
         self.target_scroll_y = 0
         self.card_height = 50
         self.spacing = 12
         self.visible_area_height = BASE_HEIGHT - 100
-
 
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
 
@@ -40,33 +42,18 @@ class SettingsMenu(Scene):
             "Back"
         ]
 
-
     def handle_events(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_DOWN:
-                self.selected = (self.selected + 1) % len(self.options)
-            elif event.key == pygame.K_UP:
-                self.selected = (self.selected - 1) % len(self.options)
+        pass
 
-            if self.options[self.selected] == "Text size":
-                if event.key == pygame.K_LEFT:
-                    self.text_size_value = max(12, self.text_size_value - 1)
-                elif event.key == pygame.K_RIGHT:
-                    self.text_size_value = min(30, self.text_size_value + 1)
-
-            if event.key == pygame.K_RETURN:
-                self.handle_selection()
-
-            if event.key == pygame.K_ESCAPE:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+    def handle_back(self):
+        from ui.home_menu import HomeMenu
+        self.manager.set_scene(HomeMenu(self.manager))
 
     def handle_selection(self):
         selected_option = self.options[self.selected]
 
         if selected_option == "Back":
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+            self.handle_back()
 
         elif selected_option == "Profile customization":
             profile_submenu = SubMenu(
@@ -103,7 +90,6 @@ class SettingsMenu(Scene):
         elif selected_option == "Set to default":
             submenu = SubMenu(self.manager, "Set to Default", ["Confirm reset?", "Yes", "No"], self)
             self.manager.set_scene(submenu)
-
 
     def handle_profile_customization(self, option):
         if option == "Change username":
@@ -143,34 +129,32 @@ class SettingsMenu(Scene):
                 self.styles.red_color()
             else:
                 self.styles.set_standaard_kleuren()
+
             self.handle_theme()
             return True
+
         return False
-    
+
     def handle_theme(self):
         theme = self.current_theme
         path = os.path.join("data", "users.json")
-        
-        # Maak bestand aan als het niet bestaat
+
         if not os.path.exists(path):
             os.makedirs("data", exist_ok=True)
             with open(path, "w") as f:
                 json.dump({"users": []}, f, indent=4)
-        
-        # Lees de data
+
         with open(path, "r") as f:
             data = json.load(f)
-        
-        # Update het thema van de huidige gebruiker
+
         for user in data["users"]:
-            if user["name"] == self.manager.current_user["name"]:  
+            if user["name"] == self.manager.current_user["name"]:
                 user["theme"] = theme
                 break
-        
-        # Schrijf de bijgewerkte data terug
+
         with open(path, "w") as f:
             json.dump(data, f, indent=4)
-        
+
         self.users = data.get("users", [])[:3]
 
     def handle_delete_confirmation(self, option):
@@ -181,20 +165,47 @@ class SettingsMenu(Scene):
                 if os.path.exists(path):
                     with open(path, "r") as f:
                         data = json.load(f)
-                    data["users"] = [u for u in data.get("users", []) if u.get("name") != current_user.get("name")]
+
+                    data["users"] = [
+                        u for u in data.get("users", [])
+                        if u.get("name") != current_user.get("name")
+                    ]
+
                     with open(path, "w") as f:
                         json.dump(data, f, indent=4)
+
                 self.manager.current_user = None
                 from ui.lockscreen import LockScreen
                 self.manager.set_scene(LockScreen(self.manager))
             return True
+
         elif option == "Cancel":
             self.manager.set_scene(self.current_profile_submenu)
             return True
+
         return False
 
-
     def update(self, dt):
+        self.input.update()
+
+        if self.input.just_pressed("DOWN"):
+            self.selected = (self.selected + 1) % len(self.options)
+
+        if self.input.just_pressed("UP"):
+            self.selected = (self.selected - 1) % len(self.options)
+
+        if self.options[self.selected] == "Text size":
+            if self.input.just_pressed("LEFT"):
+                self.text_size_value = max(12, self.text_size_value - 1)
+
+            if self.input.just_pressed("RIGHT"):
+                self.text_size_value = min(30, self.text_size_value + 1)
+
+        if self.input.just_pressed("L") or self.input.just_pressed("ENTER"):
+            self.handle_selection()
+
+        if self.input.just_pressed("B"):
+            self.handle_back()
 
         item_y = 60 + self.selected * (self.card_height + self.spacing)
 
@@ -204,7 +215,6 @@ class SettingsMenu(Scene):
             self.target_scroll_y = item_y + self.card_height - self.visible_area_height
 
         self.scroll_y += (self.target_scroll_y - self.scroll_y) * 0.15
-
 
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
@@ -231,15 +241,14 @@ class SettingsMenu(Scene):
         pygame.draw.rect(surface, (200, 200, 200), (x, y, width, 12), border_radius=6)
         percentage = (self.text_size_value - 12) / (30 - 12)
         pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, int(width * percentage), 12), border_radius=6)
+
         val_txt = self.styles.create_font(14).render(str(self.text_size_value), True, self.styles.TEXT_SET)
         surface.blit(val_txt, (x + width + 10, y - 4))
 
     def draw(self, surface):
         self.draw_gradient(surface)
 
-
         content_start_y = 50 - self.scroll_y
-
 
         title = self.title_font.render("Settings", True, self.styles.TEXT_COLOR)
         title_rect = title.get_rect(center=(BASE_WIDTH // 2, content_start_y))
@@ -247,10 +256,8 @@ class SettingsMenu(Scene):
         if -50 < title_rect.centery < BASE_HEIGHT + 50:
             surface.blit(title, title_rect)
 
-
         card_width = 380
         start_x = (BASE_WIDTH - card_width) // 2
-
 
         menu_start_y = content_start_y + 45
 
