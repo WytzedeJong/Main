@@ -37,6 +37,11 @@ class Game_Menu(Scene):
         self.card_width = self.styles.CARD_WIDTH
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
+        
+        # Font cache to prevent wobbly text
+        self.font_cache = {}
+
+        
 
 
 
@@ -66,18 +71,25 @@ class Game_Menu(Scene):
             b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
-    def draw_card(self, surface, x, y, width, height, text, is_selected):
-
+    def draw_card(self, surface, x, y, width, height, text, is_selected, scale):
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
 
-        label = self.card_font.render(text, True, self.styles.TEXT_SET)
+        # Scale the font size based on card scale
+        scaled_font_size = int(self.styles.FONT_HOME_CARD_SIZE * scale)
+        scaled_font_size = max(10, scaled_font_size)
+        
+        # Use cached font to prevent wobbling
+        if scaled_font_size not in self.font_cache:
+            self.font_cache[scaled_font_size] = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
+        
+        label = self.font_cache[scaled_font_size].render(text, True, self.styles.TEXT_SET)
         label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
         surface.blit(label, label_rect)
 
     def update(self, dt):
         diff = self.selected - self.current_scroll
-        self.current_scroll += diff * 0.05
+        self.current_scroll += diff * 0.03
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -99,7 +111,7 @@ class Game_Menu(Scene):
         for i, (name, _) in enumerate(self.games):
             distance = i - self.current_scroll
 
-            scale = max(0.8, 1.0 - abs(distance) * 0.2)
+            scale = max(0.55, 1.0 - abs(distance) * 0.2)
             new_width = (self.card_width*scale)
             new_height = (self.card_height*scale)
             x = start_x + (distance* (self.card_width + (self.spacing*(scale**8)))) - (new_width // 2)
@@ -108,7 +120,7 @@ class Game_Menu(Scene):
             is_active = (i == self.selected)
 
         
-            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, is_active)
+            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, is_active, scale)
 
         a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
         b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
