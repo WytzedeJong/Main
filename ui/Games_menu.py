@@ -62,9 +62,6 @@ class Game_Menu(Scene):
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def draw_card(self, surface, x, y, width, height, text, is_selected):
-        #shadow = pygame.Surface((width, height), pygame.SRCALPHA)
-        #shadow.fill((0, 0, 0, 60))
-        #surface.blit(shadow, (x + 4, y + 4))
 
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
@@ -75,7 +72,7 @@ class Game_Menu(Scene):
 
     def update(self, dt):
         diff = self.selected - self.current_scroll
-        self.current_scroll += diff * 0.1
+        self.current_scroll += diff * 0.05
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
