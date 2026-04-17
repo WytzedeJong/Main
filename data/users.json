@@ -7,6 +7,12 @@
                 200,
                 80
             ],
+<<<<<<< HEAD
+=======
+            "Highscore": [
+                660
+            ],
+>>>>>>> Origin/Feature/wytze
             "password": [
                 "UP",
                 "LEFT",
