@@ -15,9 +15,12 @@
             ],
             "theme": "blue",
             "highscores": {
-                "Monkey": 80,
-                "Pengu": 1
-            }
+                "Pengu": 1,
+                "Monkey": 40
+            },
+            "Highscore": [
+                130
+            ]
         },
         {
             "name": "Wytze",
