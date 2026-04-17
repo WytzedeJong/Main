@@ -74,6 +74,7 @@ class DungeonGame(Scene):
         # Score and dots
         self.score = 0
         self.highscore = 0
+        self._load_highscore()
         self.dots = set()
         for _ in range(100):
             x = random.randint(0, self.map_width - 1)
@@ -291,7 +292,6 @@ class DungeonGame(Scene):
         self.timer = 60.0
         self.game_over = False
         self.score = 0
-        self.highscore
 
         # Reset visibility
         self.explored.clear()
@@ -642,33 +642,67 @@ class DungeonGame(Scene):
         ui_surface = self._create_ui_surface()
         ui_surface.fill((0, 0, 0))
 
+        new_highscore = False
+        if self.score > self.highscore:
+            self.highscore = self.score
+            new_highscore = True
+            self._save_highscore()          
+
         game_over_text = self.font.render("Time's Up!", True, (255, 255, 255))
+        
+        if new_highscore:
+            highscore_text = self.font.render("NEW HIGHSCORE!", True, (255, 215, 0))
+            final_score_text = self.font.render(
+                f"Final Score: {self.score}  ← NEW BEST!", True, (255, 215, 0)
+            )
+        else:
+            highscore_text = self.font.render(f"Highscore: {self.highscore}", True, (200, 200, 200))
+            final_score_text = self.font.render(
+                f"Final Score: {self.score}", True, (255, 255, 0)
+            )
+
         instruction_text = self.font.render(
             "Press ENTER to play again", True, (200, 200, 200)
-        )
-        final_score_text = self.font.render(
-            f"Final Score: {self.score}", True, (255, 255, 0)
         )
 
         ui_surface.blit(
             game_over_text,
             (
                 self.UI_BASE_WIDTH // 2 - game_over_text.get_width() // 2,
-                self.UI_BASE_HEIGHT // 2 - game_over_text.get_height() // 2 - 50,
+                self.UI_BASE_HEIGHT // 2 - game_over_text.get_height() // 2 - 120,
             ),
         )
-        ui_surface.blit(
-            instruction_text,
-            (
-                self.UI_BASE_WIDTH // 2 - instruction_text.get_width() // 2,
-                self.UI_BASE_HEIGHT // 2 - instruction_text.get_height() // 2 + 50,
-            ),
-        )
+
+        if new_highscore:
+            ui_surface.blit(
+                highscore_text,
+                (
+                    self.UI_BASE_WIDTH // 2 - highscore_text.get_width() // 2,
+                    self.UI_BASE_HEIGHT // 2 - highscore_text.get_height() // 2 - 50,
+                ),
+            )
+        else:
+            ui_surface.blit(
+                highscore_text,
+                (
+                    self.UI_BASE_WIDTH // 2 - highscore_text.get_width() // 2,
+                    self.UI_BASE_HEIGHT // 2 - highscore_text.get_height() // 2 - 30,
+                ),
+            )
+
         ui_surface.blit(
             final_score_text,
             (
                 self.UI_BASE_WIDTH // 2 - final_score_text.get_width() // 2,
-                self.UI_BASE_HEIGHT // 2 - final_score_text.get_height() // 2 + 150,
+                self.UI_BASE_HEIGHT // 2 - final_score_text.get_height() // 2 + 30,
+            ),
+        )
+
+        ui_surface.blit(
+            instruction_text,
+            (
+                self.UI_BASE_WIDTH // 2 - instruction_text.get_width() // 2,
+                self.UI_BASE_HEIGHT // 2 - instruction_text.get_height() // 2 + 110,
             ),
         )
 
@@ -824,6 +858,26 @@ class DungeonGame(Scene):
             pygame.draw.rect(surface, (220, 30, 30), player_rect)
 
         self._draw_hud(surface)
+
+    def _scores_path(self):
+        return os.path.join(os.path.dirname(__file__), "data", "users.json")
+
+    def _load_highscore(self):
+        try:
+            with open(self._scores_path(), "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.highscore = int(data.get("best", 0))
+        except:
+            self.highscore = 0
+
+    def _save_highscore(self):
+        best = (self.highscore // 10) * 10
+        data = {"best": best}
+        try:
+            with open(self._scores_path(), "w", encoding="utf-8") as f:
+                json.dump(data, f)
+        except:
+            pass
 
 class Enemy:
     def __init__(self, x, y, enemy_type, walls):
