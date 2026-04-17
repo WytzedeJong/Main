@@ -35,7 +35,7 @@ class Game_Menu(Scene):
         self.card_font = self.styles.create_font(self.styles.FONT_HOME_CARD_SIZE, bold=True)
 
         self.card_width = self.styles.CARD_WIDTH
-        self.card_height = self.styles.CARD_HEIGHT
+        self.card_height = self.styles.GAMES_CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
         
         # Font cache to prevent wobbly text
