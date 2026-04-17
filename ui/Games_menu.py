@@ -28,6 +28,7 @@ class Game_Menu(Scene):
         ]
 
         self.selected = 0
+        self.current_scroll = 0
 
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_HOME_TIME_SIZE)
@@ -66,9 +67,6 @@ class Game_Menu(Scene):
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def draw_card(self, surface, x, y, width, height, text, is_selected):
-        #shadow = pygame.Surface((width, height), pygame.SRCALPHA)
-        #shadow.fill((0, 0, 0, 60))
-        #surface.blit(shadow, (x + 4, y + 4))
 
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
@@ -78,7 +76,8 @@ class Game_Menu(Scene):
         surface.blit(label, label_rect)
 
     def update(self, dt):
-        pass
+        diff = self.selected - self.current_scroll
+        self.current_scroll += diff * 0.05
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -98,16 +97,18 @@ class Game_Menu(Scene):
         
 
         for i, (name, _) in enumerate(self.games):
-            distance = i - self.selected
+            distance = i - self.current_scroll
 
-            scale = 1 if distance == 0 else 0.9
+            scale = max(0.8, 1.0 - abs(distance) * 0.2)
             new_width = (self.card_width*scale)
             new_height = (self.card_height*scale)
-            x = start_x + (distance* (self.card_width + (self.spacing*(scale*scale)))) - (new_width // 2)
+            x = start_x + (distance* (self.card_width + (self.spacing*(scale**8)))) - (new_width // 2)
             curr_y = y_centre - (new_height // 2)
 
+            is_active = (i == self.selected)
+
         
-            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, i == self.selected)
+            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, is_active)
 
         a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
         b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
