@@ -13,7 +13,7 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "green",
+            "theme": "dark",
             "highscores": {
                 "Pengu": 3,
                 "Monkey": 40

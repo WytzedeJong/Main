@@ -8,6 +8,7 @@ from config import styles
 from ui.settings_menu import SettingsMenu
 from ui.Games_menu import Game_Menu
 from ui.lockscreen import LockScreen
+from ui.vierkantjes import vierkantjes
 
 
 
@@ -16,6 +17,7 @@ class Highscore(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
+        self.sq = vierkantjes
         self.user = self.get_user()
         self.game_keys = self.get_members()
         self.selected = 0
@@ -143,6 +145,8 @@ class Highscore(Scene):
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
+
+        self.sq.vierkantjes(self)
 
         title = self.title_font.render("Highscores", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))

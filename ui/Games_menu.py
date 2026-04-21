@@ -9,12 +9,14 @@ from games.racer.game import RacerGame
 from games.dungeon.game import DungeonGame
 from games.monkey_stacker.game import MonkeyStacker
 from ui.settings_menu import SettingsMenu
+from ui.vierkantjes import vierkantjes
 
 
 class Game_Menu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
+        self.sq = vierkantjes
         self.games = [
             ("Puzzle", PuzzleGame),
             ("Dungeon", DungeonGame),
@@ -80,27 +82,15 @@ class Game_Menu(Scene):
         diff = self.selected - self.current_scroll
         self.current_scroll += diff * 0.03
 
+    
+
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
 
-        #vierkantjes rechtsboven
-        # linksboven
-       # linksboven (2 blokjes)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 0, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 0, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 0, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 0, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 9, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 9, 10, 10), width=1)
+        self.sq.vierkantjes(self)
 
-        #vierkantjes linksonder
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 260, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 260, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 260, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 260, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 251, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 251, 10, 10), width=1)
+
         
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
