@@ -3,9 +3,9 @@ import datetime
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
-from games.adventure.game import PuzzleGame
+from games.puzzle.game import PuzzleGame
 from games.Pengu_Slider.game import AdventureGame
-from games.racer.game import RacerGame
+from games.Space.game import SpaceGame
 from games.dungeon.game import DungeonGame
 # from games.pinguin_slider.game import PinguinSlider
 from games.monkey_stacker.game import MonkeyStacker
@@ -22,7 +22,7 @@ class Game_Menu(Scene):
             ("Puzzle", PuzzleGame),
             ("Dungeon", DungeonGame),
             ("Pengu Slider", AdventureGame),
-            #("Hello", RacerGame),
+            ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
             #("Pingiun", PinguinSlider)
         ]

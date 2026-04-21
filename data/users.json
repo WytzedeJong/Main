@@ -20,13 +20,20 @@
             }
         },
         {
-            "name": "Wytze",
+            "name": "WYTZE",
             "color": [
-                120,
-                200,
-                255
+                69,
+                148,
+                211
             ],
-            "highscores": {}
+            "icon": "lorem",
+            "password": [
+                "UP",
+                "UP",
+                "UP",
+                "UP"
+            ],
+            "theme": "blue"
         }
     ]
 }
