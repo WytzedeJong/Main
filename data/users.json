@@ -7,9 +7,15 @@
                 200,
                 80
             ],
+            "password": [
+                "UP",
+                "LEFT",
+                "DOWN",
+                "RIGHT"
+            ],
             "theme": "blue",
             "highscores": {
-                "Pengu": 1,
+                "Pengu": 3,
                 "Monkey": 40
             },
             "Highscore": [
