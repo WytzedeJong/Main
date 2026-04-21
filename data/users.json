@@ -13,9 +13,9 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "blue",
+            "theme": "green",
             "highscores": {
-                "Pengu": 1,
+                "Pengu": 3,
                 "Monkey": 40
             },
             "Highscore": [
