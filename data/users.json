@@ -13,10 +13,11 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "dark",
+            "theme": "green",
             "highscores": {
                 "Pengu": 3,
-                "Monkey": 40
+                "Monkey": 40,
+                "Dungeon": 40
             },
             "Highscore": [
                 130
