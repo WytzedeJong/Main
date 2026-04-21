@@ -7,31 +7,29 @@
                 200,
                 80
             ],
-            "Highscore": [
-                50
-            ],
             "password": [
                 "UP",
                 "LEFT",
                 "DOWN",
                 "RIGHT"
+            ],
+            "theme": "blue",
+            "highscores": {
+                "Pengu": 1,
+                "Monkey": 40
+            },
+            "Highscore": [
+                130
             ]
         },
         {
-            "name": "QQQ",
+            "name": "Wytze",
             "color": [
-                69,
-                185,
-                124
+                120,
+                200,
+                255
             ],
-            "icon": "Penguin",
-            "password": [
-                "UP",
-                "UP",
-                "UP",
-                "UP"
-            ],
-            "theme": "standard"
+            "highscores": {}
         }
     ]
 }
