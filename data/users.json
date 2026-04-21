@@ -13,13 +13,19 @@
                 "DOWN",
                 "RIGHT"
             ],
-            "theme": "green",
+            "theme": "blue",
             "highscores": {
                 "Pengu": 3,
                 "Monkey": 40
             },
             "Highscore": [
                 130
+            ],
+            "password": [
+                "LEFT",
+                "LEFT",
+                "LEFT",
+                "LEFT"
             ]
         },
         {

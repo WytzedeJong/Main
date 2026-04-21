@@ -6,6 +6,7 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
+from ui.change_password import ChangePassword
 
 
 class SettingsMenu(Scene):
@@ -35,7 +36,7 @@ class SettingsMenu(Scene):
             "Brightness",
             "Volume",
             "Version",
-            "Change password",
+            "Manage password",
             "Set to default",
             "Back"
         ]
@@ -96,9 +97,11 @@ class SettingsMenu(Scene):
             submenu = SubMenu(self.manager, "Version", ["Version 1.0.0", "Back"], self)
             self.manager.set_scene(submenu)
 
-        elif selected_option == "Change password":
-            submenu = SubMenu(self.manager, "Change Password", ["Enter new password", "Back"], self)
-            self.manager.set_scene(submenu)
+        elif selected_option == "Manage password":
+            current_user = self.manager.current_user
+            if current_user:
+                change_scene = ChangePassword(self.manager, current_user, self)
+                self.manager.set_scene(change_scene)
 
         elif selected_option == "Set to default":
             submenu = SubMenu(self.manager, "Set to Default", ["Confirm reset?", "Yes", "No"], self)
