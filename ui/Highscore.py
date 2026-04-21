@@ -66,7 +66,7 @@ class Highscore(Scene):
             for player in data.get("users", []):
                 if player.get("name") == username:
                     highscores = player.get("highscores", {})
-                    return list(highscores.keys())  # Return keys: ["Monkey", "Racer", "Adventure"]
+                    return list(highscores.keys())  # Return keys: ["Monkey", "Racer", "Puzzle"]
             
             # User niet gevonden
             return []
@@ -135,9 +135,23 @@ class Highscore(Scene):
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
 
-        label = self.card_font.render(text, True, self.styles.TEXT_SET)
-        label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
-        surface.blit(label, label_rect)
+        # Handle multi-line text (for Puzzle)
+        lines = text.split('\n')
+        if len(lines) > 1:
+            # Multi-line text (Puzzle) - centreren in de kaart
+            line_height = 14
+            total_text_height = len(lines) * line_height
+            y_start = y + (height - total_text_height) // 2
+            
+            for i, line in enumerate(lines):
+                label = self.card_font.render(line, True, self.styles.TEXT_SET)
+                label_rect = label.get_rect(center=(x + width // 2, y_start + i * line_height))
+                surface.blit(label, label_rect)
+        else:
+            # Single line text - centreren in de kaart
+            label = self.card_font.render(text, True, self.styles.TEXT_SET)
+            label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
+            surface.blit(label, label_rect)
 
     def update(self, dt):
         pass
@@ -169,16 +183,30 @@ class Highscore(Scene):
         # Display highscores for each game
         total_width = len(self.game_keys) * self.card_width + (len(self.game_keys) - 1) * self.spacing
         start_x = (BASE_WIDTH - total_width) // 2
-        y = 120
+        y = (BASE_HEIGHT - self.card_height) // 2 + 40  # Iets lager
 
         for i, game_name in enumerate(self.game_keys):
             x = start_x + i * (self.card_width + self.spacing)
-            score = self.highscores.get(game_name, 0)
-            if game_name == 'Pengu':
-                score_text = f"{game_name} wins: {score}"
-
+            
+            # Puzzle toont difficulty times
+            if game_name == 'Puzzle':
+                Puzzle_times = self.highscores.get(game_name, {})
+                if isinstance(Puzzle_times, dict):
+                    # Toon de 3 moeilijkheden met hun best times
+                    times_list = []
+                    for difficulty in ['Easy', 'Medium', 'Hard']:
+                        time_str = Puzzle_times.get(difficulty, '--:--')
+                        times_list.append(f"{difficulty}: {time_str}")
+                    
+                    score_text = "Puzzle\n" + "\n".join(times_list)
+                else:
+                    score_text = f"{game_name}: {Puzzle_times}"
             else:
-                score_text = f"{game_name}:{score}"
-
+                score = self.highscores.get(game_name, 0)
+                if game_name == 'Pengu':
+                    score_text = f"{game_name}\nWins: {score}"
+                else:
+                    score_text = f"{game_name}\nScore: {score}"
+            
             self.draw_card(base_surface, x, y, self.card_width, self.card_height, score_text, i == self.selected)
 

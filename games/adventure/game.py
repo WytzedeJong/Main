@@ -1,9 +1,12 @@
 import random
+import json
+import os
 
 import pygame
 
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
+from ui.lockscreen import LockScreen
 
 
 class PuzzleGame(Scene):
@@ -59,6 +62,11 @@ class PuzzleGame(Scene):
         self.state = "difficulty"
         self.selected_difficulty = 0
         self.current_difficulty = None
+        
+        # User and highscores (per difficulty)
+        self.user = self.get_user()
+        self.highscores = {}  # Dict with difficulty names as keys
+        self._load_highscores()
 
         self.tray_index = 0
         self.selected_piece_id = None
@@ -160,6 +168,84 @@ class PuzzleGame(Scene):
         elif key == pygame.K_DOWN:
             self.selected_difficulty = (self.selected_difficulty + 1) % len(self.DIFFICULTIES)
             self._start_game(self.selected_difficulty)
+
+    def get_user(self):
+        """Get current user from manager or lockscreen"""
+        user = getattr(self.manager, 'current_user', None)
+        if user:
+            return user
+        
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
+    
+    def _get_user_name(self):
+        """Extract username from user object/string"""
+        if isinstance(self.user, dict):
+            return self.user.get("name")
+        elif isinstance(self.user, str):
+            return self.user
+        return None
+    
+    def _load_highscores(self):
+        """Load highscores per difficulty from users.json"""
+        self.highscores = {}
+        uname = self._get_user_name()
+        
+        if uname:
+            users_path = os.path.join("data", "users.json")
+            try:
+                with open(users_path, "r", encoding="utf-8") as f:
+                    users_data = json.load(f)
+                
+                for player in users_data.get("users", []):
+                    if player.get("name") == uname:
+                        Puzzle_times = player.get("highscores", {}).get("Puzzle", {})
+                        if isinstance(Puzzle_times, dict):
+                            self.highscores = Puzzle_times
+                        return
+            except Exception:
+                pass
+    
+    def _save_highscores(self):
+        """Save all difficulty times to users.json"""
+        path = os.path.join("data", "users.json")
+        
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                users_data = json.load(f)
+        except Exception:
+            users_data = {"users": []}
+        
+        target_name = self._get_user_name()
+        
+        if target_name:
+            updated = False
+            for player in users_data.get("users", []):
+                if player.get("name") == target_name:
+                    if "highscores" not in player:
+                        player["highscores"] = {}
+                    
+                    player["highscores"]["Puzzle"] = self.highscores
+                    updated = True
+                    break
+            
+            if updated:
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(users_data, f, indent=4)
+                except Exception:
+                    pass
+    
+    def _time_to_seconds(self, time_str):
+        """Convert MM:SS format to seconds"""
+        try:
+            parts = time_str.split(':')
+            return int(parts[0]) * 60 + int(parts[1])
+        except:
+            return float('inf')
 
     def _handle_exit_dialog_events(self, key):
         if key == pygame.K_UP:
@@ -443,6 +529,14 @@ class PuzzleGame(Scene):
                 f"{minutes:02d}:{seconds:02d}. "
                 "Press B to play again."
             )
+            # Save time for this difficulty
+            difficulty_name = self.current_difficulty['name']
+            time_str = f"{minutes:02d}:{seconds:02d}"
+            
+            # Update highscore if this is better (lower time)
+            if difficulty_name not in self.highscores or self._time_to_seconds(self.highscores[difficulty_name]) > self.elapsed_time:
+                self.highscores[difficulty_name] = time_str
+                self._save_highscores()
         else:
             self.message = "That block does not fit there."
 
