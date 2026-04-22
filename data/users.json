@@ -8,24 +8,18 @@
                 80
             ],
             "password": [
-                "UP",
-                "LEFT",
-                "DOWN",
-                "RIGHT"
-            ],
-            "theme": "green",
-            "highscores": {
-                "Pengu": 3,
-                "Monkey": 40
-            },
-            "Highscore": [
-                130
-            ],
-            "password": [
                 "LEFT",
                 "LEFT",
                 "LEFT",
                 "LEFT"
+            ],
+            "theme": "green",
+            "highscores": {
+                "Pengu": 67,
+                "Monkey": 40
+            },
+            "Highscore": [
+                130
             ]
         },
         {
