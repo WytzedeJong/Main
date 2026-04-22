@@ -475,7 +475,7 @@ class SpaceGame(Scene):
 
         if enemy.enemy_type == "heavy":
             bullet_radius = 3
-            bullet_width = 30
+            bullet_width = 45
             bullet_height = 6
 
         self.bullets.append(
