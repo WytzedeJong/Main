@@ -21,6 +21,7 @@ class Highscore(Scene):
         self.user = self.get_user()
         self.game_keys = self.get_members()
         self.selected = 0
+        self.current_scroll = 0  
 
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_HOME_TIME_SIZE)
@@ -29,7 +30,7 @@ class Highscore(Scene):
         self.card_width = self.styles.CARD_WIDTH
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
-        
+        self.current_scroll = 0
         
         self.highscores = self.load_highscores()
         
@@ -109,10 +110,12 @@ class Highscore(Scene):
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                self.selected = (self.selected + 1) % len(self.game_keys)
+                if self.selected < len(self.game_keys) - 1:
+                    self.selected += 1
 
             if event.key == pygame.K_LEFT:
-                self.selected = (self.selected - 1) % len(self.game_keys)
+                if self.selected > 0:
+                    self.selected -= 1
 
             if event.key == pygame.K_ESCAPE:
                 from ui.home_menu import HomeMenu
@@ -127,34 +130,38 @@ class Highscore(Scene):
             b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
-    def draw_card(self, surface, x, y, width, height, text, is_selected):
+    def draw_card(self, surface, color, x, y, width, height, text, scale, border_radius):
         shadow = pygame.Surface((width, height), pygame.SRCALPHA)
         shadow.fill((0, 0, 0, 60))
         surface.blit(shadow, (x + 6, y + 6))
 
-        color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
-        pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
+        pygame.draw.rect(surface, color, (x, y, width, height), border_radius=int(border_radius))
 
-        # Handle multi-line text (for Puzzle)
+        scaled_font_size = int(self.styles.FONT_HOME_CARD_SIZE * scale)
+        scaled_font_size = max(10, scaled_font_size)
+
         lines = text.split('\n')
         if len(lines) > 1:
-            # Multi-line text (Puzzle) - centreren in de kaart
-            line_height = 14
+            # Multi-line text (Adventure/Puzzle) - centreren in de kaart
+            line_height = int(12 * scale)
             total_text_height = len(lines) * line_height
             y_start = y + (height - total_text_height) // 2
             
+            font_for_text = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
             for i, line in enumerate(lines):
-                label = self.card_font.render(line, True, self.styles.TEXT_SET)
+                label = font_for_text.render(line, True, self.styles.TEXT_SET)
                 label_rect = label.get_rect(center=(x + width // 2, y_start + i * line_height))
                 surface.blit(label, label_rect)
         else:
             # Single line text - centreren in de kaart
-            label = self.card_font.render(text, True, self.styles.TEXT_SET)
+            font_for_text = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
+            label = font_for_text.render(text, True, self.styles.TEXT_SET)
             label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
             surface.blit(label, label_rect)
 
     def update(self, dt):
-        pass
+        diff = self.selected - self.current_scroll
+        self.current_scroll += diff * 0.03
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -176,37 +183,50 @@ class Highscore(Scene):
         time_text = self.time_font.render(now, True, self.styles.TEXT_COLOR)
         base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
 
-        # Display player name
-        player_text = self.card_font.render(f"Player: {username}", True, self.styles.TEXT_COLOR)
-        base_surface.blit(player_text, (30, 60))
-
         # Display highscores for each game
-        total_width = len(self.game_keys) * self.card_width + (len(self.game_keys) - 1) * self.spacing
-        start_x = (BASE_WIDTH - total_width) // 2
-        y = (BASE_HEIGHT - self.card_height) // 2 + 40  # Iets lager
+        start_x = BASE_WIDTH // 2
+        y_centre = BASE_HEIGHT // 2
+
+        n = len(self.game_keys)
+        real_selected = self.selected
 
         for i, game_name in enumerate(self.game_keys):
-            x = start_x + i * (self.card_width + self.spacing)
+            distance = i - self.current_scroll  
+            standard_radius = 12
+
+            scale = max(0.55, 1.0 - abs(distance) * 0.2)
+            border_radius = standard_radius * (2 - scale)
+            new_width = self.card_width * scale
+            new_height = self.card_height * scale
+    
+            x = start_x + (distance * (self.card_width + self.spacing)) - (new_width // 2)
+            curr_y = y_centre - (new_height // 2)
+
+            is_active = (i == real_selected)
             
-            # Puzzle toont difficulty times
+            
+            if abs(distance) > 2:  
+                continue
+            
+            color = self.styles.CARD_SELECTED if is_active else self.styles.CARD_COLOR
+            
+            # Prepare score text
             if game_name == 'Puzzle':
-                Puzzle_times = self.highscores.get(game_name, {})
-                if isinstance(Puzzle_times, dict):
-                    # Toon de 3 moeilijkheden met hun best times
+                puzzle_times = self.highscores.get(game_name, {})
+                if isinstance(puzzle_times, dict):
                     times_list = []
                     for difficulty in ['Easy', 'Medium', 'Hard']:
-                        time_str = Puzzle_times.get(difficulty, '--:--')
+                        time_str = puzzle_times.get(difficulty, '--:--')
                         times_list.append(f"{difficulty}: {time_str}")
-                    
-                    score_text = "Puzzle\n" + "\n".join(times_list)
+                    score_text = "Puzzle\n\n" + "\n\n".join(times_list)
                 else:
-                    score_text = f"{game_name}: {Puzzle_times}"
+                    score_text = f"{game_name}: {puzzle_times}"
             else:
                 score = self.highscores.get(game_name, 0)
                 if game_name == 'Pengu':
-                    score_text = f"{game_name}\nWins: {score}"
+                    score_text = f"{game_name}\n\nWins: {score}"
                 else:
-                    score_text = f"{game_name}\nScore: {score}"
-            
-            self.draw_card(base_surface, x, y, self.card_width, self.card_height, score_text, i == self.selected)
+                    score_text = f"{game_name}\n\nScore: {score}"
+
+            self.draw_card(base_surface, color, x, curr_y, new_width, new_height, score_text, scale, border_radius)
 
