@@ -29,8 +29,16 @@ class PuzzleGame(Scene):
             "cols": 7,
             "rows": 6,
             "min_piece": 3,
-            "max_piece": 5,
+            "max_piece": 6,
             "cell_size": 18,
+        },
+        {
+            "name": "Extra Hard",
+            "cols": 8,
+            "rows": 7,
+            "min_piece": 4,
+            "max_piece": 7,
+            "cell_size": 16,
         },
     ]
 
@@ -93,7 +101,13 @@ class PuzzleGame(Scene):
             return
 
         if event.key == pygame.K_ESCAPE:
-            if self.state in ("playing", "won"):
+            if self.state == "won":
+                self.timer_running = False
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
+                return
+
+            if self.state == "playing":
                 if self.selected_piece_id is not None:
                     # Er is een stuk geselecteerd → terugleggen i.p.v. menu openen
                     self._cancel_selected_piece()
@@ -144,21 +158,30 @@ class PuzzleGame(Scene):
                 self._draw_exit_dialog(surface)
 
     def _handle_difficulty_events(self, key):
-        if key == pygame.K_UP:
-            self.selected_difficulty = (self.selected_difficulty - 1) % len(self.DIFFICULTIES)
-        elif key == pygame.K_DOWN:
-            self.selected_difficulty = (self.selected_difficulty + 1) % len(self.DIFFICULTIES)
+        if key in (
+            pygame.K_UP,
+            pygame.K_DOWN,
+            pygame.K_LEFT,
+            pygame.K_RIGHT,
+        ):
+            self.selected_difficulty = self._move_difficulty_selection(
+                self.selected_difficulty, key
+            )
         elif key in (pygame.K_RETURN, pygame.K_b):
             self._start_game(self.selected_difficulty)
 
     def _handle_won_events(self, key):
         if key in (pygame.K_RETURN, pygame.K_b):
             self._start_game(self.selected_difficulty)
-        elif key == pygame.K_UP:
-            self.selected_difficulty = (self.selected_difficulty - 1) % len(self.DIFFICULTIES)
-            self._start_game(self.selected_difficulty)
-        elif key == pygame.K_DOWN:
-            self.selected_difficulty = (self.selected_difficulty + 1) % len(self.DIFFICULTIES)
+        elif key in (
+            pygame.K_UP,
+            pygame.K_DOWN,
+            pygame.K_LEFT,
+            pygame.K_RIGHT,
+        ):
+            self.selected_difficulty = self._move_difficulty_selection(
+                self.selected_difficulty, key
+            )
             self._start_game(self.selected_difficulty)
 
     def _handle_exit_dialog_events(self, key):
@@ -469,10 +492,22 @@ class PuzzleGame(Scene):
         self.state = "playing"
         self.message = "Tray reset. Pick a block with B to start again."
 
-        # Timer resetten bij reset tray
-        self.start_time = pygame.time.get_ticks()
-        self.elapsed_time = 0
-        self.timer_running = True
+    def _move_difficulty_selection(self, current_index, key):
+        columns = 2
+        total = len(self.DIFFICULTIES)
+        row = current_index // columns
+        col = current_index % columns
+
+        if key == pygame.K_LEFT and col > 0:
+            current_index -= 1
+        elif key == pygame.K_RIGHT and col < columns - 1 and current_index + 1 < total:
+            current_index += 1
+        elif key == pygame.K_UP and row > 0:
+            current_index -= columns
+        elif key == pygame.K_DOWN and current_index + columns < total:
+            current_index += columns
+
+        return current_index
 
     def _can_place_piece(self, piece, anchor):
         cols = self.current_difficulty["cols"]
@@ -544,12 +579,20 @@ class PuzzleGame(Scene):
         surface.blit(subtitle, subtitle.get_rect(center=(BASE_WIDTH // 2, 78)))
 
         card_width = 190
-        card_height = 42
-        start_y = 112
+        card_height = 54
+        grid_columns = 2
+        horizontal_gap = 20
+        vertical_gap = 18
+        total_width = grid_columns * card_width + horizontal_gap
+        start_x = (BASE_WIDTH - total_width) // 2
+        start_y = 110
 
         for index, config in enumerate(self.DIFFICULTIES):
+            row = index // grid_columns
+            col = index % grid_columns
             rect = pygame.Rect(0, 0, card_width, card_height)
-            rect.center = (BASE_WIDTH // 2, start_y + index * 52)
+            rect.x = start_x + col * (card_width + horizontal_gap)
+            rect.y = start_y + row * (card_height + vertical_gap)
 
             selected = index == self.selected_difficulty
             fill = (255, 216, 120) if selected else (248, 249, 250)
@@ -562,16 +605,16 @@ class PuzzleGame(Scene):
                 f"{config['cols']}x{config['rows']} board", True, (60, 67, 81)
             )
 
-            surface.blit(label, label.get_rect(center=(rect.centerx, rect.centery - 7)))
+            surface.blit(label, label.get_rect(center=(rect.centerx, rect.centery - 9)))
             surface.blit(info, info.get_rect(center=(rect.centerx, rect.centery + 10)))
 
         hint_lines = [
-            "Up and down choose a difficulty.",
+            "Use the D-pad to choose a difficulty.",
             "Press B or Enter to start. Esc returns to the games menu.",
         ]
         for index, line in enumerate(hint_lines):
             hint = self.body_font.render(line, True, (0, 0, 0)) #245, 248, 250
-            surface.blit(hint, hint.get_rect(center=(BASE_WIDTH // 2, 235 + index * 16)))
+            surface.blit(hint, hint.get_rect(center=(BASE_WIDTH // 2, 260 + index * 16)))
 
     def _draw_game_screen(self, surface):
         title = self.title_font.render("Fill the board to complete", True, (255, 255, 255))
@@ -755,7 +798,7 @@ class PuzzleGame(Scene):
         time_label = self.subtitle_font.render(time_text, True, (76, 129, 183))  # mooie blauwe kleur
         
         hint = self.small_font.render(
-            "Press B to replay, Up/Down to switch difficulty, Esc to leave.",
+            "Press B to replay, use the D-pad to switch difficulty, Esc to leave.",
             True, (62, 70, 83)
         )
 

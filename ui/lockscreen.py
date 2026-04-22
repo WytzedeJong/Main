@@ -138,6 +138,8 @@ class LockScreen(Scene):
             self.handle_create_color(event)
         elif self.state == "create_icon":
             self.handle_create_icon(event)
+        elif self.state == "password_optional":
+            self.handle_password_optional(event)
         elif self.state == "create_password":
             self.handle_create_password(event)
         elif self.state == "confirm_password":
@@ -158,8 +160,14 @@ class LockScreen(Scene):
         elif self.state == "create_icon":
             self.state = "create_color"
 
-        elif self.state == "create_password":
+        elif self.state == "password_optional":
             self.state = "create_icon"
+            self.new_password = []
+            self.confirm_password = []
+            self.anim_dots = []
+
+        elif self.state == "create_password":
+            self.state = "password_optional"
             self.new_password = []
             self.anim_dots = []
 
@@ -193,9 +201,33 @@ class LockScreen(Scene):
                 self.select_grid_index = 0
                 return
 
-            self.state = "password"
-            self.input_sequence = []
-            self.anim_dots = []
+            # Check if user has a password
+            user = self.users[self.selected_index]
+            user_password = user.get("password", [])
+            
+            if user_password and len(user_password) > 0:
+                # User has a password, ask for it
+                self.state = "password"
+                self.input_sequence = []
+                self.anim_dots = []
+            else:
+                # No password, login directly
+                self.manager.current_user = user
+                self.user = user
+                
+                theme = user.get("theme", "standard")
+                if theme == "standard":
+                    styles.set_standaard_kleuren()
+                elif theme == "gold":
+                    styles.gold_color()
+                elif theme == "green":
+                    styles.green_color()
+                elif theme == "blue":
+                    styles.blue_color()
+                elif theme == "red":
+                    styles.red_color()
+                self.success_timer = self.success_delay
+                self.set_user(user)
 
 
     def handle_password(self, event):
@@ -301,9 +333,26 @@ class LockScreen(Scene):
 
         elif event.key == pygame.K_RETURN:
             self.new_icon = self.icons[self.select_grid_index]
-            self.state = "create_password"
+            self.state = "password_optional"
             self.new_password = []
+            self.confirm_password = []
             self.anim_dots = []
+            self.select_grid_index = 0
+
+
+    def handle_password_optional(self, event):
+        """Ask user if they want to set a password"""
+        if event.key == pygame.K_RIGHT:
+            self.select_grid_index = (self.select_grid_index + 1) % 2
+        elif event.key == pygame.K_LEFT:
+            self.select_grid_index = (self.select_grid_index - 1) % 2
+        elif event.key == pygame.K_RETURN:
+            if self.select_grid_index == 0:  # "YES" selected
+                self.state = "create_password"
+                self.new_password = []
+                self.anim_dots = []
+            else:  # "NO" selected
+                self.finish_create(with_password=False)
 
 
     def handle_create_password(self, event):
@@ -341,22 +390,25 @@ class LockScreen(Scene):
             if len(self.confirm_password) == 4:
 
                 if self.confirm_password == self.new_password:
-                    self.finish_create()
+                    self.finish_create(with_password=True)
                 else:
                     self.confirm_password = []
                     self.anim_dots = []
                     self.shake_timer = 0.4
 
 
-    def finish_create(self):
+    def finish_create(self, with_password=True):
 
         user = {
             "name": self.new_name,
             "color": self.new_color,
             "icon": self.new_icon,
-            "password": self.new_password,
             "theme": "standard"
         }
+        
+        if with_password:
+            user["password"] = self.new_password
+        # If no password, we don't add the "password" key at all
 
         if len(self.users) < 3:
             self.users.append(user)
@@ -403,6 +455,9 @@ class LockScreen(Scene):
 
         elif self.state == "create_icon":
             self.draw_create_icon(surface)
+
+        elif self.state == "password_optional":
+            self.draw_password_optional(surface)
 
         elif self.state == "create_password":
             self.draw_password_screen(surface, 0, creating=True)
@@ -576,6 +631,53 @@ class LockScreen(Scene):
         data = self.confirm_password if confirm else (self.new_password if creating else self.input_sequence)
 
         self.draw_dots(surface, data, cx)
+
+
+    def draw_password_optional(self, surface):
+        """Draw screen asking if user wants to set a password"""
+        cx = BASE_WIDTH // 2
+
+        title = self.name_font.render("WACHTWOORD INSTELLEN?", True, self.styles.TEXT_SET)
+        surface.blit(title, title.get_rect(center=(cx, 80)))
+
+        # Draw YES/NO buttons
+        button_width = 100
+        button_height = 50
+        spacing = 30
+        
+        total_width = button_width * 2 + spacing
+        start_x = cx - total_width // 2
+
+        for i, text in enumerate(["JA", "NEE"]):
+            x = start_x + i * (button_width + spacing)
+            y = 170
+
+            rect = pygame.Rect(x, y, button_width, button_height)
+            
+            # Determine colors based on selection
+            is_selected = (i == self.select_grid_index)
+            
+            if is_selected:
+                # Selected: bright border and darker background
+                border_color = (0, 120, 215)
+                border_width = 4
+                bg_color = (60, 60, 80)
+            else:
+                # Not selected: thin border, grey background
+                border_color = (100, 100, 100)
+                border_width = 2
+                bg_color = (80, 80, 80)
+            
+            # Draw button background
+            pygame.draw.rect(surface, bg_color, rect, border_radius=8)
+            # Draw button border
+            pygame.draw.rect(surface, border_color, rect, border_width, border_radius=8)
+            
+            # Draw text
+            btn_font = self.styles.create_font(28, bold=is_selected)
+            text_color = (255, 255, 255) if is_selected else (200, 200, 200)
+            lbl = btn_font.render(text, True, text_color)
+            surface.blit(lbl, lbl.get_rect(center=rect.center))
 
 
     def draw_dots(self, surface, data, cx):

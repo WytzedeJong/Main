@@ -15,18 +15,34 @@
             ],
             "theme": "green",
             "highscores": {
-                "Monkey": 80,
-                "Pengu": 1
-            }
+                "Pengu": 3,
+                "Monkey": 40
+            },
+            "Highscore": [
+                130
+            ],
+            "password": [
+                "LEFT",
+                "LEFT",
+                "LEFT",
+                "LEFT"
+            ]
         },
         {
-            "name": "Wytze",
+            "name": "WYTZE",
             "color": [
-                120,
-                200,
-                255
+                69,
+                148,
+                211
             ],
-            "highscores": {}
+            "icon": "lorem",
+            "password": [
+                "UP",
+                "UP",
+                "UP",
+                "UP"
+            ],
+            "theme": "blue"
         }
     ]
 }

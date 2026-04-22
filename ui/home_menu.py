@@ -15,9 +15,9 @@ class HomeMenu(Scene):
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.games = [
-            ("Settings", SettingsMenu),
             ("Games", Game_Menu), 
-            ("High Scores", Highscore)
+            ("High Scores", Highscore),
+            ("Settings", SettingsMenu)
         ]
 
         self.selected = 0

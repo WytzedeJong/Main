@@ -42,6 +42,7 @@ class AppStyles:
         # Card dimensions (Home Menu)
         self.CARD_WIDTH = 100
         self.CARD_HEIGHT = 140
+        self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
 
 
@@ -92,6 +93,7 @@ class AppStyles:
         # Card dimensions (Home Menu)
         self.CARD_WIDTH = 100
         self.CARD_HEIGHT = 140
+        self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
 
 
@@ -122,6 +124,7 @@ class AppStyles:
         self.FONT_HOME_CARD_SIZE = 18
         self.CARD_WIDTH = 100
         self.CARD_HEIGHT = 140
+        self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
         self.FONT_SETTINGS_TITLE_SIZE = 28
         self.FONT_SETTINGS_MENU_SIZE = 15
@@ -144,6 +147,7 @@ class AppStyles:
         self.FONT_HOME_CARD_SIZE = 18
         self.CARD_WIDTH = 100
         self.CARD_HEIGHT = 140
+        self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
         self.FONT_SETTINGS_TITLE_SIZE = 28
         self.FONT_SETTINGS_MENU_SIZE = 15
@@ -163,6 +167,7 @@ class AppStyles:
         self.FONT_HOME_TITLE_SIZE = 28
         self.CARD_WIDTH = 100
         self.CARD_HEIGHT = 140
+        self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
         
 

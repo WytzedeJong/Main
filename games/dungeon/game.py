@@ -64,6 +64,35 @@ class DungeonGame(Scene):
         except:
             self.powerup_images['speed'] = None
 
+        # Load enemy and point images
+        self.enemy_images = {}
+        enemy_image_paths = {
+            1: "games/dungeon/red_slime.png",
+            2: "games/dungeon/purple_slime.png",
+            3: "games/dungeon/orange_slime.png",
+        }
+        enemy_image_scales = {
+            1: 1.0,
+            2: 0.75,
+            3: 0.75,
+        }
+        for enemy_type, image_path in enemy_image_paths.items():
+            try:
+                enemy_img = pygame.image.load(image_path).convert_alpha()
+                sprite_size = max(1, int(self.tile_size * enemy_image_scales.get(enemy_type, 1.0)))
+                self.enemy_images[enemy_type] = pygame.transform.scale(
+                    enemy_img, (sprite_size, sprite_size)
+                )
+            except:
+                self.enemy_images[enemy_type] = None
+
+        try:
+            point_img = pygame.image.load("games/dungeon/points.png").convert_alpha()
+            point_size = max(1, int(self.tile_size * 0.5))
+            self.point_image = pygame.transform.scale(point_img, (point_size, point_size))
+        except:
+            self.point_image = None
+
         # Player facing direction
         self.facing = 'right'
 
@@ -800,14 +829,26 @@ class DungeonGame(Scene):
             ey = enemy.y - cam_y
             if 0 <= ex < self.viewport_width and 0 <= ey < self.viewport_height:
                 if (enemy.x, enemy.y) in self.visible:
-                    enemy_x_pos = ex * self.tile_size + self.tile_size // 2
-                    enemy_y_pos = ey * self.tile_size + self.tile_size // 2
-                    if enemy.type == 1:
-                        pygame.draw.circle(surface, (255, 0, 0), (enemy_x_pos, enemy_y_pos), 7)  # Red
-                    elif enemy.type == 2:
-                        pygame.draw.circle(surface, (200, 100, 255), (enemy_x_pos, enemy_y_pos), 6)  # Purple
-                    elif enemy.type == 3:
-                        pygame.draw.circle(surface, (255, 165, 0), (enemy_x_pos, enemy_y_pos), 5)  # Orange
+                    enemy_x_pos = ex * self.tile_size
+                    enemy_y_pos = ey * self.tile_size
+                    enemy_image = self.enemy_images.get(enemy.type)
+                    if enemy_image:
+                        enemy_rect = enemy_image.get_rect(
+                            center=(
+                                enemy_x_pos + self.tile_size // 2,
+                                enemy_y_pos + self.tile_size // 2,
+                            )
+                        )
+                        surface.blit(enemy_image, enemy_rect)
+                    else:
+                        enemy_center_x = enemy_x_pos + self.tile_size // 2
+                        enemy_center_y = enemy_y_pos + self.tile_size // 2
+                        if enemy.type == 1:
+                            pygame.draw.circle(surface, (255, 0, 0), (enemy_center_x, enemy_center_y), 7)  # Red
+                        elif enemy.type == 2:
+                            pygame.draw.circle(surface, (200, 100, 255), (enemy_center_x, enemy_center_y), 6)  # Purple
+                        elif enemy.type == 3:
+                            pygame.draw.circle(surface, (255, 165, 0), (enemy_center_x, enemy_center_y), 5)  # Orange
 
         # Draw dots
         for dot in self.dots:
@@ -815,9 +856,20 @@ class DungeonGame(Scene):
             dy = dot[1] - cam_y
             if 0 <= dx < self.viewport_width and 0 <= dy < self.viewport_height:
                 if dot in self.visible:
-                    dot_x = dx * self.tile_size + self.tile_size // 2
-                    dot_y = dy * self.tile_size + self.tile_size // 2
-                    pygame.draw.circle(surface, (255, 255, 0), (dot_x, dot_y), 5)
+                    dot_x = dx * self.tile_size
+                    dot_y = dy * self.tile_size
+                    if self.point_image:
+                        point_rect = self.point_image.get_rect(
+                            center=(
+                                dot_x + self.tile_size // 2,
+                                dot_y + self.tile_size // 2,
+                            )
+                        )
+                        surface.blit(self.point_image, point_rect)
+                    else:
+                        dot_center_x = dot_x + self.tile_size // 2
+                        dot_center_y = dot_y + self.tile_size // 2
+                        pygame.draw.circle(surface, (255, 255, 0), (dot_center_x, dot_center_y), 5)
 
         # Draw power-ups
         for pos, powerup_type in self.powerups.items():
