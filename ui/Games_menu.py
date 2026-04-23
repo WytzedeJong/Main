@@ -9,12 +9,14 @@ from games.Space.game import SpaceGame
 from games.dungeon.game import DungeonGame
 from games.monkey_stacker.game import MonkeyStacker
 from ui.settings_menu import SettingsMenu
+from ui.vierkantjes import vierkantjes
 
 
 class Game_Menu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
+        self.sq = vierkantjes
         self.games = [
             ("Puzzle", PuzzleGame),
             ("Dungeon", DungeonGame),
@@ -62,9 +64,8 @@ class Game_Menu(Scene):
             b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
-    def draw_card(self, surface, x, y, width, height, text, is_selected, scale):
-        color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
-        pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
+    def draw_card(self, surface, color, x, y, width, height, text, scale, border_radius):
+        pygame.draw.rect(surface, color, (x, y, width, height), border_radius = int(border_radius))
 
         scaled_font_size = int(self.styles.FONT_HOME_CARD_SIZE * scale)
         scaled_font_size = max(10, scaled_font_size)
@@ -81,27 +82,15 @@ class Game_Menu(Scene):
         diff = self.selected - self.current_scroll
         self.current_scroll += diff * 0.03
 
+    
+
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
 
-        #vierkantjes rechtsboven
-        # linksboven
-       # linksboven (2 blokjes)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 0, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 0, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 0, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 0, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 9, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 9, 10, 10), width=1)
+        self.sq.vierkantjes(self)
 
-        #vierkantjes linksonder
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (470, 260, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (470, 260, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 260, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 260, 10, 10), width=1)
-        pygame.draw.rect(base_surface, (self.styles.CARD_COLOR), (461, 251, 10, 10))
-        pygame.draw.rect(base_surface, (0,0,0), (461, 251, 10, 10), width=1)
+
         
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
@@ -118,16 +107,30 @@ class Game_Menu(Scene):
 
         for i, (name, _) in enumerate(self.games):
             distance = (i - self.current_scroll + n / 2) % n - n / 2
+            standard_radius = 12
 
+            
+        
             scale = max(0.55, 1.0 - abs(distance) * 0.2)
+            border_radius = standard_radius*(2 -scale)
             new_width = self.card_width * scale
             new_height = self.card_height * scale
             x = start_x + (distance * (self.card_width + (self.spacing * (scale ** 8)))) - (new_width // 2)
             curr_y = y_centre - (new_height // 2)
 
             is_active = (i == real_selected)
+            base_color = pygame.Color(self.styles.CARD_COLOR)
+            # afstand tot midden van x as, om kleurvervaging toe te passen
+            afstand = abs(start_x - x)
+            factor = max(0.0, 1.0 - (afstand / BASE_WIDTH))     
+            r = int(base_color.r * factor)
+            g = int(base_color.g * factor)
+            b = int(base_color.b * factor)
 
-            self.draw_card(base_surface, x, curr_y, new_width, new_height, name, is_active, scale)
+            vervaging_kleur = (r,g,b)
+            color = self.styles.CARD_SELECTED if is_active else vervaging_kleur
+
+            self.draw_card(base_surface, color, x, curr_y, new_width, new_height, name, scale, border_radius)
 
         a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
         b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)

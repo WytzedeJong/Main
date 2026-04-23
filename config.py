@@ -1,8 +1,12 @@
 import pygame
+from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
+
 
 
 class AppStyles:
     def __init__(self):
+
+        
         self.set_standaard_kleuren()
     
     def set_standaard_kleuren(self):
@@ -169,6 +173,8 @@ class AppStyles:
         self.CARD_HEIGHT = 140
         self.GAMES_CARD_HEIGHT = 100
         self.CARD_SPACING = 20
+
+    
         
 
 # Helper function to create fonts

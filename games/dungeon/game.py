@@ -5,6 +5,7 @@ import random
 import math
 import json
 import os
+from ui.lockscreen import LockScreen
 
 
 class DungeonGame(Scene):
@@ -22,6 +23,9 @@ class DungeonGame(Scene):
         self.viewport_height = BASE_HEIGHT // self.tile_size
         self.map_width = self.viewport_width * 10
         self.map_height = self.viewport_height * 10
+
+        self.user = self.get_user()
+        
 
         self.tile_palettes = [
                 [(156, 80, 40), (115, 51, 17), (84, 39, 14)],
@@ -355,6 +359,144 @@ class DungeonGame(Scene):
         # Reset instructions
         self.show_instructions = True
 
+    def get_user(self):
+        # prefer manager's current_user if already set
+        user = getattr(self.manager, 'current_user', None)
+        if user:
+            return user
+
+        # fallback: create a LockScreen with the same manager and ask it
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
+
+    def user_highscore(self, score):
+        path = os.path.join("data", "users.json")
+        target_user = self.user 
+        
+        try:
+            with open(path, 'r') as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            print("User data not found")
+            return
+        
+        found = False
+        for player in data["users"]:
+            if player["name"] == target_user:
+                # Zorg dat highscores object bestaat
+                if "highscores" not in player:
+                    player["highscores"] = {}
+                
+                # Update ALLEEN Dungeon, laat andere games (Racer, Adventure) ongeroerd
+                current = player["highscores"].get("Dungeon", 0)
+                if score > current:
+                    player["highscores"]["Dungeon"] = score
+                found = True
+                break
+                
+        if found:
+            with open(path, 'w') as file:
+                json.dump(data, file, indent=4)
+            print(f"Score {score} opgeslagen voor {target_user}")
+        else:
+            print(f"Gebruiker {target_user} niet gevonden in JSON")
+                
+
+    def _load_highscore(self):
+        # Prefer per-user highscore from data/users.json
+        self.highscore = 0
+
+        # resolve user name
+        uname = None
+        if isinstance(self.user, dict):
+            uname = self.user.get("name")
+        elif isinstance(self.user, str):
+            uname = self.user
+
+        if uname:
+            users_path = os.path.join("data", "users.json")
+            try:
+                with open(users_path, "r", encoding="utf-8") as f:
+                    users_data = json.load(f)
+
+                for player in users_data.get("users", []):
+                    if player.get("name") == uname:
+                        highscores = player.get("highscores", {})
+                        try:
+                            self.highscore = int(highscores.get("Dungeon", 0))
+                        except Exception:
+                            self.highscore = 0
+                        return
+            except Exception:
+                # fall back to legacy path below
+                pass
+
+        # fallback: load legacy Dungeon_scores.json best value
+        try:
+            with open(self._scores_path(), "r", encoding="utf-8") as f:
+                data = json.load(f)
+            self.highscore = int(data.get("best", 0))
+        except Exception:
+            self.highscore = 0
+
+    def _save_highscore(self):
+        # normalize score to tens
+        best = (self.highscore // 10) * 10
+
+        # update user's Highscore in data/users.json, keeping only the highest value
+        path = os.path.join("data", "users.json")
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                users_data = json.load(f)
+        except Exception:
+            users_data = {"users": []}
+
+        target = self.user
+        target_name = None
+        if isinstance(target, dict):
+            target_name = target.get("name")
+        elif isinstance(target, str):
+            target_name = target
+
+        if target_name:
+            updated = False
+            for player in users_data.get("users", []):
+                if player.get("name") == target_name:
+                    if "highscores" not in player:
+                        player["highscores"] = {}
+                    
+                    cur_val = player["highscores"].get("Dungeon", 0)
+                    try:
+                        cur_val = int(cur_val)
+                    except Exception:
+                        cur_val = 0
+
+                    if best > cur_val:
+                        player["highscores"]["Dungeon"] = best
+                    else:
+                        player["highscores"]["Dungeon"] = cur_val
+
+                    updated = True
+                    break
+
+            if updated:
+                try:
+                    with open(path, "w", encoding="utf-8") as f:
+                        json.dump(users_data, f, indent=4)
+                except Exception:
+                    pass
+
+        # legacy: also save a simple best value to Dungeon_scores.json for compatibility
+        try:
+            with open(self._scores_path(), "w", encoding="utf-8") as f:
+                json.dump({"best": best}, f)
+        except Exception:
+            pass
+
     # --- Line of sight ---
     def has_line_of_sight(self, x0, y0, x1, y1):
         dx = abs(x1 - x0)
@@ -457,6 +599,8 @@ class DungeonGame(Scene):
 
         if self.timer <= 0:
             self.game_over = True
+            self.highscore = max(self.highscore, self.score)
+            self._save_highscore()
             return
 
         keys = pygame.key.get_pressed()
@@ -523,6 +667,8 @@ class DungeonGame(Scene):
                     enemy.attack()
                     if enemy.type == 1:  # Instant death
                         self.game_over = True
+                        self.highscore = max(self.highscore, self.score)
+                        self._save_highscore()
                     elif enemy.type == 2:  # Point drain
                         self.score = max(0, self.score - 3)
                     elif enemy.type == 3:  # Stun

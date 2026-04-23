@@ -13,10 +13,22 @@
                 "LEFT",
                 "LEFT"
             ],
-            "theme": "green",
+            "theme": "blue",
             "highscores": {
+<<<<<<< HEAD
                 "Pengu": 70,
                 "Monkey": 40
+=======
+                "Pengu": 3,
+                "Monkey": 40,
+                "Dungeon": 40,
+                "Puzzle": {
+                    "Easy": "00:30"
+                }
+            },
+            "achievements": {
+                "Monkey": []
+>>>>>>> origin/feature/niek
             },
             "Highscore": [
                 130
@@ -29,6 +41,7 @@
                 148,
                 211
             ],
+<<<<<<< HEAD
             "icon": "lorem",
             "password": [
                 "UP",
@@ -37,6 +50,10 @@
                 "UP"
             ],
             "theme": "blue"
+=======
+            "highscores": {},
+            "achievements": {}
+>>>>>>> origin/feature/niek
         }
     ]
 }
