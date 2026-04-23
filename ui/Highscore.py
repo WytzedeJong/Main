@@ -20,9 +20,9 @@ class Highscore(Scene):
         self.sq = vierkantjes
         self.user = self.get_user()
         self.game_keys = self.get_members()
-        self.selected = 0
-        self.current_scroll = 0  
-
+        self.selected_x = 0  # X-as: horizontaal (game selection)
+        self.selected_y = 0  # Y-as: verticaal (0=highscore, 1=achievement)
+        
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_HOME_TIME_SIZE)
         self.card_font = self.styles.create_font(self.styles.FONT_HOME_CARD_SIZE, bold=True)
@@ -30,7 +30,8 @@ class Highscore(Scene):
         self.card_width = self.styles.CARD_WIDTH
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
-        self.current_scroll = 0
+        self.current_scroll_x = 0
+        self.current_scroll_y = 0
         
         self.highscores = self.load_highscores()
         
@@ -110,12 +111,24 @@ class Highscore(Scene):
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RIGHT:
-                if self.selected < len(self.game_keys) - 1:
-                    self.selected += 1
+                if self.selected_x < len(self.game_keys) - 1:
+                    self.selected_x += 1
+                if self.selected_y > 0:
+                    self.selected_y = 0
 
             if event.key == pygame.K_LEFT:
-                if self.selected > 0:
-                    self.selected -= 1
+                if self.selected_x > 0:
+                    self.selected_x -= 1
+                if self.selected_y > 0:
+                    self.selected_y = 0
+
+            if event.key == pygame.K_DOWN:
+                if self.selected_y < 1:  # 0=highscore, 1=achievement
+                    self.selected_y += 1
+
+            if event.key == pygame.K_UP:
+                if self.selected_y > 0:
+                    self.selected_y -= 1
 
             if event.key == pygame.K_ESCAPE:
                 from ui.home_menu import HomeMenu
@@ -131,9 +144,6 @@ class Highscore(Scene):
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def draw_card(self, surface, color, x, y, width, height, text, scale, border_radius):
-        shadow = pygame.Surface((width, height), pygame.SRCALPHA)
-        shadow.fill((0, 0, 0, 60))
-        surface.blit(shadow, (x + 6, y + 6))
 
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=int(border_radius))
 
@@ -142,7 +152,32 @@ class Highscore(Scene):
 
         lines = text.split('\n')
         if len(lines) > 1:
-            # Multi-line text (Adventure/Puzzle) - centreren in de kaart
+            line_height = int(12 * scale)
+            total_text_height = len(lines) * line_height
+            y_start = y + (height - total_text_height) // 2
+            
+            font_for_text = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
+            for i, line in enumerate(lines):
+                label = font_for_text.render(line, True, self.styles.TEXT_SET)
+                label_rect = label.get_rect(center=(x + width // 2, y_start + i * line_height))
+                surface.blit(label, label_rect)
+        else:
+            # Single line text - centreren in de kaart
+            font_for_text = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
+            label = font_for_text.render(text, True, self.styles.TEXT_SET)
+            label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
+            surface.blit(label, label_rect)
+
+    def draw_achievement(self, surface, color, x, y, width, height, text, scale, border_radius):
+        
+
+        pygame.draw.rect(surface, color, (x, y, width, height), border_radius=int(border_radius))
+
+        scaled_font_size = int(self.styles.FONT_HOME_CARD_SIZE * scale)
+        scaled_font_size = max(10, scaled_font_size)
+
+        lines = text.split('\n')
+        if len(lines) > 1:
             line_height = int(12 * scale)
             total_text_height = len(lines) * line_height
             y_start = y + (height - total_text_height) // 2
@@ -160,8 +195,11 @@ class Highscore(Scene):
             surface.blit(label, label_rect)
 
     def update(self, dt):
-        diff = self.selected - self.current_scroll
-        self.current_scroll += diff * 0.03
+        diff_x = self.selected_x - self.current_scroll_x
+        self.current_scroll_x += diff_x * 0.03
+        
+        diff_y = self.selected_y - self.current_scroll_y
+        self.current_scroll_y += diff_y * 0.03
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -172,7 +210,7 @@ class Highscore(Scene):
         title = self.title_font.render("Highscores", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
 
-        # Get user name for display
+        # user name toevoegen, werkt nog niet correct
         username = "Guest"
         if isinstance(self.user, dict):
             username = self.user.get("name", "Guest")
@@ -188,29 +226,47 @@ class Highscore(Scene):
         y_centre = BASE_HEIGHT // 2
 
         n = len(self.game_keys)
-        real_selected = self.selected
 
         for i, game_name in enumerate(self.game_keys):
-            distance = i - self.current_scroll  
-            standard_radius = 12
 
-            scale = max(0.55, 1.0 - abs(distance) * 0.2)
+            
+            distance_y_highscore = 0 - self.current_scroll_y
+            distance_x = i - self.current_scroll_x  
+            standard_radius = 12
+            scale = max(0.55, 1.0 - abs(distance_x) * 0.2)
             border_radius = standard_radius * (2 - scale)
             new_width = self.card_width * scale
-            new_height = self.card_height * scale
-    
-            x = start_x + (distance * (self.card_width + self.spacing)) - (new_width // 2)
-            curr_y = y_centre - (new_height // 2)
+            new_height = self.card_width * scale
+            x = start_x + (distance_x * (self.card_width + self.spacing)) - (new_width // 2)       
+            curr_y = y_centre + (distance_y_highscore * 80) - (new_height // 2)
+            
 
-            is_active = (i == real_selected)
+
+               # distance_y_highscore = 0 - self.current_scroll_y
+            #vertical_offset = 130
+            #curr_y = y_centre + (distance_y_highscore * vertical_offset) - (new_height // 2)
             
-            
-            if abs(distance) > 2:  
+            # Hide cards too far away
+            if abs(distance_x) > 3:
                 continue
             
-            color = self.styles.CARD_SELECTED if is_active else self.styles.CARD_COLOR
+            # Check if this card is selected (for highscores, y=0)
+            is_active_highscore = (i == self.selected_x and self.selected_y == 0)
+            color_highscore = self.styles.CARD_SELECTED if is_active_highscore else self.styles.CARD_COLOR
+
+            # settings voor achievements cards
+            spacing = 80
+            a_width = self.card_width * 0.8 * scale
+            a_height = self.card_width * 0.8 * scale
+            curr_y_a = curr_y + (new_height // 2) + (spacing * 0.7)
+            achievement_text = "test"
+            corr = (new_width // 2) - (a_width // 2)
+            achievement_x = x + corr
             
-            # Prepare score text
+            # Check if this card is selected (for achievements, y=1)
+            is_active_achievement = (i == self.selected_x and self.selected_y == 1)
+            color_achievement = self.styles.CARD_SELECTED if is_active_achievement else self.styles.CARD_COLOR
+             
             if game_name == 'Puzzle':
                 puzzle_times = self.highscores.get(game_name, {})
                 if isinstance(puzzle_times, dict):
@@ -228,5 +284,5 @@ class Highscore(Scene):
                 else:
                     score_text = f"{game_name}\n\nScore: {score}"
 
-            self.draw_card(base_surface, color, x, curr_y, new_width, new_height, score_text, scale, border_radius)
-
+            self.draw_card(base_surface, color_highscore, x, curr_y, new_width, new_height, score_text, scale, border_radius)
+            self.draw_achievement(base_surface, color_achievement, achievement_x, curr_y_a, a_width, a_height, achievement_text, scale, border_radius)
