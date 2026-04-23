@@ -328,7 +328,7 @@ class AdventureGame(Scene):
         font_small = pygame.font.Font(None, 20)
         
         # Title
-        title = font_large.render("ICE SUMO", True, (255, 255, 100))
+        title = font_large.render("PENGU SLIDER", True, (255, 255, 100))
         title_rect = title.get_rect(center=(self.window_width // 2, 30))
         self.screen.blit(title, title_rect)
         
@@ -760,6 +760,7 @@ class AdventureGame(Scene):
                     self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                     self.start_game()
+                    return
             
             if self.state == GameState.WAITING_FOR_INPUT:
                 human_player = next((p for p in self.get_alive_players() if p.is_human), None)
