@@ -14,6 +14,18 @@ from ui.vierkantjes import vierkantjes
 
 
 class Highscore(Scene):
+    ACHIEVEMENT_TARGETS = {
+        "Monkey": {
+            "1000_points": 1000,
+        }
+    }
+
+    ACHIEVEMENT_DESCRIPTIONS = {
+        "Monkey": {
+            "1000_points": "Behaal een score van 1000",
+        }
+    }
+
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
@@ -34,6 +46,7 @@ class Highscore(Scene):
         self.current_scroll_y = 0
         
         self.highscores = self.load_highscores()
+        self.achievements = self.load_achievements()
         
 
     def get_user(self):
@@ -107,6 +120,40 @@ class Highscore(Scene):
             print(f"Error loading highscores: {e}")
         
         return highscores
+
+    def load_achievements(self):
+        """Load achievements for each game from users.json"""
+        achievements = {key: [] for key in self.game_keys}
+        
+        if not self.user or (isinstance(self.user, int) and self.user == 0):
+            return achievements
+        
+        username = None
+        if isinstance(self.user, dict):
+            username = self.user.get("name")
+        elif isinstance(self.user, str):
+            username = self.user
+        
+        if not username:
+            return achievements
+        
+        path = os.path.join("data", "users.json")
+        
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            
+            for player in data.get("users", []):
+                if player.get("name") == username:
+                    user_achievements = player.get("achievements", {})
+                    # Load achievements for each game
+                    for game_name in self.game_keys:
+                        achievements[game_name] = user_achievements.get(game_name, [])
+                    return achievements
+        except Exception as e:
+            print(f"Error loading achievements: {e}")
+        
+        return achievements
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -194,6 +241,61 @@ class Highscore(Scene):
             label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
             surface.blit(label, label_rect)
 
+    def _format_achievement_name(self, achievement_key):
+        if achievement_key == "1000_points":
+            return "1000+ Points"
+        return achievement_key.replace("_", " ").title()
+
+    def _get_achievement_description(self, game_name, achievement_key):
+        game_descriptions = self.ACHIEVEMENT_DESCRIPTIONS.get(game_name, {})
+        if achievement_key in game_descriptions:
+            return game_descriptions[achievement_key]
+
+        target = self._get_achievement_target(game_name, achievement_key)
+        if target:
+            return f"Behaal een score van {target}"
+
+        return self._format_achievement_name(achievement_key)
+
+    def _get_achievement_target(self, game_name, achievement_key):
+        game_targets = self.ACHIEVEMENT_TARGETS.get(game_name, {})
+        if achievement_key in game_targets:
+            return game_targets[achievement_key]
+
+        if achievement_key.endswith("_points"):
+            target_value = achievement_key.removesuffix("_points").replace("_", "")
+            if target_value.isdigit():
+                return int(target_value)
+
+        return None
+
+    def _get_achievement_cards(self, game_name):
+        if game_name == "Puzzle":
+            return []
+
+        achievement_keys = list(self.ACHIEVEMENT_TARGETS.get(game_name, {}).keys())
+
+        for achievement_key in self.achievements.get(game_name, []):
+            if achievement_key not in achievement_keys:
+                achievement_keys.append(achievement_key)
+
+        score = self.highscores.get(game_name, 0)
+        cards = []
+
+        for achievement_key in achievement_keys:
+            target = self._get_achievement_target(game_name, achievement_key)
+            description = self._get_achievement_description(game_name, achievement_key)
+
+            if target:
+                percentage = min(100, int((score / target) * 100)) if target > 0 else 0
+                card_text = f"{description}\n\n{score}/{target} {percentage}%"
+            else:
+                card_text = description
+
+            cards.append(card_text)
+
+        return cards
+
     def update(self, dt):
         diff_x = self.selected_x - self.current_scroll_x
         self.current_scroll_x += diff_x * 0.03
@@ -255,11 +357,13 @@ class Highscore(Scene):
             color_highscore = self.styles.CARD_SELECTED if is_active_highscore else self.styles.CARD_COLOR
 
             # settings voor achievements cards
-            spacing = 80
             a_width = self.card_width * 0.8 * scale
             a_height = self.card_width * 0.8 * scale
-            curr_y_a = curr_y + (new_height // 2) + (spacing * 0.7)
-            achievement_text = "test"
+            curr_y_a = curr_y + new_height + 24
+            
+            # Load achievements for this game
+            achievement_cards = self._get_achievement_cards(game_name)
+            
             corr = (new_width // 2) - (a_width // 2)
             achievement_x = x + corr
             
@@ -285,4 +389,16 @@ class Highscore(Scene):
                     score_text = f"{game_name}\n\nScore: {score}"
 
             self.draw_card(base_surface, color_highscore, x, curr_y, new_width, new_height, score_text, scale, border_radius)
-            self.draw_achievement(base_surface, color_achievement, achievement_x, curr_y_a, a_width, a_height, achievement_text, scale, border_radius)
+            for achievement_index, achievement_text in enumerate(achievement_cards):
+                achievement_y = curr_y_a + achievement_index * (a_height + 18)
+                self.draw_achievement(
+                    base_surface,
+                    color_achievement,
+                    achievement_x,
+                    achievement_y,
+                    a_width,
+                    a_height,
+                    achievement_text,
+                    scale,
+                    border_radius,
+                )

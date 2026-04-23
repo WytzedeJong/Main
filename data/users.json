@@ -22,6 +22,9 @@
                     "Easy": "00:30"
                 }
             },
+            "achievements": {
+                "Monkey": []
+            },
             "Highscore": [
                 130
             ]
@@ -33,7 +36,8 @@
                 200,
                 255
             ],
-            "highscores": {}
+            "highscores": {},
+            "achievements": {}
         }
     ]
 }
