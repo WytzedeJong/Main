@@ -17,6 +17,11 @@ class MonkeyStacker(Scene):
 
         self.styles = AppStyles
 
+        # Achievement targets
+        self.achievement_targets = {
+            "1000_points": 1000,  # Target score for this achievement
+        }
+        
         self.tile = 16
         self.grid_w = BASE_WIDTH // self.tile
         self.grid_h = BASE_HEIGHT // self.tile
@@ -75,6 +80,7 @@ class MonkeyStacker(Scene):
         self.user = self.get_user()
 
         self._load_highscore()
+        self._load_achievements()
         self._start_new_game()
 
     def get_user(self):
@@ -218,6 +224,76 @@ class MonkeyStacker(Scene):
         except Exception:
             pass
 
+    def _load_achievements(self):
+        """Load achievements for this player from users.json"""
+        self.achievements = []
+        
+        uname = None
+        if isinstance(self.user, dict):
+            uname = self.user.get("name")
+        elif isinstance(self.user, str):
+            uname = self.user
+        
+        if uname:
+            users_path = os.path.join("data", "users.json")
+            try:
+                with open(users_path, "r", encoding="utf-8") as f:
+                    users_data = json.load(f)
+                
+                for player in users_data.get("users", []):
+                    if player.get("name") == uname:
+                        achievements_dict = player.get("achievements", {})
+                        monkey_achievements = achievements_dict.get("Monkey", [])
+                        self.achievements = monkey_achievements if isinstance(monkey_achievements, list) else []
+                        return
+            except Exception:
+                pass
+
+    def _save_achievement(self, achievement_name):
+        """Save a new achievement for this player"""
+        path = os.path.join("data", "users.json")
+        
+        # Load current data
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                users_data = json.load(f)
+        except Exception:
+            users_data = {"users": []}
+        
+        target_name = None
+        if isinstance(self.user, dict):
+            target_name = self.user.get("name")
+        elif isinstance(self.user, str):
+            target_name = self.user
+        
+        if target_name:
+            for player in users_data.get("users", []):
+                if player.get("name") == target_name:
+                    if "achievements" not in player:
+                        player["achievements"] = {}
+                    if "Monkey" not in player["achievements"]:
+                        player["achievements"]["Monkey"] = []
+                    
+                    # Add achievement if not already there
+                    if achievement_name not in player["achievements"]["Monkey"]:
+                        player["achievements"]["Monkey"].append(achievement_name)
+                        
+                        # Save to file
+                        try:
+                            with open(path, "w", encoding="utf-8") as f:
+                                json.dump(users_data, f, indent=4)
+                        except Exception:
+                            pass
+                    
+                    # Update local achievements
+                    self.achievements = player["achievements"]["Monkey"]
+                    break
+
+    def _check_achievements(self):
+        """Check if any achievements should be unlocked"""
+        # Achievement: "1000_points" - Get 1000+ points
+        if self.highscore >= 1000 and "1000_points" not in self.achievements:
+            self._save_achievement("1000_points")
 
 
     def _create_shapes(self):
@@ -460,6 +536,7 @@ class MonkeyStacker(Scene):
             self.state = "game_over"
             self.highscore = max(self.highscore, self.score)
             self._save_highscore()
+            self._check_achievements()
             return
 
         for gx, gy in newly_placed:
@@ -479,6 +556,7 @@ class MonkeyStacker(Scene):
         self.highscore = max(self.highscore, self.score)
 
         self._save_highscore()
+        self._check_achievements()
         
 
     def _is_game_over(self):
