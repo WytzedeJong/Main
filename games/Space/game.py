@@ -67,7 +67,6 @@ class UpgradeDrop:
     speed: float
     label: str
     effect: str
-    color: tuple[int, int, int]
 
     @property
     def rect(self):
@@ -114,20 +113,20 @@ class SpaceGame(Scene):
         self.show_instructions = True
 
         self.upgrades = [
-            {"label": "Rapid Fire", "effect": "fire_rate", "color": (255, 220, 110)},
-            {"label": "Hull Up", "effect": "max_health", "color": (120, 255, 160)},
-            {"label": "Thrusters", "effect": "move_speed", "color": (120, 210, 255)},
-            {"label": "Heavy Shot", "effect": "damage", "color": (255, 140, 140)},
-            {"label": "Turbo Bolt", "effect": "bullet_speed", "color": (255, 175, 90)},
-            {"label": "Shield Plating", "effect": "armor", "color": (175, 170, 255)},
-            {"label": "Wider Shot", "effect": "bullet_size", "color": (255, 120, 200)},
+            {"label": "Rapid Fire", "effect": "fire_rate"},
+            {"label": "Hull Up", "effect": "max_health"},
+            {"label": "Thrusters", "effect": "move_speed"},
+            {"label": "Heavy Shot", "effect": "damage"},
+            {"label": "Turbo Bolt", "effect": "bullet_speed"},
+            {"label": "Shield Plating", "effect": "armor"},
         ]
         self.special_upgrades = [
-            {"label": "Side Shot", "effect": "side_shot", "color": (255, 210, 120)},
-            {"label": "Spread Shot", "effect": "spread_shot", "color": (120, 235, 255)},
-            {"label": "Crit Core", "effect": "crit", "color": (255, 150, 120)},
-            {"label": "Repair Matrix", "effect": "heal_on_kill", "color": (120, 255, 170)},
-            {"label": "Overcharge Hull", "effect": "overheal", "color": (120, 200, 255)},
+            {"label": "Side Shot", "effect": "side_shot"},
+            {"label": "Spread Shot", "effect": "spread_shot"},
+            {"label": "Crit Chance", "effect": "crit_chance"},
+            {"label": "Crit Damage", "effect": "crit_damage"},
+            {"label": "Repair Matrix", "effect": "heal_on_kill"},
+            {"label": "Overcharge Hull", "effect": "overheal"},
         ]
 
         self.upgrade_pool = []
@@ -226,7 +225,7 @@ class SpaceGame(Scene):
                 path = os.path.join(self.asset_dir, file_name)
                 try:
                     image = pygame.image.load(path).convert()
-                    backgrounds.append(pygame.transform.smoothscale(image, (BASE_WIDTH, self.play_height)))
+                    backgrounds.append(pygame.transform.smoothscale(image, (BASE_WIDTH, BASE_HEIGHT)))
                 except pygame.error:
                     continue
         return backgrounds
@@ -241,8 +240,17 @@ class SpaceGame(Scene):
         random.shuffle(self.upgrade_pool)
 
     def reset_special_upgrade_pool(self):
-        self.special_upgrade_pool = self.special_upgrades.copy()
+        self.special_upgrade_pool = [
+            upgrade
+            for upgrade in self.special_upgrades
+            if self.is_special_upgrade_available(upgrade["effect"])
+        ]
         random.shuffle(self.special_upgrade_pool)
+
+    def is_special_upgrade_available(self, effect):
+        if effect == "overheal":
+            return self.overheal_bonus == 0
+        return True
 
     def get_random_upgrade_y(self, upgrade_height):
         min_y = 18
@@ -271,6 +279,26 @@ class SpaceGame(Scene):
         lines.append(current_line)
         return lines
 
+    def get_enemy_fire_tier(self, round_number):
+        return max(0, (round_number - 1) // 5)
+
+    def get_enemy_fire_cooldown(self, base_cooldown, round_number, minimum):
+        return max(minimum, base_cooldown - self.get_enemy_fire_tier(round_number) * 0.05)
+
+    def get_enemy_bullet_speed(self, base_speed, round_number):
+        return base_speed + self.get_enemy_fire_tier(round_number) * 12
+
+    def get_round_enemy_count(self, round_number):
+        if round_number <= 5:
+            return random.randint(3, 5)
+        if round_number <= 9:
+            return random.randint(4, 7)
+        if round_number <= 15:
+            return random.randint(6, 9)
+        if round_number <= 19:
+            return random.randint(7, 9)
+        return random.randint(8, 13)
+
     def spawn_round(self, round_number):
         self.enemies = []
         self.bullets = [bullet for bullet in self.bullets if bullet.owner == "player"]
@@ -279,12 +307,7 @@ class SpaceGame(Scene):
             self.spawn_boss_round(round_number)
             return
 
-        if round_number <= 4:
-            enemy_count = random.randint(3, 6)
-        elif round_number <= 10:
-            enemy_count = random.randint(5, 9)
-        else:
-            enemy_count = random.randint(8, 12)
+        enemy_count = self.get_round_enemy_count(round_number)
         spacing = self.play_height / (enemy_count + 1)
         enemy_types = ["elite" if index % 3 == 2 else "normal" for index in range(enemy_count)]
         if round_number >= 5:
@@ -302,35 +325,34 @@ class SpaceGame(Scene):
         for index in range(enemy_count):
             enemy_type = enemy_types[index]
             x = BASE_WIDTH - 90 - random.randint(0, 45)
-            base_health = 22 + round_number * 8
-            base_damage = 7 + round_number * 2
+            base_health = 42 + round_number * 14
+            base_damage = 9 + round_number * 1
 
             if enemy_type == "elite":
                 max_health = int(base_health * 1.45)
                 damage = int(base_damage * 1.35)
-                fire_cooldown = max(1.7 - round_number * 0.035, 0.7)
-                bullet_speed = 185 + round_number * 9
+                fire_cooldown = self.get_enemy_fire_cooldown(1.7, round_number, 0.7)
+                bullet_speed = self.get_enemy_bullet_speed(185, round_number)
                 color = (210, 120, 90)
+                width = 36
+                height = 24
             elif enemy_type == "heavy":
                 max_health = base_health * 2
                 damage = max(4, int(base_damage * 0.75))
-                fire_cooldown = max(2.15 - round_number * 0.03, 1.1)
-                bullet_speed = 120 + round_number * 5
-                color = (130, 110, 200)
+                fire_cooldown = self.get_enemy_fire_cooldown(2.15, round_number, 1.1)
+                bullet_speed = self.get_enemy_bullet_speed(120, round_number)
+                color = (210, 120, 90)
+                width = 46
+                height = 30
             else:
                 max_health = base_health
                 damage = base_damage
-                fire_cooldown = max(1.45 - round_number * 0.04, 0.5)
-                bullet_speed = 175 + round_number * 8
+                fire_cooldown = self.get_enemy_fire_cooldown(1.45, round_number, 0.5)
+                bullet_speed = self.get_enemy_bullet_speed(175, round_number)
                 color_shift = min(100 + round_number * 7, 220)
                 color = (color_shift, 90, 120)
-
-            if enemy_type == "heavy":
-                width = min(54, 30 + max_health // 18)
-                height = min(36, 18 + max_health // 28)
-            else:
-                width = min(44, 24 + max_health // 15 + damage // 10)
-                height = min(32, 16 + max_health // 24 + damage // 14)
+                width = 30
+                height = 20
             y = spacing * (index + 1) - height / 2 + random.randint(-8, 8)
             enemy = Enemy(
                 x=x,
@@ -352,8 +374,8 @@ class SpaceGame(Scene):
             self.enemies.append(enemy)
 
     def spawn_boss_round(self, round_number):
-        max_health = 340 + round_number * 38
-        damage = 12 + round_number * 2
+        max_health = 340 + round_number * 94
+        damage = 12 + round_number * 1
         width = 108
         height = 74
         enemy = Enemy(
@@ -363,8 +385,8 @@ class SpaceGame(Scene):
             height=height,
             max_health=max_health,
             health=max_health,
-            fire_cooldown=max(1.0 - round_number * 0.01, 0.5),
-            bullet_speed=220 + round_number * 6,
+            fire_cooldown=self.get_enemy_fire_cooldown(1.0, round_number, 0.5),
+            bullet_speed=self.get_enemy_bullet_speed(220, round_number),
             damage=damage,
             color=(210, 80, 120),
             enemy_type="boss",
@@ -638,7 +660,6 @@ class SpaceGame(Scene):
                 speed=48.0,
                 label=upgrade["label"],
                 effect=upgrade["effect"],
-                color=upgrade["color"],
             )
 
         self.round_number += 1
@@ -665,28 +686,27 @@ class SpaceGame(Scene):
 
     def apply_buff(self, effect):
         if effect == "fire_rate":
-            self.player_fire_cooldown = max(0.1, self.player_fire_cooldown - 0.025)
+            self.player_fire_cooldown = max(0.1, self.player_fire_cooldown - 0.0125)
         elif effect == "max_health":
-            self.max_health += 20
-            self.player_health = min(self.get_player_heal_cap(), self.player_health + 20)
+            self.max_health += 10
+            self.player_health = min(self.get_player_heal_cap(), self.player_health + 10)
         elif effect == "move_speed":
-            self.player_speed += 18
+            self.player_speed += 9
         elif effect == "damage":
-            self.player_damage += 3
+            self.player_damage += 1.5
         elif effect == "bullet_speed":
-            self.player_bullet_speed += 45
+            self.player_bullet_speed += 22.5
         elif effect == "armor":
-            self.player_armor += 1
-        elif effect == "bullet_size":
-            self.player_bullet_radius += 1
+            self.player_armor += 0.5
 
     def apply_special_upgrade(self, effect):
         if effect == "side_shot":
             self.side_shot_level += 1
         elif effect == "spread_shot":
             self.spread_shot_level += 1
-        elif effect == "crit":
+        elif effect == "crit_chance":
             self.crit_chance = min(1.0, self.crit_chance + 0.05)
+        elif effect == "crit_damage":
             self.crit_damage_bonus += 0.10
         elif effect == "heal_on_kill":
             self.heal_on_kill += 1
@@ -716,7 +736,7 @@ class SpaceGame(Scene):
         if self.current_background:
             surface.blit(self.current_background, (0, 0))
         else:
-            surface.fill((7, 10, 26), pygame.Rect(0, 0, BASE_WIDTH, self.play_height))
+            surface.fill((7, 10, 26), pygame.Rect(0, 0, BASE_WIDTH, BASE_HEIGHT))
 
         player_zone = pygame.Rect(0, 0, int(BASE_WIDTH * 0.45), self.play_height)
         enemy_zone = pygame.Rect(int(BASE_WIDTH * 0.58), 0, BASE_WIDTH, self.play_height)
@@ -763,6 +783,8 @@ class SpaceGame(Scene):
             )
 
     def draw_bullets(self, surface):
+        enemy_bullet_color = (255, 110, 110)
+
         for bullet in self.bullets:
             if bullet.owner == "player":
                 color = (255, 220, 110) if bullet.is_crit else (110, 235, 255)
@@ -770,11 +792,11 @@ class SpaceGame(Scene):
                 continue
 
             if bullet.width is not None and bullet.height is not None:
-                color = (190, 150, 255)
+                color = enemy_bullet_color
                 pygame.draw.rect(surface, color, bullet.rect, border_radius=3)
-                pygame.draw.rect(surface, (245, 235, 255), bullet.rect, 1, border_radius=3)
+                pygame.draw.rect(surface, (255, 210, 210), bullet.rect, 1, border_radius=3)
             else:
-                color = (255, 110, 110)
+                color = enemy_bullet_color
                 pygame.draw.circle(surface, color, (int(bullet.x), int(bullet.y)), bullet.radius)
 
     def draw_upgrade(self, surface):
@@ -836,13 +858,9 @@ class SpaceGame(Scene):
             buff_text = self.small_font.render(f"Buff: {self.last_buff_label}", True, (120, 255, 160))
             buff_rect = buff_text.get_rect(center=(BASE_WIDTH // 2, rect.centery + 18))
             surface.blit(buff_text, buff_rect)
-        if self.last_upgrade_label:
-            upgrade_text = self.small_font.render(f"Special: {self.last_upgrade_label}", True, (120, 210, 255))
-            upgrade_rect = upgrade_text.get_rect(center=(BASE_WIDTH // 2, rect.centery + 31))
-            surface.blit(upgrade_text, upgrade_rect)
 
     def draw_instructions(self, surface):
-        panel = pygame.Rect(26, 22, BASE_WIDTH - 52, BASE_HEIGHT - 44)
+        panel = pygame.Rect(26, 22, BASE_WIDTH - 52, BASE_HEIGHT - 22)
         pygame.draw.rect(surface, (10, 15, 30), panel, border_radius=14)
         pygame.draw.rect(surface, (180, 220, 255), panel, 2, border_radius=14)
 
@@ -851,22 +869,13 @@ class SpaceGame(Scene):
 
         sections = [
             ("Doel", ["Versla elke ronde alle vijanden en overleef zo lang mogelijk."]),
-            ("Besturing", ["Pijltjes om te bewegen.", "Je schip schiet automatisch rechtdoor naar rechts."]),
+            ("Besturing", ["Pijltjes om te bewegen.", "Je schip schiet automatisch."]),
             (
                 "Regels",
                 [
                     "Elke verslagen enemy geeft 1 punt.",
-                    "Enemies schieten ook terug, maar trager dan jij.",
-                    "Na elke gehaalde ronde krijg je automatisch 1 buff op je basisstats.",
-                    "Na elke ronde heal je automatisch 5 HP.",
+                    "Na elke ronde krijg je 5 HP terug.",
                     "Na elke 3 rondes dropt er een speciale upgrade die je moet oppakken.",
-                    "Vanaf ronde 5 kan er soms een zeldzame zware enemy verschijnen, maximaal 2 per ronde.",
-                    "Elke 10e ronde is een boss fight, beginnend bij ronde 10.",
-                    "Na een boss fight krijg je direct 30 HP en 1 random special upgrade.",
-                    "Side Shot geeft 1 extra rechte kogel, Spread Shot 2 diagonale kogels.",
-                    "Crit Core geeft +5% crit chance en +10% crit damage.",
-                    "Repair Matrix geeft +1 HP per kill.",
-                    "Overcharge Hull laat healing boven je max HP komen.",
                     "Elke nieuwe ronde worden enemies sterker.",
                 ],
             ),
@@ -890,10 +899,8 @@ class SpaceGame(Scene):
 
             y += 3
 
-        start_text = self.text_font.render("ENTER om te starten", True, (120, 255, 160))
-        back_text = self.text_font.render("ESC om terug te gaan", True, (120, 255, 160))
-        surface.blit(start_text, (panel.x + 18, panel.bottom - 40))
-        surface.blit(back_text, (panel.x + 18, panel.bottom - 22))
+        start_text = self.small_font.render("ENTER om te starten", True, (120, 255, 160))
+        surface.blit(start_text, (panel.x + 18, panel.bottom - 22))
 
     def draw_game_over(self, surface):
         overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
