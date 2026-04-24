@@ -1,6 +1,6 @@
 import pygame
 from core.scene import Scene
-from settings import BASE_WIDTH, BASE_HEIGHT
+from settings import BASE_WIDTH, BASE_HEIGHT, base_surface
 from config import styles
 from ui.vierkantjes import vierkantjes
 
@@ -79,7 +79,8 @@ class SubMenu(Scene):
         surface.blit(label, label.get_rect(center=(x + width // 2, y + height // 2)))
 
     def draw(self, surface):
-        self.draw_gradient(surface)
+        base_surface.fill((self.styles.BG))
+        #self.draw_gradient(base_surface)
 
         self.sq.vierkantjes(self)
         content_start_y = 50 - self.scroll_y

@@ -85,8 +85,10 @@ class Game_Menu(Scene):
     
 
     def draw(self, surface):
-        base_surface.fill((0, 0, 0))
-        self.draw_gradient(base_surface)
+        base_surface.fill((self.styles.BG))
+        #self.draw_gradient(base_surface)
+
+        
 
         self.sq.vierkantjes(self)
 

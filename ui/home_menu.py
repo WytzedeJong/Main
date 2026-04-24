@@ -62,7 +62,14 @@ class HomeMenu(Scene):
 
     def draw_card(self, surface, x, y, width, height, text, is_selected):
         shadow = pygame.Surface((width, height), pygame.SRCALPHA)
-        shadow.fill((0, 0, 0, 60))
+
+        pygame.draw.rect(
+            shadow,
+            (0, 0, 0, 60),
+            (0, 0, width, height),
+            border_radius=12
+        )
+
         surface.blit(shadow, (x + 6, y + 6))
 
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
@@ -76,8 +83,8 @@ class HomeMenu(Scene):
         pass
 
     def draw(self, surface):
-        base_surface.fill((0, 0, 0))
-        self.draw_gradient(base_surface)
+        base_surface.fill((self.styles.BG))
+        #self.draw_gradient(base_surface)
 
         self.sq.vierkantjes(self)
 

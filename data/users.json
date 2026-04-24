@@ -1,7 +1,7 @@
 {
     "users": [
         {
-            "name": "ThijS",
+            "name": "ThijSS",
             "color": [
                 255,
                 200,
@@ -13,7 +13,7 @@
                 "LEFT",
                 "LEFT"
             ],
-            "theme": "blue",
+            "theme": "standard",
             "highscores": {
                 "Pengu": 70,
                 "Monkey": 40

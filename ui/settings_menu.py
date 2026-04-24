@@ -2,7 +2,7 @@ import pygame
 import json
 import os
 from core.scene import Scene
-from settings import BASE_WIDTH, BASE_HEIGHT
+from settings import BASE_WIDTH, BASE_HEIGHT, base_surface
 from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
@@ -240,7 +240,10 @@ class SettingsMenu(Scene):
         surface.blit(val_txt, (x + width + 10, y - 4))
 
     def draw(self, surface):
-        self.draw_gradient(surface)
+        base_surface.fill((self.styles.BG))
+        #self.draw_gradient(base_surface)
+
+        
 
 
         content_start_y = 50 - self.scroll_y
