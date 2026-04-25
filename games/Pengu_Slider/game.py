@@ -16,9 +16,9 @@ BASE_WINDOW_HEIGHT = BASE_HEIGHT
 BASE_ICE_WIDTH = int(BASE_WINDOW_WIDTH * 0.7)
 BASE_ICE_HEIGHT = int(BASE_WINDOW_HEIGHT * 0.8)
 
-MAX_SPEED = 60  # 4x harder than before
-FRICTION = 0.98  # Ice friction (slippery)
-ACCELERATION = 6
+MAX_SPEED = 40  # Reduced from 60 for more manageable gameplay
+FRICTION = 0.96  # Increased from 0.98 for better control
+ACCELERATION = 5  # Slightly reduced from 6
 MAX_PLAYERS = 50  # Support many players
 
 class GameState(Enum):
@@ -27,6 +27,7 @@ class GameState(Enum):
     MOVING = 2
     GAME_OVER = 3
     SETTINGS = 4
+    WINNER_SCREEN = 5
 
 class Player:
     def __init__(self, x, y, color, player_id, is_human=False, radius=25):
@@ -212,7 +213,8 @@ class AdventureGame(Scene):
         self.ice_y = (self.window_height - self.ice_height) // 2
         
         # Calculate player radius based on number of players (fewer players = bigger blobs)
-        self.player_radius = int(4 + 9 * (MAX_PLAYERS - num_players) / MAX_PLAYERS)
+        # Increased base size for better visibility and control
+        self.player_radius = int(6 + 10 * (MAX_PLAYERS - num_players) / MAX_PLAYERS)
         
         self.num_players = num_players
         self.players = []
@@ -326,7 +328,7 @@ class AdventureGame(Scene):
         font_small = pygame.font.Font(None, 20)
         
         # Title
-        title = font_large.render("ICE SUMO", True, (255, 255, 100))
+        title = font_large.render("PENGU SLIDER", True, (255, 255, 100))
         title_rect = title.get_rect(center=(self.window_width // 2, 30))
         self.screen.blit(title, title_rect)
         
@@ -419,6 +421,80 @@ class AdventureGame(Scene):
         
         pygame.display.flip()
         return restart_rect, settings_rect
+    
+    def draw_winner_overlay(self):
+        """Draw winner info overlay on top of the ice platform"""
+        font_large = pygame.font.Font(None, 72)
+        font_medium = pygame.font.Font(None, 40)
+        
+        alive = self.get_alive_players()
+        winner = alive[0] if alive else None
+        
+        if winner:
+            if winner.is_human:
+                title_text = "🎉 YOU WIN! 🎉"
+                title_color = (100, 255, 100)
+                detail_text = "You are the last one standing!"
+            else:
+                title_text = f"Player {winner.player_id + 1} Wins!"
+                title_color = (255, 200, 100)
+                detail_text = "Better luck next time!"
+        else:
+            return
+        
+        # Draw semi-transparent overlay box
+        overlay_width = 600
+        overlay_height = 280
+        overlay_x = (self.window_width - overlay_width) // 2
+        overlay_y = (self.window_height - overlay_height) // 2
+        
+        overlay_rect = pygame.Rect(overlay_x, overlay_y, overlay_width, overlay_height)
+        pygame.draw.rect(self.screen, (20, 30, 60), overlay_rect)
+        pygame.draw.rect(self.screen, title_color, overlay_rect, 4)
+        
+        # Title
+        title = font_large.render(title_text, True, title_color)
+        title_rect = title.get_rect(center=(self.window_width // 2, overlay_y + 40))
+        self.screen.blit(title, title_rect)
+        
+        # Detail text
+        detail = font_medium.render(detail_text, True, (200, 230, 255))
+        detail_rect = detail.get_rect(center=(self.window_width // 2, overlay_y + 110))
+        self.screen.blit(detail, detail_rect)
+        
+        # Instructions text (keyboard only)
+        font_small = pygame.font.Font(None, 28)
+        instructions = font_small.render("Press SPACE or ENTER to play again", True, (200, 230, 255))
+        instructions_rect = instructions.get_rect(center=(self.window_width // 2, overlay_y + 170))
+        self.screen.blit(instructions, instructions_rect)
+    
+    def draw_winner_text(self):
+        """Draw only winner text screen"""
+        font_large = pygame.font.Font(None, 80)
+        font_medium = pygame.font.Font(None, 50)
+        
+        alive = self.get_alive_players()
+        winner = alive[0] if alive else None
+        
+        if winner:
+            if winner.is_human:
+                title_text = "YOU WIN!"
+                title_color = (100, 255, 100)
+            else:
+                title_text = f"Player {winner.player_id + 1} Wins!"
+                title_color = (255, 200, 100)
+        else:
+            return
+        
+        # Title
+        title = font_large.render(title_text, True, title_color)
+        title_rect = title.get_rect(center=(self.window_width // 2, self.window_height // 2 - 100))
+        self.screen.blit(title, title_rect)
+        
+        # Instructions text
+        instructions = font_medium.render("Press ENTER to continue", True, (200, 230, 255))
+        instructions_rect = instructions.get_rect(center=(self.window_width // 2, self.window_height // 2 + 100))
+        self.screen.blit(instructions, instructions_rect)
     
     def get_alive_players(self):
         """Get list of alive players"""
@@ -607,8 +683,8 @@ class AdventureGame(Scene):
                 alive_count = len(self.get_alive_players())
                 
                 if alive_count <= 1:
-                    self.state = GameState.GAME_OVER
-                    # Count the win only once when transitioning to GAME_OVER
+                    self.state = GameState.WINNER_SCREEN
+                    # Count the win only once when transitioning to WINNER_SCREEN
                     if not self._win_counted:
                         alive_players = self.get_alive_players()
                         if alive_players and alive_players[0].is_human:
@@ -617,8 +693,8 @@ class AdventureGame(Scene):
                 else:
                     self.state = GameState.WAITING_FOR_INPUT
                     self.round_counter += 1
-                    if self.round_counter % 3 == 0:
-                        self.circle_shrink_factor *= 0.9
+                    if self.round_counter % 4 == 0:
+                        self.circle_shrink_factor *= 0.93
                     for player in self.players:
                         player.scheduled_direction = 0
                         player.scheduled_force = 0
@@ -672,7 +748,7 @@ class AdventureGame(Scene):
     def handle_events(self, event):
         """Handle player input"""
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE and self.state != GameState.WINNER_SCREEN:
                 from ui.home_menu import HomeMenu
                 self.manager.set_scene(HomeMenu(self.manager))
                 return
@@ -684,6 +760,7 @@ class AdventureGame(Scene):
                     self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
                 elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
                     self.start_game()
+                    return
             
             if self.state == GameState.WAITING_FOR_INPUT:
                 human_player = next((p for p in self.get_alive_players() if p.is_human), None)
@@ -691,6 +768,10 @@ class AdventureGame(Scene):
                     if event.key == pygame.K_SPACE:
                         human_player.scheduled_force = self.current_force
                         human_player.scheduled_direction = self.direction_angle
+            
+            if self.state == GameState.WINNER_SCREEN:
+                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
+                    self.state = GameState.START_SCREEN
         
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Scale mouse position from screen space to base surface space
@@ -755,6 +836,10 @@ class AdventureGame(Scene):
             self.draw_start_screen()
         elif self.state == GameState.GAME_OVER:
             self.draw_end_screen()
+        elif self.state == GameState.WINNER_SCREEN:
+            # Draw only winner text - nothing else
+            self.screen.fill((25, 50, 120))
+            self.draw_winner_text()
         else:
             # Drawing gameplay (WAITING_FOR_INPUT or MOVING states)
             self.draw_waves()

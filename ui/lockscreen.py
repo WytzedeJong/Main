@@ -7,6 +7,7 @@ from datetime import datetime
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from ui.vierkantjes import vierkantjes
 
 
 class LockScreen(Scene):
@@ -16,6 +17,7 @@ class LockScreen(Scene):
 
         # Use shared styles instance so theme toggles affect the lockscreen
         self.styles = styles
+        self.sq = vierkantjes
 
         self.users = []
         self.load_users()
@@ -436,6 +438,8 @@ class LockScreen(Scene):
 
         surface.fill(self.styles.BACKGROUND)
         self.draw_top(surface)
+
+        #self.sq.vierkantjes(self)
 
         shake_x = 0
         if self.shake_timer > 0:

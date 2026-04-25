@@ -6,6 +6,7 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
 from ui.submenu import SubMenu
 from ui.edit_username import EditUsername
+from ui.vierkantjes import vierkantjes
 from ui.change_password import ChangePassword
 
 
@@ -13,6 +14,7 @@ class SettingsMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.styles = styles
+        self.sq = vierkantjes
 
         self.current_theme = "standard"
         self.selected = 0
@@ -242,6 +244,8 @@ class SettingsMenu(Scene):
 
 
         content_start_y = 50 - self.scroll_y
+
+        self.sq.vierkantjes(self)
 
 
         title = self.title_font.render("Settings", True, self.styles.TEXT_COLOR)

@@ -7,6 +7,7 @@ from ui.settings_menu import SettingsMenu
 from ui.Games_menu import Game_Menu
 from ui.lockscreen import LockScreen
 from ui.Highscore import Highscore
+from ui.vierkantjes import vierkantjes
 
 
 class HomeMenu(Scene):
@@ -14,6 +15,7 @@ class HomeMenu(Scene):
         super().__init__(manager)
         # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
+        self.sq = vierkantjes
         self.games = [
             ("Games", Game_Menu), 
             ("High Scores", Highscore),
@@ -76,6 +78,8 @@ class HomeMenu(Scene):
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
         self.draw_gradient(base_surface)
+
+        self.sq.vierkantjes(self)
 
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))

@@ -2,6 +2,7 @@ import pygame
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from ui.vierkantjes import vierkantjes
 
 
 class SubMenu(Scene):
@@ -14,6 +15,7 @@ class SubMenu(Scene):
         self.selected = 0
 
         self.styles = styles
+        self.sq = vierkantjes
         self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
         self.menu_font = self.styles.create_font(self.styles.FONT_SETTINGS_MENU_SIZE)
 
@@ -79,7 +81,7 @@ class SubMenu(Scene):
     def draw(self, surface):
         self.draw_gradient(surface)
 
-
+        self.sq.vierkantjes(self)
         content_start_y = 50 - self.scroll_y
 
 
