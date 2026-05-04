@@ -74,7 +74,13 @@ class Game_Menu(Scene):
             self.font_cache[scaled_font_size] = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
 
         label = self.font_cache[scaled_font_size].render(text, True, self.styles.TEXT_SET)
-        label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
+        label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
+        
+        # Ensure text doesn't overflow the card width
+        if label_rect.width > width - 4:
+            label_rect.width = width - 4
+            label_rect.centerx = x + width // 2
+        
         surface.blit(label, label_rect)
 
 

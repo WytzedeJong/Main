@@ -16,11 +16,14 @@ class SettingsMenu(Scene):
         self.styles = styles
         self.sq = vierkantjes
 
-        self.current_theme = "standard"
+        current_user = getattr(self.manager, "current_user", None)
+        self.current_theme = current_user.get("theme", "standard") if current_user else "standard"
         self.selected = 0
-        self.text_size_value = 20
+        self.text_size_value = current_user.get("text_size", 20) if current_user else 20
         self.current_profile_submenu = None
 
+        if current_user:
+            self.apply_text_size()
 
         self.scroll_y = 0
         self.target_scroll_y = 0
@@ -54,8 +57,10 @@ class SettingsMenu(Scene):
             if self.options[self.selected] == "Text size":
                 if event.key == pygame.K_LEFT:
                     self.text_size_value = max(12, self.text_size_value - 1)
+                    self.apply_text_size()
                 elif event.key == pygame.K_RIGHT:
                     self.text_size_value = min(30, self.text_size_value + 1)
+                    self.apply_text_size()
 
             if event.key == pygame.K_RETURN:
                 self.handle_selection()
@@ -168,10 +173,16 @@ class SettingsMenu(Scene):
         
         # Update het thema van de huidige gebruiker
         for user in data["users"]:
-            if user["name"] == self.manager.current_user["name"]:  
+            if user["name"] == self.manager.current_user["name"]:
                 user["theme"] = theme
+                user["text_size"] = self.text_size_value
                 break
         
+        # Houd manager.current_user up-to-date
+        if self.manager.current_user:
+            self.manager.current_user["theme"] = theme
+            self.manager.current_user["text_size"] = self.text_size_value
+
         # Schrijf de bijgewerkte data terug
         with open(path, "w") as f:
             json.dump(data, f, indent=4)
@@ -211,6 +222,31 @@ class SettingsMenu(Scene):
         self.scroll_y += (self.target_scroll_y - self.scroll_y) * 0.15
 
 
+    def save_text_size(self):
+        path = os.path.join("data", "users.json")
+        if not os.path.exists(path):
+            os.makedirs("data", exist_ok=True)
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump({"users": []}, f, indent=4)
+
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        for user in data.get("users", []):
+            if self.manager.current_user and user.get("name") == self.manager.current_user.get("name"):
+                user["text_size"] = self.text_size_value
+                break
+
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+
+    def apply_text_size(self):
+        self.styles.set_text_scale(self.text_size_value / 20)
+        if self.manager.current_user:
+            self.manager.current_user["text_size"] = self.text_size_value
+        self.save_text_size()
+        self.title_font = self.styles.create_font(self.styles.FONT_SETTINGS_TITLE_SIZE, bold=True)
+
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
             ratio = y / BASE_HEIGHT
@@ -227,16 +263,16 @@ class SettingsMenu(Scene):
         if is_selected:
             pygame.draw.rect(surface, self.styles.TEXT_COLOR, (x, y, width, height), 2, border_radius=12)
 
-        font = self.styles.create_font(self.text_size_value)
+        font = self.styles.create_font(self.text_size_value, absolute=True)
         label = font.render(text, True, self.styles.TEXT_SET)
         surface.blit(label, label.get_rect(center=(x + width // 2, y + height // 2)))
 
     def draw_text_size_slider(self, surface, x, y):
-        width = 140
+        width = 80
         pygame.draw.rect(surface, (200, 200, 200), (x, y, width, 12), border_radius=6)
         percentage = (self.text_size_value - 12) / (30 - 12)
         pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, int(width * percentage), 12), border_radius=6)
-        val_txt = self.styles.create_font(14).render(str(self.text_size_value), True, self.styles.TEXT_SET)
+        val_txt = self.styles.create_font(14, absolute=True).render(str(self.text_size_value), True, self.styles.TEXT_SET)
         surface.blit(val_txt, (x + width + 10, y - 4))
 
     def draw(self, surface):
@@ -268,5 +304,5 @@ class SettingsMenu(Scene):
                 self.draw_card(surface, start_x, y_pos, card_width, self.card_height, option, i == self.selected)
 
                 if option == "Text size":
-                    slider_x = start_x + card_width - 180
+                    slider_x = start_x + card_width - 120
                     self.draw_text_size_slider(surface, slider_x, y_pos + 19)
