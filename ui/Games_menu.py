@@ -8,6 +8,7 @@ from games.Pengu_Slider.game import AdventureGame
 from games.Space.game import SpaceGame
 from games.dungeon.game import DungeonGame
 from games.monkey_stacker.game import MonkeyStacker
+from games.tower_defense.game import TowerGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
 
@@ -23,7 +24,7 @@ class Game_Menu(Scene):
             ("Pengu Slider", AdventureGame),
             ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
-            ("test", MonkeyStacker)
+            ("Tower Defense", TowerGame)
         ]
 
         self.selected = 0

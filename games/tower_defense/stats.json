@@ -1,0 +1,125 @@
+{
+  "towers": {
+    "starter": {
+      "damage": 10,
+      "range": 62.5,
+      "fire_rate": 1.5,
+      "cost": 50
+    },
+    "sniper": {
+      "damage": 50,
+      "range": 212.5,
+      "fire_rate": 0.4,
+      "cost": 200
+    },
+    "cannon": {
+      "damage": 20,
+      "range": 87.5,
+      "fire_rate": 0.5,
+      "cost": 70,
+      "splash_damage": 20
+    },
+    "slowing tower": {
+      "damage": 0,
+      "range": 87.5,
+      "fire_rate": 0.4,
+      "cost": 200,
+      "slow_effect": 0.5,
+      "area_of_effect": 5
+    },
+    "earthquake machine": {
+      "damage": 20,
+      "range": 62.5,
+      "fire_rate": 0.7,
+      "cost": 130,
+      "360_degree_attack": true
+    },
+    "laser": {
+      "damage": 15,
+      "range": 87.5,
+      "fire_rate": 2.0,
+      "cost": 300
+    },
+    "missile": {
+      "damage": 30,
+      "range": 87.5,
+      "fire_rate": 0.4,
+      "cost": 140,
+      "splash_damage": 20
+    },
+    "freeze": {
+      "damage": 0,
+      "range": 62.5,
+      "fire_rate": 0.5,
+      "cost": 250,
+      "freeze_duration": 0.5
+    },
+    "poison": {
+      "damage": 20,
+      "range": 87.5,
+      "fire_rate": 0.7,
+      "cost": 300,
+      "poison_duration": 5.0
+    },
+    "tesla": {
+      "damage": 25,
+      "range": 62.5,
+      "fire_rate": 0.8,
+      "cost": 450,
+      "chain_effect": true,
+      "chain_range": 3
+    },
+    "flame": {
+      "damage": 20,
+      "range": 62.5,
+      "fire_rate": 0.6,
+      "cost": 350,
+      "burn_duration": 4.0
+    },
+    "shock": {
+      "damage": 30,
+      "range": 87.5,
+      "fire_rate": 0.5,
+      "cost": 500,
+      "freeze_duration": 0.2,
+      "chain_effect": true,
+      "chain_range": 2
+    },
+    "railgun": {
+      "damage": 200,
+      "range": 212.5,
+      "fire_rate": 0.3,
+      "cost": 1000,
+      "piercing": true
+    },
+    "bomb": {
+      "damage": 100,
+      "range": 10,
+      "cost": 100,
+      "explosion_radius": 40
+    },
+    "mine placer": {
+        "range": 37.5,
+        "fire_rate": 1.0,
+        "cost": 250,
+        "360_degree_attack": true,
+        "trigger_radius": 30,
+        "max_mines": 4
+    }
+
+},
+  "enemies": {
+    "grunt": {
+      "health": 50,
+      "damage": 5,
+      "speed": 1.0,
+      "reward": 10
+    },
+    "tank": {
+      "health": 250,
+      "damage": 10,
+      "speed": 0.5,
+      "reward": 50
+    }
+  }
+}
