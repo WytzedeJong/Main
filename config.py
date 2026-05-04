@@ -5,8 +5,7 @@ from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 
 class AppStyles:
     def __init__(self):
-
-        
+        self.text_scale = 1.0
         self.set_standaard_kleuren()
     
     def set_standaard_kleuren(self):
@@ -59,6 +58,9 @@ class AppStyles:
         self.BACKGROUND = 255, 255, 255
         self.TEXT_SET = 0, 0, 0
         
+    def set_text_scale(self, scale):
+        self.text_scale = max(0.6, min(2.0, float(scale)))
+
     def gold_color(self):
         self.BG_TOP = (120, 200, 180)
         self.BG_BOTTOM = (40, 120, 140)
@@ -178,8 +180,9 @@ class AppStyles:
         
 
 # Helper function to create fonts
-    def create_font(self, size, bold=False):
-        return pygame.font.SysFont(self.FONT_NAME, size, bold)
+    def create_font(self, size, bold=False, absolute=False):
+        font_size = int(size if absolute else max(1, round(size * self.text_scale)))
+        return pygame.font.SysFont(self.FONT_NAME, font_size, bold)
 
 
 # Shared styles instance for app-wide theming

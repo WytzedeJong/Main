@@ -77,6 +77,21 @@ class LockScreen(Scene):
     
     def set_user(self, user):
         self.user = user
+    def apply_user_style(self, user):
+        theme = user.get("theme", "standard")
+        if theme == "standard":
+            styles.set_standaard_kleuren()
+        elif theme == "gold":
+            styles.gold_color()
+        elif theme == "green":
+            styles.green_color()
+        elif theme == "blue":
+            styles.blue_color()
+        elif theme == "red":
+            styles.red_color()
+
+        text_size = user.get("text_size", 20)
+        styles.set_text_scale(text_size / 20)
     
     def load_settings(self):
         pass
@@ -216,20 +231,7 @@ class LockScreen(Scene):
                 # No password, login directly
                 self.manager.current_user = user
                 self.user = user
-                
-                theme = user.get("theme", "standard")
-                if theme == "standard":
-                    styles.set_standaard_kleuren()
-                elif theme == "gold":
-                    styles.gold_color()
-                elif theme == "green":
-                    styles.green_color()
-                elif theme == "blue":
-                    styles.blue_color()
-                elif theme == "red":
-                    styles.red_color()
-                self.success_timer = self.success_delay
-                self.set_user(user)
+                self.apply_user_style(user)
 
 
     def handle_password(self, event):
@@ -251,18 +253,7 @@ class LockScreen(Scene):
                 if self.input_sequence == user.get("password", []):
                     self.manager.current_user = user
                     self.user = user
-
-                    theme = user.get("theme", "standard")
-                    if theme == "standard":
-                        styles.set_standaard_kleuren()
-                    elif theme == "gold":
-                        styles.gold_color()
-                    elif theme == "green":
-                        styles.green_color()
-                    elif theme == "blue":
-                        styles.blue_color()
-                    elif theme == "red":
-                        styles.red_color()
+                    self.apply_user_style(user)
                     self.success_timer = self.success_delay
                     self.set_user(user)
                 else:
@@ -405,7 +396,8 @@ class LockScreen(Scene):
             "name": self.new_name,
             "color": self.new_color,
             "icon": self.new_icon,
-            "theme": "standard"
+            "theme": "standard",
+            "text_size": 20
         }
         
         if with_password:

@@ -20,7 +20,8 @@
             },
             "Highscore": [
                 130
-            ]
+            ],
+            "text_size": 20
         },
         {
             "name": "WYTZE",
@@ -36,7 +37,8 @@
                 "UP",
                 "UP"
             ],
-            "theme": "blue"
+            "theme": "blue",
+            "text_size": 20
         }
     ]
 }
