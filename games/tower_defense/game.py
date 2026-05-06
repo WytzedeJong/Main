@@ -47,9 +47,17 @@ class Enemy:
     poison_dps: float = 0.0
     burn_timer: float = 0.0
     burn_dps: float = 0.0
+    regeneration_rate: float = 0.0
+    regeneration_amount: float = 0.0
+    regeneration_timer: float = 0.0
+    armored: bool = False
+    stealth: bool = False
+    freeze_radius: float = 0.0
+    freeze_duration: float = 0.0
 
     def update(self, dt, waypoints, speed_multiplier=1.0):
         self._tick_effects(dt)
+        self._tick_regeneration(dt)
         if self.waypoint >= len(waypoints) - 1:
             return True
 
@@ -97,6 +105,17 @@ class Enemy:
             self.health -= self.burn_dps * tick
             self.burn_timer -= dt
 
+    def _tick_regeneration(self, dt):
+        if self.regeneration_rate <= 0 or self.regeneration_amount <= 0:
+            return
+        if self.health <= 0 or self.health >= self.max_health:
+            return
+
+        self.regeneration_timer -= dt
+        if self.regeneration_timer <= 0:
+            self.health = min(self.max_health, self.health + self.regeneration_amount)
+            self.regeneration_timer = self.regeneration_rate
+
 
 @dataclass
 class Tower:
@@ -108,6 +127,7 @@ class Tower:
     cooldown: float = 0.0
     total_spent: int = 0
     flash_timer: float = 0.0
+    freeze_timer: float = 0.0
 
     @property
     def center(self):
@@ -118,7 +138,7 @@ class Tower:
         if isinstance(value, (int, float)):
             if key == "range":
                 return value * (1.10 ** (self.level - 1))
-            if key in ("trigger_radius", "chain_range", "splash_damage", "explosion_radius"):
+            if key in ("trigger_radius", "chain_range", "area_of_effect", "poison_duration", "burn_duration"):
                 return value
             return value * (1.25 ** (self.level - 1))
         return value
@@ -139,7 +159,7 @@ class Tower:
     def upgrade_cost(self):
         if self.level >= 5:
             return None
-        return int(self.base.get("cost", 0) * (self.level + 1))
+        return int(self.base.get("cost", 0) * (self.level + 1) * 1.1)
 
 
 @dataclass
@@ -150,6 +170,7 @@ class Mine:
     radius: float
     trigger: float
     color: tuple[int, int, int]
+    owner: Tower
 
 
 @dataclass
@@ -572,15 +593,78 @@ class TowerGame(Scene):
     def _begin_round(self):
         self.round += 1
         self.round_cleared_announced = False
+        queue = self._round_spawn_queue()
+
+        self.spawn_queue = queue
+        self.spawn_timer = random.uniform(0.05, 0.16)
+        boss_count = queue.count("boss")
+        boss_label = f" - Boss x{boss_count}" if boss_count else ""
+        self.message = f"Round {self.round}{boss_label}"
+        self._flash_banner(f"Round {self.round}{boss_label}")
+
+    def _round_spawn_queue(self):
+        round_data = self.stats.get("rounds", {}).get(str(self.round))
+        if not round_data:
+            return self._generated_spawn_queue()
+
+        enemies = round_data.get("enemies", {})
+        queue = []
+        for name, count in enemies.items():
+            if name not in self.stats["enemies"]:
+                continue
+            for _ in range(max(0, int(count))):
+                queue.append(name)
+
+        if not queue:
+            return self._generated_spawn_queue()
+
+        random.shuffle(queue)
+        return queue
+
+    def _generated_spawn_queue(self):
         count = 8 + self.round * 3 + random.randint(0, 2 + self.round // 3)
         queue = ["grunt"] * count
+
+        if self.round >= 4 and "fast" in self.stats["enemies"]:
+            fast_count = self.round // 4 + random.randint(0, max(1, self.round // 8))
+            for _ in range(fast_count):
+                queue.insert(random.randrange(len(queue) + 1), "fast")
+
         tank_count = self.round // 3 + random.randint(0, max(0, self.round // 6))
         for _ in range(tank_count):
             queue.insert(random.randrange(len(queue) + 1), "tank")
-        self.spawn_queue = queue
-        self.spawn_timer = random.uniform(0.05, 0.16)
-        self.message = f"Round {self.round}"
-        self._flash_banner(f"Round {self.round}")
+
+        if self.round >= 8 and "armored" in self.stats["enemies"]:
+            armored_count = max(1, self.round // 7)
+            for _ in range(armored_count):
+                queue.insert(random.randrange(len(queue) + 1), "armored")
+
+        if self.round >= 12 and "regenerating" in self.stats["enemies"]:
+            regen_count = max(1, self.round // 10)
+            for _ in range(regen_count):
+                queue.insert(random.randrange(len(queue) + 1), "regenerating")
+
+        if self.round >= 14 and "stealth" in self.stats["enemies"]:
+            stealth_count = max(1, self.round // 9)
+            for _ in range(stealth_count):
+                queue.insert(random.randrange(len(queue) + 1), "stealth")
+
+        if self.round >= 16 and "frost" in self.stats["enemies"]:
+            frost_count = max(1, self.round // 12)
+            for _ in range(frost_count):
+                queue.insert(random.randrange(len(queue) + 1), "frost")
+
+        if self.round >= 18 and "regenerating_fast" in self.stats["enemies"]:
+            regen_fast_count = max(1, self.round // 14)
+            for _ in range(regen_fast_count):
+                queue.insert(random.randrange(len(queue) + 1), "regenerating_fast")
+
+        if self.round % 10 == 0 and "boss" in self.stats["enemies"]:
+            boss_count = self.round // 10
+            for _ in range(boss_count):
+                queue.append("boss")
+
+        return queue
 
     def _flash_banner(self, text, duration=1.6):
         self.banner_message = text
@@ -592,9 +676,9 @@ class TowerGame(Scene):
         return random.uniform(fast, slow)
 
     def _round_factor(self):
-        if self.round <= 20:
-            return 1 + (self.round - 1) / 19
-        return 2 + (self.round - 20) / 20
+        if self.round <= 10:
+            return 1 + (self.round - 1) / 9
+        return 2 + (self.round - 10) / 10
 
     def _spawn_enemy(self, name):
         data = self.stats["enemies"].get(name, self.stats["enemies"][self.enemy_names[0]])
@@ -604,9 +688,16 @@ class TowerGame(Scene):
             data["health"] * factor,
             data["health"] * factor,
             max(1, int(data["damage"] * factor)),
-            data["speed"] * (1 + min(0.35, self.round * 0.006)),
-            int(data["reward"] * (1 + self.round * 0.03)),
+            data["speed"],
+            int(data["reward"]),
         )
+        enemy.armored = bool(data.get("armored"))
+        enemy.stealth = bool(data.get("stealth"))
+        enemy.regeneration_rate = data.get("regeneration_rate", 0.0)
+        enemy.regeneration_amount = data.get("regeneration_amount", 0.0) * factor
+        enemy.regeneration_timer = enemy.regeneration_rate
+        enemy.freeze_radius = data.get("freeze_radius", 0.0)
+        enemy.freeze_duration = data.get("freeze_duration", 0.0)
         enemy.x, enemy.y = self.path[0]
         self.enemies.append(enemy)
 
@@ -614,6 +705,7 @@ class TowerGame(Scene):
         for enemy in list(self.enemies):
             escaped = enemy.update(dt, self.path, self.game_speed)
             if enemy.health <= 0:
+                self._trigger_frost_death(enemy)
                 self.money += enemy.reward
                 self.texts.append(FloatingText(f"+{enemy.reward}", enemy.x, enemy.y - 8, (255, 236, 130)))
                 self.enemies.remove(enemy)
@@ -624,8 +716,11 @@ class TowerGame(Scene):
 
     def _update_towers(self, dt):
         for tower in list(self.towers):
+            tower.freeze_timer = max(0, tower.freeze_timer - dt)
             tower.cooldown = max(0, tower.cooldown - dt)
             tower.flash_timer = max(0, tower.flash_timer - dt)
+            if tower.freeze_timer > 0:
+                continue
             if tower.name == "mine placer":
                 self._update_mine_placer(tower)
                 continue
@@ -637,10 +732,11 @@ class TowerGame(Scene):
     def _update_mine_placer(self, tower):
         if tower.cooldown > 0:
             return
-        if len(self.mines) >= int(tower.stat("max_mines", 4)):
+        active_mines = sum(1 for mine in self.mines if mine.owner is tower)
+        if active_mines >= int(tower.stat("max_mines_per_tower", 4)):
             return
         px, py = self._mine_position_near_tower(tower)
-        mine = Mine(px, py, 28 * (1.25 ** (tower.level - 1)), 36, tower.stat("trigger_radius", 30), tower.color)
+        mine = Mine(px, py, 28 * (1.25 ** (tower.level - 1)), 36, tower.stat("trigger_radius", 30), tower.color, tower)
         self.mines.append(mine)
         tower.cooldown = 1 / tower.fire_rate
         tower.flash_timer = 0.08
@@ -701,7 +797,11 @@ class TowerGame(Scene):
         splash = tower.stat("splash_damage", 0) or tower.stat("explosion_radius", 0)
         if splash:
             for enemy in self.enemies:
-                if enemy is not target and distance((enemy.x, enemy.y), (target.x, target.y)) <= splash:
+                if (
+                    enemy is not target
+                    and self._tower_can_hit_enemy(tower, enemy)
+                    and distance((enemy.x, enemy.y), (target.x, target.y)) <= splash
+                ):
                     self._damage_enemy(enemy, tower, tower.damage * 0.55)
             if tower.name == "bomb":
                 self.towers.remove(tower)
@@ -710,9 +810,16 @@ class TowerGame(Scene):
 
     def _targets_in_range(self, tower):
         cx, cy = tower.center
-        targets = [e for e in self.enemies if distance((cx, cy), (e.x, e.y)) <= tower.range]
+        targets = [
+            e for e in self.enemies
+            if self._tower_can_hit_enemy(tower, e)
+            and distance((cx, cy), (e.x, e.y)) <= tower.range
+        ]
         targets.sort(key=lambda enemy: enemy.progress, reverse=True)
         return targets
+
+    def _tower_can_hit_enemy(self, tower, enemy):
+        return not enemy.stealth or tower.base.get("detect_stealth", False)
 
     def _piercing_line_targets(self, tower, primary):
         cx, cy = tower.center
@@ -728,6 +835,8 @@ class TowerGame(Scene):
         line_width = max(7, GRID * 0.35)
         hits = []
         for enemy in self.enemies:
+            if not self._tower_can_hit_enemy(tower, enemy):
+                continue
             ex = enemy.x - cx
             ey = enemy.y - cy
             along = ex * ux + ey * uy
@@ -741,18 +850,25 @@ class TowerGame(Scene):
         return ([enemy for _, enemy in hits] or [primary]), endpoint
 
     def _damage_enemy(self, enemy, tower, amount):
+        if enemy.armored:
+            amount *= 0.65
         enemy.health -= amount
         if tower.base.get("slow_effect"):
             self._apply_slow_area(enemy, tower)
         self._apply_status_effects(enemy, tower)
 
+    def _trigger_frost_death(self, enemy):
+        if enemy.freeze_radius <= 0 or enemy.freeze_duration <= 0:
+            return
+        for tower in self.towers:
+            if distance(tower.center, (enemy.x, enemy.y)) <= enemy.freeze_radius:
+                tower.freeze_timer = max(tower.freeze_timer, enemy.freeze_duration)
+
     def _apply_slow_area(self, enemy, tower):
-        cx, cy = tower.center
         area = tower.stat("area_of_effect", 0)
-        radius = min(tower.range, area * GRID * 0.5) if area else 0
-        affected = self.enemies if radius else [enemy]
+        affected = self.enemies if area else [enemy]
         for other in affected:
-            if distance((cx, cy), (other.x, other.y)) <= tower.range and (not radius or distance((enemy.x, enemy.y), (other.x, other.y)) <= radius):
+            if self._tower_can_hit_enemy(tower, other) and (not area or distance((enemy.x, enemy.y), (other.x, other.y)) <= area):
                 other.slow_timer = 1.4
                 other.slow_factor = tower.base["slow_effect"]
 
@@ -772,13 +888,18 @@ class TowerGame(Scene):
         for mine in list(self.mines):
             hit = None
             for enemy in self.enemies:
+                if enemy.stealth and not mine.owner.base.get("detect_stealth", False):
+                    continue
                 if distance((mine.x, mine.y), (enemy.x, enemy.y)) <= mine.trigger:
                     hit = enemy
                     break
             if hit:
                 for enemy in self.enemies:
+                    if enemy.stealth and not mine.owner.base.get("detect_stealth", False):
+                        continue
                     if distance((mine.x, mine.y), (enemy.x, enemy.y)) <= mine.radius:
-                        enemy.health -= mine.damage
+                        damage = mine.damage * 0.65 if enemy.armored else mine.damage
+                        enemy.health -= damage
                 self.shots.append(((mine.x, mine.y), None, mine.radius, mine.color, 0.16))
                 self.mines.remove(mine)
 
@@ -834,6 +955,8 @@ class TowerGame(Scene):
             rect = pygame.Rect(x + 2, y + 2, GRID - 4, GRID - 4)
             pygame.draw.rect(surface, tower.color, rect, border_radius=3)
             pygame.draw.rect(surface, (22, 28, 32), rect, 1, border_radius=3)
+            if tower.freeze_timer > 0:
+                pygame.draw.rect(surface, (160, 225, 255), rect, 2, border_radius=3)
             if tower.flash_timer > 0:
                 pygame.draw.circle(surface, (255, 245, 180), tower.center, 3)
             level = self.small_font.render(str(tower.level), True, (255, 255, 255))
@@ -841,13 +964,30 @@ class TowerGame(Scene):
 
     def _draw_enemies(self, surface):
         for enemy in self.enemies:
-            color = (185, 67, 66) if enemy.kind == "grunt" else (102, 70, 58)
-            pygame.draw.circle(surface, color, (int(enemy.x), int(enemy.y)), 7)
-            pygame.draw.circle(surface, (35, 25, 25), (int(enemy.x), int(enemy.y)), 7, 1)
-            bar_w = 16
+            color = self._enemy_color(enemy)
+            radius = 11 if enemy.kind == "boss" else 8 if enemy.armored else 6 
+            pygame.draw.circle(surface, color, (int(enemy.x), int(enemy.y)), radius)
+            if enemy.stealth:
+                pygame.draw.circle(surface, (205, 215, 230), (int(enemy.x), int(enemy.y)), radius + 2, 1)
+            pygame.draw.circle(surface, (35, 25, 25), (int(enemy.x), int(enemy.y)), radius, 1)
+            bar_w = 24 if enemy.kind == "boss" else 16
             ratio = clamp(enemy.health / enemy.max_health, 0, 1)
-            pygame.draw.rect(surface, (35, 35, 35), (enemy.x - 8, enemy.y - 12, bar_w, 3))
-            pygame.draw.rect(surface, (84, 220, 104), (enemy.x - 8, enemy.y - 12, int(bar_w * ratio), 3))
+            pygame.draw.rect(surface, (35, 35, 35), (enemy.x - bar_w // 2, enemy.y - radius - 6, bar_w, 3))
+            pygame.draw.rect(surface, (84, 220, 104), (enemy.x - bar_w // 2, enemy.y - radius - 6, int(bar_w * ratio), 3))
+
+    def _enemy_color(self, enemy):
+        colors = {
+            "grunt": (185, 67, 66),
+            "tank": (102, 70, 58),
+            "fast": (225, 152, 64),
+            "boss": (120, 42, 132),
+            "armored": (96, 104, 112),
+            "regenerating": (75, 166, 96),
+            "stealth": (106, 112, 132),
+            "frost": (92, 180, 218),
+            "regenerating_fast": (73, 184, 142),
+        }
+        return colors.get(enemy.kind, (185, 67, 66))
 
     def _draw_shots(self, surface):
         for origin, target, radius, color, timer in self.shots:
