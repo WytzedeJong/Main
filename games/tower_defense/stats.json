@@ -6,6 +6,13 @@
       "fire_rate": 1.5,
       "cost": 50
     },
+    "piercer": {
+      "damage": 25,
+      "range": 87.5,
+      "fire_rate": 0.8,
+      "cost": 100,
+      "piercing": true
+    },
     "sniper": {
       "damage": 60,
       "range": 1000,
@@ -59,11 +66,12 @@
       "360_degree_attack": true
     },
     "poison": {
-      "damage": 20,
+      "damage": 15,
       "range": 87.5,
       "fire_rate": 0.7,
       "cost": 300,
-      "poison_duration": 5.0
+      "poison_duration": 5.0,
+      "detect_stealth": true
     },
     "tesla": {
       "damage": 25,
@@ -74,7 +82,7 @@
       "chain_range": 3
     },
     "flame": {
-      "damage": 20,
+      "damage": 15,
       "range": 62.5,
       "fire_rate": 0.6,
       "cost": 350,
@@ -87,8 +95,7 @@
       "cost": 500,
       "freeze_duration": 0.1,
       "chain_effect": true,
-      "chain_range": 2,
-      "detect_stealth": true
+      "chain_range": 2
     },
     "railgun": {
       "damage": 200,
@@ -687,7 +694,9 @@
         "grunt": 56,
         "fast": 28,
         "tank": 15,
-        "frost": 9
+        "frost": 9,
+        "regenerating": 8,
+        "stealth": 9
       }
     },
     "62": {
@@ -695,7 +704,9 @@
         "grunt": 57,
         "fast": 28,
         "tank": 16,
-        "armored": 9
+        "armored": 9,
+        "stealth": 9,
+        "regenerating_fast": 5
       }
     },
     "63": {
@@ -703,7 +714,9 @@
         "grunt": 58,
         "fast": 29,
         "tank": 16,
-        "regenerating_fast": 6
+        "armored": 10,
+        "stealth": 10,
+        "frost": 9
       }
     },
     "64": {
@@ -711,7 +724,9 @@
         "grunt": 59,
         "fast": 29,
         "tank": 16,
-        "stealth": 10
+        "stealth": 10,
+        "regenerating_fast": 9,
+        "armored": 10
       }
     },
     "65": {
@@ -719,7 +734,9 @@
         "grunt": 60,
         "fast": 30,
         "tank": 17,
-        "frost": 10
+        "frost": 10,
+        "regenerating": 9,
+        "stealth": 10
       }
     },
     "66": {
@@ -727,7 +744,9 @@
         "grunt": 61,
         "fast": 30,
         "tank": 17,
-        "armored": 10
+        "armored": 10,
+        "stealth_fast": 10,
+        "regenerating_fast": 8
       }
     },
     "67": {
@@ -735,7 +754,12 @@
         "grunt": 62,
         "fast": 31,
         "tank": 17,
-        "regenerating": 8
+        "regenerating": 8,
+        "stealth": 10,
+        "armored": 10,
+        "frost": 10,
+        "regenerating_fast": 8,
+        "stealth_fast": 10
       }
     },
     "68": {
@@ -743,7 +767,8 @@
         "grunt": 63,
         "fast": 31,
         "tank": 18,
-        "stealth": 11
+        "stealth": 11,
+        "frost": 10
       }
     },
     "69": {
@@ -751,7 +776,8 @@
         "grunt": 64,
         "fast": 32,
         "tank": 18,
-        "frost": 11
+        "frost": 11,
+        "regenerating_fast": 8
       }
     },
     "70": {
@@ -759,7 +785,10 @@
         "grunt": 65,
         "fast": 32,
         "tank": 18,
-        "boss": 7
+        "boss": 7,
+        "stealth_fast": 11,
+        "armored": 5,
+        "regenerating_fast": 10
       }
     },
     "71": {
@@ -767,7 +796,8 @@
         "grunt": 66,
         "fast": 33,
         "tank": 19,
-        "armored": 11
+        "armored": 11,
+        "stealth": 11
       }
     },
     "72": {
@@ -775,7 +805,8 @@
         "grunt": 67,
         "fast": 33,
         "tank": 19,
-        "regenerating_fast": 7
+        "regenerating_fast": 7,
+        "frost": 11
       }
     },
     "73": {
@@ -783,7 +814,10 @@
         "grunt": 68,
         "fast": 34,
         "tank": 19,
-        "stealth": 12
+        "stealth": 12,
+        "armored": 11,
+        "regenerating": 10,
+        "frost": 11
       }
     },
     "74": {
@@ -791,7 +825,9 @@
         "grunt": 69,
         "fast": 34,
         "tank": 20,
-        "frost": 12
+        "frost": 12,
+        "stealth": 12,
+        "armored": 18
       }
     },
     "75": {
@@ -799,7 +835,9 @@
         "grunt": 70,
         "fast": 35,
         "tank": 20,
-        "armored": 12
+        "armored": 12,
+        "regenerating": 9,
+        "regenerating_fast": 9
       }
     },
     "76": {
@@ -807,7 +845,8 @@
         "grunt": 71,
         "fast": 35,
         "tank": 20,
-        "regenerating": 9
+        "regenerating": 9,
+        "stealth": 13
       }
     },
     "77": {
@@ -815,7 +854,9 @@
         "grunt": 72,
         "fast": 36,
         "tank": 21,
-        "stealth": 13
+        "stealth": 13,
+        "armored": 12,
+        "stealth_fast": 13
       }
     },
     "78": {
@@ -823,7 +864,9 @@
         "grunt": 73,
         "fast": 36,
         "tank": 21,
-        "frost": 13
+        "frost": 13,
+        "regenerating_fast": 30,
+        "regenerating": 30
       }
     },
     "79": {
@@ -831,7 +874,9 @@
         "grunt": 74,
         "fast": 37,
         "tank": 21,
-        "armored": 13
+        "armored": 13,
+        "stealth": 13,
+        "frost": 13
       }
     },
     "80": {
@@ -840,7 +885,9 @@
         "fast": 37,
         "tank": 22,
         "boss": 8,
-        "regenerating_fast": 8
+        "regenerating_fast": 8,
+        "stealth": 14,
+        "armored": 13
       }
     },
     "81": {
@@ -848,7 +895,8 @@
         "grunt": 76,
         "fast": 38,
         "tank": 22,
-        "stealth": 14
+        "stealth": 24,
+        "stealth_fast": 24
       }
     },
     "82": {
@@ -856,7 +904,10 @@
         "grunt": 77,
         "fast": 38,
         "tank": 22,
-        "frost": 14
+        "frost": 14,
+        "regenerating": 12,
+        "regenerating_fast": 12,
+        "armored": 14
       }
     },
     "83": {
@@ -864,7 +915,9 @@
         "grunt": 78,
         "fast": 39,
         "tank": 23,
-        "armored": 14
+        "armored": 14,
+        "stealth": 14,
+        "frost": 14
       }
     },
     "84": {
@@ -872,7 +925,9 @@
         "grunt": 79,
         "fast": 39,
         "tank": 23,
-        "regenerating": 10
+        "regenerating": 10,
+        "stealth": 14,
+        "stealth_fast": 14
       }
     },
     "85": {
@@ -880,7 +935,9 @@
         "grunt": 80,
         "fast": 40,
         "tank": 23,
-        "stealth": 15
+        "stealth": 15,
+        "armored": 15,
+        "regenerating_fast": 10
       }
     },
     "86": {
@@ -888,7 +945,8 @@
         "grunt": 81,
         "fast": 40,
         "tank": 24,
-        "frost": 15
+        "frost": 15,
+        "armored": 15
       }
     },
     "87": {
@@ -896,7 +954,9 @@
         "grunt": 82,
         "fast": 41,
         "tank": 24,
-        "armored": 15
+        "armored": 15,
+        "stealth_fast": 15,
+        "regenerating": 10
       }
     },
     "88": {
@@ -904,7 +964,9 @@
         "grunt": 83,
         "fast": 41,
         "tank": 24,
-        "regenerating_fast": 9
+        "regenerating_fast": 9,
+        "armored": 15,
+        "frost": 15
       }
     },
     "89": {
@@ -912,7 +974,11 @@
         "grunt": 84,
         "fast": 42,
         "tank": 25,
-        "stealth": 16
+        "stealth": 16,
+        "regenerating": 10,
+        "stealth_fast": 16,
+        "armored": 16,
+        "frost": 16
       }
     },
     "90": {
@@ -920,7 +986,9 @@
         "grunt": 85,
         "fast": 42,
         "tank": 25,
-        "boss": 9
+        "boss": 9,
+        "frost": 36,
+        "armored": 15
       }
     },
     "91": {
@@ -928,7 +996,9 @@
         "grunt": 86,
         "fast": 43,
         "tank": 25,
-        "frost": 16
+        "frost": 16,
+        "stealth": 16,
+        "regenerating": 11
       }
     },
     "92": {
@@ -936,7 +1006,9 @@
         "grunt": 87,
         "fast": 43,
         "tank": 26,
-        "armored": 16
+        "armored": 16,
+        "stealth": 16,
+        "regenerating_fast": 11
       }
     },
     "93": {
@@ -944,7 +1016,10 @@
         "grunt": 88,
         "fast": 44,
         "tank": 26,
-        "regenerating": 11
+        "regenerating": 11,
+        "stealth_fast": 17,
+        "armored": 17,
+        "regenerating_fast": 11
       }
     },
     "94": {
@@ -952,7 +1027,10 @@
         "grunt": 89,
         "fast": 44,
         "tank": 26,
-        "stealth": 17
+        "stealth": 17,
+        "armored": 17,
+        "frost": 17,
+        "regenerating_fast": 11
       }
     },
     "95": {
@@ -960,7 +1038,8 @@
         "grunt": 90,
         "fast": 45,
         "tank": 27,
-        "frost": 17
+        "frost": 17,
+        "armored": 15
       }
     },
     "96": {
@@ -968,7 +1047,8 @@
         "grunt": 91,
         "fast": 45,
         "tank": 27,
-        "armored": 17
+        "armored": 17,
+        "stealth_fast": 17
       }
     },
     "97": {
@@ -976,7 +1056,9 @@
         "grunt": 92,
         "fast": 46,
         "tank": 27,
-        "regenerating_fast": 10
+        "regenerating_fast": 10,
+        "stealth_fast": 18,
+        "armored": 18
       }
     },
     "98": {
@@ -984,7 +1066,9 @@
         "grunt": 93,
         "fast": 46,
         "tank": 28,
-        "stealth": 18
+        "stealth": 18,
+        "armored": 18,
+        "frost": 18
       }
     },
     "99": {
@@ -992,7 +1076,9 @@
         "grunt": 94,
         "fast": 47,
         "tank": 28,
-        "frost": 18
+        "frost": 18,
+        "stealth": 18,
+        "regenerating": 12
       }
     },
     "100": {
@@ -1005,7 +1091,8 @@
         "stealth": 20,
         "regenerating": 15,
         "regenerating_fast": 12,
-        "frost": 20
+        "frost": 20,
+        "stealth_fast": 20
       }
     }
   }
