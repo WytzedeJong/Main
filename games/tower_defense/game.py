@@ -17,6 +17,7 @@ COLS = FIELD_WIDTH // GRID
 ROWS = BASE_HEIGHT // GRID
 PATH_WIDTH = 25
 MAX_TOWERS = 20
+PIERCING_RANGE_MULTIPLIER = 2.0
 
 
 def distance(a, b):
@@ -676,9 +677,7 @@ class TowerGame(Scene):
         return random.uniform(fast, slow)
 
     def _round_factor(self):
-        if self.round <= 10:
-            return 1 + (self.round - 1) / 9
-        return 2 + (self.round - 10) / 10
+        return 2 ** ((self.round - 1) / 5)
 
     def _spawn_enemy(self, name):
         data = self.stats["enemies"].get(name, self.stats["enemies"][self.enemy_names[0]])
@@ -831,7 +830,8 @@ class TowerGame(Scene):
 
         ux = dx / length
         uy = dy / length
-        endpoint = (cx + ux * tower.range, cy + uy * tower.range)
+        shot_range = tower.range * tower.base.get("pierce_range_multiplier", PIERCING_RANGE_MULTIPLIER)
+        endpoint = (cx + ux * shot_range, cy + uy * shot_range)
         line_width = max(7, GRID * 0.35)
         hits = []
         for enemy in self.enemies:
@@ -840,7 +840,7 @@ class TowerGame(Scene):
             ex = enemy.x - cx
             ey = enemy.y - cy
             along = ex * ux + ey * uy
-            if along < 0 or along > tower.range:
+            if along < 0 or along > shot_range:
                 continue
             perpendicular = abs(ex * uy - ey * ux)
             if perpendicular <= line_width:
