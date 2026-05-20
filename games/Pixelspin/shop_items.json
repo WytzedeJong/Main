@@ -1,0 +1,88 @@
+{
+  "charms": {
+    "Lucky Cat": {
+      "cost": 20,
+      "effect": "Rente bonus +5% per 3 patronen",
+      "category": "interest"
+    },
+    "Pentacle": {
+      "cost": 15,
+      "effect": "Patroon-vermenigvuldiger +0.5x bij 5+ patronen",
+      "category": "multiplier"
+    },
+    "Big Mushroom": {
+      "cost": 25,
+      "effect": "Symboolwaarde x2 bij 3+ patronen",
+      "category": "symbol"
+    },
+    "Holy Bible": {
+      "cost": 50,
+      "effect": "Bescherming tegen 666 patroon",
+      "category": "protection"
+    },
+    "Golden Horseshoe": {
+      "cost": 30,
+      "effect": "Luck-triggers x2 effectief",
+      "category": "luck"
+    }
+  },
+  "powerups": {
+    "Luck Potion": {
+      "cost": 40,
+      "effect": "+10 Luck instant",
+      "category": "instant_luck"
+    },
+    "Coin Doubler": {
+      "cost": 35,
+      "effect": "Volgende 3 spins x2 muneten",
+      "category": "multiplier_temp"
+    },
+    "Extra Spins": {
+      "cost": 60,
+      "effect": "+5 spins voor deze ronde",
+      "category": "spin_boost"
+    }
+  },
+  "upgrades": {
+    "Better Odds": {
+      "cost": 75,
+      "effect": "Patroon kansen +15%",
+      "category": "permanent_upgrade"
+    },
+    "Interest Boost": {
+      "cost": 45,
+      "effect": "ATM rente 5% -> 7%",
+      "category": "permanent_upgrade"
+    },
+    "Diamant Boost": {
+      "cost": 55,
+      "effect": "Diamant kans +5% (hogere droprate)",
+      "category": "symbol_chance"
+    },
+    "Zeven Boost": {
+      "cost": 65,
+      "effect": "Zeven kans +4% (hogere droprate)",
+      "category": "symbol_chance"
+    },
+    "Klaver Boost": {
+      "cost": 40,
+      "effect": "Klaver kans +4% (hogere droprate)",
+      "category": "symbol_chance"
+    },
+    "Goud Diamant": {
+      "cost": 50,
+      "effect": "Diamant waarde +3 goud",
+      "category": "symbol_value"
+    },
+    "Goud Zeven": {
+      "cost": 60,
+      "effect": "Zeven waarde +5 goud",
+      "category": "symbol_value"
+    },
+    "Goud Citroen": {
+      "cost": 30,
+      "effect": "Citroen waarde +1 goud",
+      "category": "symbol_value"
+    }
+  }
+}
