@@ -25,7 +25,8 @@ class Game_Menu(Scene):
             ("Pengu Slider", AdventureGame),
             ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
-            ("test", MonkeyStacker)
+            ("Tower Defense", TowerGame)
+            ("Pixelspin", PixelspinGame)
         ]
 
         self.selected = 0
