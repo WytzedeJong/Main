@@ -25,7 +25,7 @@ class Game_Menu(Scene):
             ("Pengu Slider", AdventureGame),
             ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
-            ("Tower Defense", TowerGame)
+            ("Tower Defense", TowerGame),
             ("Pixelspin", PixelspinGame)
         ]
 
