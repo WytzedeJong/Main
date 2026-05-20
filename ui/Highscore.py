@@ -375,7 +375,7 @@ class Highscore(Scene):
                 puzzle_times = self.highscores.get(game_name, {})
                 if isinstance(puzzle_times, dict):
                     times_list = []
-                    for difficulty in ['Easy', 'Medium', 'Hard']:
+                    for difficulty in ['Easy', 'Medium', 'Hard', 'Extra Hard']:
                         time_str = puzzle_times.get(difficulty, '--:--')
                         times_list.append(f"{difficulty}: {time_str}")
                     score_text = "Puzzle\n\n" + "\n\n".join(times_list)
@@ -385,6 +385,8 @@ class Highscore(Scene):
                 score = self.highscores.get(game_name, 0)
                 if game_name == 'Pengu':
                     score_text = f"{game_name}\n\nWins: {score}"
+                elif game_name == 'Tower Defense':
+                    score_text = f"{game_name}\n\nBest round: {score}"
                 else:
                     score_text = f"{game_name}\n\nScore: {score}"
 

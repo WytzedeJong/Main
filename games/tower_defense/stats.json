@@ -1,0 +1,1165 @@
+{
+  "towers": {
+    "starter": {
+      "damage": 10,
+      "range": 62.5,
+      "fire_rate": 1.5,
+      "cost": 50
+    },
+    "cannon": {
+      "damage": 20,
+      "range": 87.5,
+      "fire_rate": 0.5,
+      "cost": 70,
+      "splash_damage": 20,
+      "detect_stealth": true
+    },
+    "piercer": {
+      "damage": 25,
+      "range": 87.5,
+      "fire_rate": 0.8,
+      "cost": 100,
+      "piercing": true
+    },
+    "bomb": {
+      "damage": 100,
+      "range": 10,
+      "cost": 100,
+      "explosion_radius": 40,
+      "detect_stealth": true
+    },
+    "earthquake machine": {
+      "damage": 20,
+      "range": 62.5,
+      "fire_rate": 0.7,
+      "cost": 130,
+      "360_degree_attack": true
+    },
+    "missile": {
+      "damage": 30,
+      "range": 87.5,
+      "fire_rate": 0.4,
+      "cost": 140,
+      "splash_damage": 20
+    },
+    "sniper": {
+      "damage": 60,
+      "range": 1000,
+      "fire_rate": 0.4,
+      "cost": 200,
+      "detect_stealth": true
+    },
+    "slowing tower": {
+      "damage": 0,
+      "range": 62.5,
+      "fire_rate": 0.4,
+      "cost": 200,
+      "slow_effect": 0.5,
+      "area_of_effect": 5
+    },
+    "freeze": {
+      "damage": 0,
+      "range": 37.5,
+      "fire_rate": 0.2,
+      "cost": 250,
+      "freeze_duration": 0.3,
+      "360_degree_attack": true
+    },
+    "mine placer": {
+        "range": 37.5,
+        "fire_rate": 1.0,
+        "cost": 250,
+        "360_degree_attack": true,
+        "trigger_radius": 30,
+        "max_mines_per_tower": 4,
+        "detect_stealth": true
+    },
+    "laser": {
+      "damage": 15,
+      "range": 87.5,
+      "fire_rate": 2.0,
+      "cost": 300,
+      "detect_stealth": true
+    },
+    "flame": {
+      "damage": 25,
+      "range": 62.5,
+      "fire_rate": 0.6,
+      "cost": 350,
+      "burn_duration": 4.0
+    },
+    "bank": {
+      "cost": 350,
+      "money_generation": 5,
+      "money_generation_interval": 1.0
+    },
+    "poison": {
+      "damage": 20,
+      "range": 87.5,
+      "fire_rate": 0.7,
+      "cost": 400,
+      "poison_duration": 5.0,
+      "detect_stealth": true
+    },
+    "buffer": {
+      "range": 42.7,
+      "cost": 400,
+      "buff_effect": 0.125
+    },
+    "tesla": {
+      "damage": 25,
+      "range": 62.5,
+      "fire_rate": 0.6,
+      "cost": 450,
+      "chain_effect": true,
+      "chain_range": 3
+    },
+    "shock": {
+      "damage": 30,
+      "range": 87.5,
+      "fire_rate": 0.5,
+      "cost": 500,
+      "freeze_duration": 0.1,
+      "chain_effect": true,
+      "chain_range": 2
+    },
+      "machinegunner": {
+      "damage": 25,
+      "range": 62.5,
+      "fire_rate": 4.0,
+      "cost": 500,
+      "detect_stealth": true,
+      "targeting_priority": "weakest"
+    },
+    "upgrade link": {
+      "damage": 5,
+      "range": 62.5,
+      "fire_rate": 0.5,
+      "cost": 500,
+      "upgrade_link": true,
+      "upgrade_range": 87.5,
+      "upgrade_effect": 0.2,
+      "upgrade_max_links": 5
+    },
+    "railgun": {
+      "damage": 300,
+      "range": 112.5,
+      "fire_rate": 0.2,
+      "cost": 1500,
+      "piercing": true
+    },
+    "excavator": {
+      "damage": 75,
+      "range": 50,
+      "fire_rate": 0.4,
+      "cost": 4000,
+      "slow_effect": 0.7,
+      "360_degree_attack": true,
+      "delayed_2nd_attack": true,
+      "delay_duration": 1
+    },
+    "inferno": {
+      "damage": 15,
+      "range": 62.5,
+      "fire_rate": 0.1,
+      "cost": 4500,
+      "increasing_damage": true,
+      "continous_damage": true,
+      "max_damage_per_second": 400,
+      "time_to_max_damage": 6.0,
+      "targeting_priority": "strongest"
+    },
+    "boxer": {
+      "damage": 45,
+      "range": 62.5,
+      "fire_rate": 0.6,
+      "cost": 5000,
+      "knockback_distance": 15
+    },
+    "black hole generator": {
+      "damage": 90,
+      "range": 62.5,
+      "fire_rate": 1,
+      "cost": 10000,
+      "pull_strength": 0.2,
+      "pull_radius": 62.5,
+      "continous_damage": true,
+      "detect_stealth": true
+    }
+
+},
+  "enemies": {
+    "grunt": {
+      "health": 50,
+      "damage": 5,
+      "speed": 1.0,
+      "reward": 10
+    },
+    "tank": {
+      "health": 250,
+      "damage": 10,
+      "speed": 0.5,
+      "reward": 50
+    },
+    "fast": {
+      "health": 50,
+      "damage": 5,
+      "speed": 2.0,
+      "reward": 15
+    },
+    "boss": {
+      "health": 1000,
+      "damage": 20,
+      "speed": 0.3,
+      "reward": 200
+    },
+    "armored": {
+      "health": 375,
+      "damage": 10,
+      "speed": 0.4,
+      "reward": 100,
+      "armored": true
+    },
+    "regenerating": {
+      "health": 100,
+      "damage": 5,
+      "speed": 0.8,
+      "reward": 30,
+      "regeneration_rate": 1.0,
+      "regeneration_amount": 7
+    },
+    "stealth": {
+      "health": 40,
+      "damage": 5,
+      "speed": 1.0,
+      "reward": 25,
+      "stealth": true
+    },
+    "frost": {
+      "health": 60,
+      "damage": 5,
+      "speed": 0.8,
+      "reward": 20,
+      "freeze_radius": 37.5,
+      "freeze_duration": 1.0
+    },
+    "regenerating_fast": {
+      "health": 80,
+      "damage": 5,
+      "speed": 1.5,
+      "reward": 25,
+      "regeneration_rate": 0.5,
+      "regeneration_amount": 5
+    },
+    "stealth_fast": {
+      "health": 40,
+      "damage": 5,
+      "speed": 1.5,
+      "reward": 30,
+      "stealth": true
+    }
+  },
+  "rounds": {
+    "1": {
+      "enemies": {
+        "grunt": 10
+      }
+    },
+    "2": {
+      "enemies": {
+        "tank": 1,
+        "grunt": 12
+      }
+    },
+    "3": {
+      "enemies": {
+        "tank": 1,
+        "grunt": 12,
+        "fast": 3
+      }
+    },
+    "4": {
+      "enemies": {
+        "tank": 2,
+        "grunt": 12
+      }
+    },
+    "5": {
+      "enemies": {
+        "tank": 2,
+        "grunt": 10,
+        "fast": 5
+      }
+    },
+    "6": {
+      "enemies": {
+        "tank": 2,
+        "grunt": 10,
+        "fast": 5,
+        "frost": 3
+      }
+    },
+    "7": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "regenerating": 3
+      }
+    },
+    "8": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "tank": 2
+      }
+    },
+    "9": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "tank": 3,
+        "regenerating": 3
+      }
+    },
+    "10": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "boss": 1,
+        "regenerating": 5
+      }
+    },
+    "11": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "stealth": 1,
+        "frost": 2
+      }
+    },
+    "12": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "regenerating_fast": 3
+      }
+    },
+    "13": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "armored": 1,
+        "regenerating": 5
+      }
+    },
+    "14": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "armored": 2
+      }
+    },
+    "15": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "tank": 6,
+        "armored": 1
+      }
+    },
+    "16": {
+      "enemies": {
+        "grunt": 10,
+        "fast": 5,
+        "regenerating_fast": 5,
+        "stealth": 5
+      }
+    },
+    "17": {
+      "enemies": {
+        "grunt": 12,
+        "fast": 6
+      }
+    },
+    "18": {
+      "enemies": {
+        "grunt": 13,
+        "fast": 6,
+        "tank": 1
+      }
+    },
+    "19": {
+      "enemies": {
+        "grunt": 14,
+        "fast": 7,
+        "tank": 1
+      }
+    },
+    "20": {
+      "enemies": {
+        "grunt": 15,
+        "fast": 7,
+        "tank": 2,
+        "boss": 2
+      }
+    },
+    "21": {
+      "enemies": {
+        "grunt": 16,
+        "fast": 8,
+        "tank": 2,
+        "frost": 1
+      }
+    },
+    "22": {
+      "enemies": {
+        "grunt": 17,
+        "fast": 8,
+        "tank": 2,
+        "regenerating": 2
+      }
+    },
+    "23": {
+      "enemies": {
+        "grunt": 18,
+        "fast": 9,
+        "tank": 3
+      }
+    },
+    "24": {
+      "enemies": {
+        "grunt": 19,
+        "fast": 9,
+        "tank": 3,
+        "stealth": 2
+      }
+    },
+    "25": {
+      "enemies": {
+        "grunt": 20,
+        "fast": 10,
+        "tank": 3,
+        "armored": 1
+      }
+    },
+    "26": {
+      "enemies": {
+        "grunt": 21,
+        "fast": 10,
+        "tank": 4,
+        "regenerating": 3
+      }
+    },
+    "27": {
+      "enemies": {
+        "grunt": 22,
+        "fast": 11,
+        "tank": 4,
+        "frost": 2
+      }
+    },
+    "28": {
+      "enemies": {
+        "grunt": 23,
+        "fast": 11,
+        "tank": 4,
+        "stealth": 3
+      }
+    },
+    "29": {
+      "enemies": {
+        "grunt": 24,
+        "fast": 12,
+        "tank": 5,
+        "armored": 2,
+        "stealth_fast": 2
+      }
+    },
+    "30": {
+      "enemies": {
+        "grunt": 25,
+        "fast": 12,
+        "tank": 5,
+        "boss": 3
+      }
+    },
+    "31": {
+      "enemies": {
+        "grunt": 26,
+        "fast": 13,
+        "tank": 5,
+        "regenerating_fast": 2
+      }
+    },
+    "32": {
+      "enemies": {
+        "grunt": 27,
+        "fast": 13,
+        "tank": 6,
+        "stealth": 4
+      }
+    },
+    "33": {
+      "enemies": {
+        "grunt": 28,
+        "fast": 14,
+        "tank": 6,
+        "frost": 3
+      }
+    },
+    "34": {
+      "enemies": {
+        "grunt": 29,
+        "fast": 14,
+        "tank": 6,
+        "armored": 3
+      }
+    },
+    "35": {
+      "enemies": {
+        "grunt": 30,
+        "fast": 15,
+        "tank": 7,
+        "regenerating": 4,
+        "stealth_fast": 3
+      }
+    },
+    "36": {
+      "enemies": {
+        "grunt": 31,
+        "fast": 15,
+        "tank": 7,
+        "stealth": 5
+      }
+    },
+    "37": {
+      "enemies": {
+        "grunt": 32,
+        "fast": 16,
+        "tank": 7,
+        "frost": 4
+      }
+    },
+    "38": {
+      "enemies": {
+        "grunt": 33,
+        "fast": 16,
+        "tank": 8,
+        "armored": 4
+      }
+    },
+    "39": {
+      "enemies": {
+        "grunt": 34,
+        "fast": 17,
+        "tank": 8,
+        "regenerating_fast": 3,
+        "stealth_fast": 4
+      }
+    },
+    "40": {
+      "enemies": {
+        "grunt": 35,
+        "fast": 17,
+        "tank": 8,
+        "boss": 4,
+        "stealth": 3
+      }
+    },
+    "41": {
+      "enemies": {
+        "grunt": 36,
+        "fast": 18,
+        "tank": 9,
+        "armored": 4
+      }
+    },
+    "42": {
+      "enemies": {
+        "grunt": 37,
+        "fast": 18,
+        "tank": 9,
+        "frost": 5
+      }
+    },
+    "43": {
+      "enemies": {
+        "grunt": 38,
+        "fast": 19,
+        "tank": 9,
+        "regenerating": 5,
+        "stealth": 4,
+        "stealth_fast": 5
+      }
+    },
+    "44": {
+      "enemies": {
+        "grunt": 39,
+        "fast": 19,
+        "tank": 10,
+        "stealth": 6
+      }
+    },
+    "45": {
+      "enemies": {
+        "grunt": 40,
+        "fast": 20,
+        "tank": 10,
+        "armored": 5
+      }
+    },
+    "46": {
+      "enemies": {
+        "grunt": 41,
+        "fast": 20,
+        "tank": 10,
+        "regenerating_fast": 4,
+        "stealth_fast": 6,
+        "frost": 4
+      }
+    },
+    "47": {
+      "enemies": {
+        "grunt": 42,
+        "fast": 21,
+        "tank": 11,
+        "frost": 6,
+        "stealth": 4
+      }
+    },
+    "48": {
+      "enemies": {
+        "grunt": 43,
+        "fast": 21,
+        "tank": 11,
+        "stealth": 7,
+        "armored": 4
+      }
+    },
+    "49": {
+      "enemies": {
+        "grunt": 44,
+        "fast": 22,
+        "tank": 11,
+        "armored": 6,
+        "regenerating": 5
+      }
+    },
+    "50": {
+      "enemies": {
+        "grunt": 45,
+        "fast": 22,
+        "tank": 12,
+        "boss": 5,
+        "stealth": 6,
+        "frost": 3,
+        "regenerating_fast": 4,
+        "stealth_fast": 5,
+        "armored": 3
+      }
+    },
+    "51": {
+      "enemies": {
+        "grunt": 46,
+        "fast": 23,
+        "tank": 12,
+        "regenerating": 6,
+        "stealth": 6
+      }
+    },
+    "52": {
+      "enemies": {
+        "grunt": 47,
+        "fast": 23,
+        "tank": 12,
+        "frost": 7,
+        "armored": 5
+      }
+    },
+    "53": {
+      "enemies": {
+        "grunt": 48,
+        "fast": 24,
+        "tank": 13,
+        "stealth": 8,
+        "regenerating_fast": 5,
+        "armored": 6
+      }
+    },
+    "54": {
+      "enemies": {
+        "grunt": 49,
+        "fast": 24,
+        "tank": 13,
+        "armored": 7,
+        "frost": 7
+      }
+    },
+    "55": {
+      "enemies": {
+        "grunt": 50,
+        "fast": 25,
+        "tank": 13,
+        "regenerating_fast": 5,
+        "stealth": 8,
+        "armored": 11
+      }
+    },
+    "56": {
+      "enemies": {
+        "grunt": 51,
+        "fast": 25,
+        "tank": 14,
+        "frost": 8,
+        "regenerating": 17
+      }
+    },
+    "57": {
+      "enemies": {
+        "grunt": 52,
+        "fast": 26,
+        "tank": 14,
+        "stealth": 9,
+        "stealth_fast": 6
+      }
+    },
+    "58": {
+      "enemies": {
+        "grunt": 53,
+        "fast": 26,
+        "tank": 14,
+        "armored": 8,
+        "frost": 8,
+        "regenerating_fast": 4
+      }
+    },
+    "59": {
+      "enemies": {
+        "grunt": 54,
+        "fast": 27,
+        "tank": 15,
+        "regenerating": 7,
+        "stealth": 9,
+        "armored": 3
+      }
+    },
+    "60": {
+      "enemies": {
+        "grunt": 55,
+        "fast": 27,
+        "tank": 15,
+        "boss": 6,
+        "stealth": 5,
+        "frost": 5,
+        "regenerating_fast": 5,
+        "armored": 4
+      }
+    },
+    "61": {
+      "enemies": {
+        "grunt": 56,
+        "fast": 28,
+        "tank": 15,
+        "frost": 9,
+        "regenerating": 8,
+        "stealth": 9
+      }
+    },
+    "62": {
+      "enemies": {
+        "grunt": 57,
+        "fast": 28,
+        "tank": 16,
+        "armored": 9,
+        "stealth": 9,
+        "regenerating_fast": 5
+      }
+    },
+    "63": {
+      "enemies": {
+        "grunt": 58,
+        "fast": 29,
+        "tank": 16,
+        "armored": 10,
+        "stealth": 10,
+        "frost": 9
+      }
+    },
+    "64": {
+      "enemies": {
+        "grunt": 59,
+        "fast": 29,
+        "tank": 16,
+        "stealth": 10,
+        "regenerating_fast": 9,
+        "armored": 10
+      }
+    },
+    "65": {
+      "enemies": {
+        "grunt": 60,
+        "fast": 30,
+        "tank": 17,
+        "frost": 10,
+        "regenerating": 9,
+        "stealth": 10
+      }
+    },
+    "66": {
+      "enemies": {
+        "grunt": 61,
+        "fast": 30,
+        "tank": 17,
+        "armored": 10,
+        "stealth_fast": 10,
+        "regenerating_fast": 8
+      }
+    },
+    "67": {
+      "enemies": {
+        "grunt": 62,
+        "fast": 31,
+        "tank": 17,
+        "regenerating": 8,
+        "stealth": 10,
+        "armored": 10,
+        "frost": 10,
+        "regenerating_fast": 8,
+        "stealth_fast": 10
+      }
+    },
+    "68": {
+      "enemies": {
+        "grunt": 63,
+        "fast": 31,
+        "tank": 18,
+        "stealth": 11,
+        "frost": 10
+      }
+    },
+    "69": {
+      "enemies": {
+        "grunt": 64,
+        "fast": 32,
+        "tank": 18,
+        "frost": 11,
+        "regenerating_fast": 8
+      }
+    },
+    "70": {
+      "enemies": {
+        "grunt": 65,
+        "fast": 32,
+        "tank": 18,
+        "boss": 7,
+        "stealth_fast": 11,
+        "armored": 5,
+        "regenerating_fast": 10
+      }
+    },
+    "71": {
+      "enemies": {
+        "grunt": 66,
+        "fast": 33,
+        "tank": 19,
+        "armored": 11,
+        "stealth": 11
+      }
+    },
+    "72": {
+      "enemies": {
+        "grunt": 67,
+        "fast": 33,
+        "tank": 19,
+        "regenerating_fast": 7,
+        "frost": 11
+      }
+    },
+    "73": {
+      "enemies": {
+        "grunt": 68,
+        "fast": 34,
+        "tank": 19,
+        "stealth": 12,
+        "armored": 11,
+        "regenerating": 10,
+        "frost": 11
+      }
+    },
+    "74": {
+      "enemies": {
+        "grunt": 69,
+        "fast": 34,
+        "tank": 20,
+        "frost": 12,
+        "stealth": 12,
+        "armored": 18
+      }
+    },
+    "75": {
+      "enemies": {
+        "grunt": 70,
+        "fast": 35,
+        "tank": 20,
+        "armored": 12,
+        "regenerating": 9,
+        "regenerating_fast": 9
+      }
+    },
+    "76": {
+      "enemies": {
+        "grunt": 71,
+        "fast": 35,
+        "tank": 20,
+        "regenerating": 9,
+        "stealth": 13
+      }
+    },
+    "77": {
+      "enemies": {
+        "grunt": 72,
+        "fast": 36,
+        "tank": 21,
+        "stealth": 13,
+        "armored": 12,
+        "stealth_fast": 13
+      }
+    },
+    "78": {
+      "enemies": {
+        "grunt": 73,
+        "fast": 36,
+        "tank": 21,
+        "frost": 13,
+        "regenerating_fast": 30,
+        "regenerating": 30
+      }
+    },
+    "79": {
+      "enemies": {
+        "grunt": 74,
+        "fast": 37,
+        "tank": 21,
+        "armored": 13,
+        "stealth": 13,
+        "frost": 13
+      }
+    },
+    "80": {
+      "enemies": {
+        "grunt": 75,
+        "fast": 37,
+        "tank": 22,
+        "boss": 8,
+        "regenerating_fast": 8,
+        "stealth": 14,
+        "armored": 13
+      }
+    },
+    "81": {
+      "enemies": {
+        "grunt": 76,
+        "fast": 38,
+        "tank": 22,
+        "stealth": 24,
+        "stealth_fast": 24
+      }
+    },
+    "82": {
+      "enemies": {
+        "grunt": 77,
+        "fast": 38,
+        "tank": 22,
+        "frost": 14,
+        "regenerating": 12,
+        "regenerating_fast": 12,
+        "armored": 14
+      }
+    },
+    "83": {
+      "enemies": {
+        "grunt": 78,
+        "fast": 39,
+        "tank": 23,
+        "armored": 14,
+        "stealth": 14,
+        "frost": 14
+      }
+    },
+    "84": {
+      "enemies": {
+        "grunt": 79,
+        "fast": 39,
+        "tank": 23,
+        "regenerating": 10,
+        "stealth": 14,
+        "stealth_fast": 14
+      }
+    },
+    "85": {
+      "enemies": {
+        "grunt": 80,
+        "fast": 40,
+        "tank": 23,
+        "stealth": 15,
+        "armored": 15,
+        "regenerating_fast": 10
+      }
+    },
+    "86": {
+      "enemies": {
+        "grunt": 81,
+        "fast": 40,
+        "tank": 24,
+        "frost": 15,
+        "armored": 15
+      }
+    },
+    "87": {
+      "enemies": {
+        "grunt": 82,
+        "fast": 41,
+        "tank": 24,
+        "armored": 15,
+        "stealth_fast": 15,
+        "regenerating": 10
+      }
+    },
+    "88": {
+      "enemies": {
+        "grunt": 83,
+        "fast": 41,
+        "tank": 24,
+        "regenerating_fast": 9,
+        "armored": 15,
+        "frost": 15
+      }
+    },
+    "89": {
+      "enemies": {
+        "grunt": 84,
+        "fast": 42,
+        "tank": 25,
+        "stealth": 16,
+        "regenerating": 10,
+        "stealth_fast": 16,
+        "armored": 16,
+        "frost": 16
+      }
+    },
+    "90": {
+      "enemies": {
+        "grunt": 85,
+        "fast": 42,
+        "tank": 25,
+        "boss": 9,
+        "frost": 36,
+        "armored": 15
+      }
+    },
+    "91": {
+      "enemies": {
+        "grunt": 86,
+        "fast": 43,
+        "tank": 25,
+        "frost": 16,
+        "stealth": 16,
+        "regenerating": 11
+      }
+    },
+    "92": {
+      "enemies": {
+        "grunt": 87,
+        "fast": 43,
+        "tank": 26,
+        "armored": 16,
+        "stealth": 16,
+        "regenerating_fast": 11
+      }
+    },
+    "93": {
+      "enemies": {
+        "grunt": 88,
+        "fast": 44,
+        "tank": 26,
+        "regenerating": 11,
+        "stealth_fast": 17,
+        "armored": 17,
+        "regenerating_fast": 11
+      }
+    },
+    "94": {
+      "enemies": {
+        "grunt": 89,
+        "fast": 44,
+        "tank": 26,
+        "stealth": 17,
+        "armored": 17,
+        "frost": 17,
+        "regenerating_fast": 11
+      }
+    },
+    "95": {
+      "enemies": {
+        "grunt": 90,
+        "fast": 45,
+        "tank": 27,
+        "frost": 17,
+        "armored": 15
+      }
+    },
+    "96": {
+      "enemies": {
+        "grunt": 91,
+        "fast": 45,
+        "tank": 27,
+        "armored": 17,
+        "stealth_fast": 17
+      }
+    },
+    "97": {
+      "enemies": {
+        "grunt": 92,
+        "fast": 46,
+        "tank": 27,
+        "regenerating_fast": 10,
+        "stealth_fast": 18,
+        "armored": 18
+      }
+    },
+    "98": {
+      "enemies": {
+        "grunt": 93,
+        "fast": 46,
+        "tank": 28,
+        "stealth": 18,
+        "armored": 18,
+        "frost": 18
+      }
+    },
+    "99": {
+      "enemies": {
+        "grunt": 94,
+        "fast": 47,
+        "tank": 28,
+        "frost": 18,
+        "stealth": 18,
+        "regenerating": 12
+      }
+    },
+    "100": {
+      "enemies": {
+        "grunt": 100,
+        "fast": 50,
+        "tank": 30,
+        "boss": 10,
+        "armored": 20,
+        "stealth": 20,
+        "regenerating": 15,
+        "regenerating_fast": 12,
+        "frost": 20,
+        "stealth_fast": 20
+      }
+    }
+  }
+}

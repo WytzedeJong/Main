@@ -3,7 +3,6 @@ import json
 import os
 
 import pygame
-
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
 from ui.lockscreen import LockScreen
@@ -187,7 +186,7 @@ class PuzzleGame(Scene):
             pygame.K_LEFT,
             pygame.K_RIGHT,
         ):
-            self.selected_difficulty = self._move_difficulty_selection(
+            self.selected_difficulty = self._move_won_difficulty_selection(
                 self.selected_difficulty, key
             )
             self._start_game(self.selected_difficulty)
@@ -600,6 +599,16 @@ class PuzzleGame(Scene):
             current_index -= columns
         elif key == pygame.K_DOWN and current_index + columns < total:
             current_index += columns
+
+        return current_index
+
+    def _move_won_difficulty_selection(self, current_index, key):
+        total = len(self.DIFFICULTIES)
+
+        if key in (pygame.K_UP, pygame.K_LEFT):
+            return max(0, current_index - 1)
+        if key in (pygame.K_DOWN, pygame.K_RIGHT):
+            return min(total - 1, current_index + 1)
 
         return current_index
 
