@@ -1,0 +1,75 @@
+{
+  "patterns": [
+    {
+      "name": "HOR",
+      "multiplier": 1.0,
+      "length": 3,
+      "type": "horizontal",
+      "category": "basic"
+    },
+    {
+      "name": "VER",
+      "multiplier": 1.0,
+      "length": 3,
+      "type": "vertical",
+      "category": "basic"
+    },
+    {
+      "name": "DIAG",
+      "multiplier": 1.5,
+      "length": 3,
+      "type": "diagonal",
+      "category": "diagonal"
+    },
+    {
+      "name": "HOR-L",
+      "multiplier": 2.0,
+      "length": 4,
+      "type": "horizontal",
+      "category": "extended"
+    },
+    {
+      "name": "HOR-XL",
+      "multiplier": 3.0,
+      "length": 5,
+      "type": "horizontal",
+      "category": "extended"
+    },
+    {
+      "name": "ZIG",
+      "multiplier": 4.0,
+      "type": "zigzag",
+      "category": "complex"
+    },
+    {
+      "name": "ZAG",
+      "multiplier": 4.0,
+      "type": "zagzag",
+      "category": "complex"
+    },
+    {
+      "name": "ABOVE",
+      "multiplier": 7.0,
+      "type": "top_row",
+      "category": "full_row"
+    },
+    {
+      "name": "BOTTOM_ROW",
+      "multiplier": 7.0,
+      "type": "bottom_row",
+      "category": "full_row"
+    },
+    {
+      "name": "EYE",
+      "multiplier": 8.0,
+      "type": "eye",
+      "category": "complex"
+    },
+    {
+      "name": "JACKPOT",
+      "multiplier": 10.0,
+      "type": "jackpot",
+      "category": "jackpot"
+    }
+  ]
+}
