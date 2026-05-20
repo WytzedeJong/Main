@@ -8,16 +8,30 @@ import pygame
 
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
+from ui.lockscreen import LockScreen
 
 
-FIELD_WIDTH = 400
-MENU_WIDTH = BASE_WIDTH - FIELD_WIDTH
+FIELD_WIDTH = BASE_WIDTH
+MENU_WIDTH = BASE_WIDTH // 2
+MENU_X = BASE_WIDTH - MENU_WIDTH
 GRID = 25
 COLS = FIELD_WIDTH // GRID
 ROWS = BASE_HEIGHT // GRID
 PATH_WIDTH = 25
-MAX_TOWERS = 20
+MAX_TOWERS = 40
+MAX_BANKS = 8
 PIERCING_RANGE_MULTIPLIER = 2.0
+ARMORED_SHED_HEALTH_RATIO = 0.80
+
+KEY_QUIT = pygame.K_ESCAPE
+KEY_CONFIRM = pygame.K_b
+KEY_MENU = pygame.K_l
+KEY_INFO = pygame.K_i
+
+KEY_QUIT_LABEL = "Esc"
+KEY_CONFIRM_LABEL = "B"
+KEY_MENU_LABEL = "L"
+KEY_INFO_LABEL = "I"
 
 
 def distance(a, b):
@@ -56,9 +70,34 @@ class Enemy:
     freeze_radius: float = 0.0
     freeze_duration: float = 0.0
 
+    def knock_back(self, waypoints, amount):
+        amount = max(0, amount)
+        self.progress = max(0, self.progress - amount)
+
+        while amount > 0 and self.waypoint >= 0:
+            wx, wy = waypoints[self.waypoint]
+            dx = self.x - wx
+            dy = self.y - wy
+            segment_back = math.hypot(dx, dy)
+            if segment_back > 0:
+                step = min(amount, segment_back)
+                self.x -= dx / segment_back * step
+                self.y -= dy / segment_back * step
+                amount -= step
+                if step < segment_back:
+                    return
+
+            if self.waypoint <= 0:
+                self.x, self.y = waypoints[0]
+                return
+
+            self.waypoint -= 1
+            self.x, self.y = waypoints[self.waypoint + 1]
+
     def update(self, dt, waypoints, speed_multiplier=1.0):
         self._tick_effects(dt)
         self._tick_regeneration(dt)
+        self._shed_armor_if_weakened()
         if self.waypoint >= len(waypoints) - 1:
             return True
 
@@ -117,6 +156,10 @@ class Enemy:
             self.health = min(self.max_health, self.health + self.regeneration_amount)
             self.regeneration_timer = self.regeneration_rate
 
+    def _shed_armor_if_weakened(self):
+        if self.armored and self.health <= self.max_health * ARMORED_SHED_HEALTH_RATIO:
+            self.armored = False
+
 
 @dataclass
 class Tower:
@@ -129,6 +172,9 @@ class Tower:
     total_spent: int = 0
     flash_timer: float = 0.0
     freeze_timer: float = 0.0
+    inferno_target: object = None
+    inferno_charge: float = 0.0
+    income_timer: float = 0.0
 
     @property
     def center(self):
@@ -139,7 +185,14 @@ class Tower:
         if isinstance(value, (int, float)):
             if key == "range":
                 return value * (1.10 ** (self.level - 1))
-            if key in ("trigger_radius", "chain_range", "area_of_effect", "poison_duration", "burn_duration"):
+            if key == "buff_effect":
+                return value * (1 + (self.level - 1) / 4)
+            if key in (
+                "trigger_radius", "chain_range", "area_of_effect", "poison_duration", "burn_duration",
+                "freeze_duration", "delay_duration", "time_to_max_damage", "pull_strength",
+                 "upgrade_range", "upgrade_effect", "upgrade_max_links", "knockback_distance",
+                "money_generation_interval",
+            ):
                 return value
             return value * (1.25 ** (self.level - 1))
         return value
@@ -183,6 +236,15 @@ class FloatingText:
     timer: float = 1.0
 
 
+@dataclass
+class DelayedAttack:
+    timer: float
+    tower: Tower
+    targets: list
+    damage: float
+    splash: float = 0.0
+
+
 class TowerGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
@@ -195,15 +257,21 @@ class TowerGame(Scene):
         self.tower_names = list(self.stats["towers"].keys())
         self.enemy_names = list(self.stats["enemies"].keys())
         self.colors = self._build_colors()
+        self.user = self.get_user()
+        self.highscore = 0
+        self.new_highscore = False
+        self._load_highscore()
 
         self.path = self._generate_path()
         self.path_cells = self._build_path_cells()
 
-        self.focus = "menu"
+        self.focus = "field"
         self.state = "playing"
         self.menu_index = 0
         self.cursor = [4, 4]
         self.action_index = 0
+        self.info_tower = None
+        self.info_tower_name = None
         self.message = "Place towers, then start."
         self.banner_message = ""
         self.banner_timer = 0.0
@@ -213,7 +281,7 @@ class TowerGame(Scene):
         self.held_move_delay = 0.1
         self.held_move_interval = 0.07
 
-        self.money = 150
+        self.money = 200
         self.lives = 100
         self.round = 0
         self.preparing = True
@@ -227,20 +295,104 @@ class TowerGame(Scene):
         self.mines = []
         self.texts = []
         self.shots = []
+        self.delayed_attacks = []
         self.selected_tower = None
         self.game_over = False
+
+    def get_user(self):
+        user = getattr(self.manager, "current_user", None)
+        if user:
+            return user
+
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
+
+    def _user_name(self):
+        if isinstance(self.user, dict):
+            return self.user.get("name")
+        if isinstance(self.user, str):
+            return self.user
+        return None
 
     def _load_stats(self):
         path = os.path.join(os.path.dirname(__file__), "stats.json")
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
 
+    def _load_highscore(self):
+        self.highscore = 0
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        try:
+            with open(os.path.join("data", "users.json"), "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            return
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+            try:
+                self.highscore = int(player.get("highscores", {}).get("Tower Defense", 0))
+            except Exception:
+                self.highscore = 0
+            return
+
+    def _save_highscore(self):
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        path = os.path.join("data", "users.json")
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            users_data = {"users": []}
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+
+            if "highscores" not in player:
+                player["highscores"] = {}
+
+            try:
+                current = int(player["highscores"].get("Tower Defense", 0))
+            except Exception:
+                current = 0
+
+            if self.highscore > current:
+                player["highscores"]["Tower Defense"] = self.highscore
+
+            try:
+                with open(path, "w", encoding="utf-8") as file:
+                    json.dump(users_data, file, indent=4)
+            except Exception:
+                pass
+            return
+
+    def _finish_game(self):
+        self.game_over = True
+        self.new_highscore = self.round > self.highscore
+        if self.new_highscore:
+            self.highscore = self.round
+            self._save_highscore()
+        self.message = f"Game over. Press {KEY_CONFIRM_LABEL} to restart."
+
     def _build_colors(self):
         palette = [
             (82, 183, 136), (87, 143, 202), (224, 138, 65), (116, 198, 157),
             (177, 117, 194), (245, 196, 66), (216, 88, 89), (126, 215, 230),
             (120, 176, 77), (111, 115, 220), (233, 116, 74), (230, 95, 145),
-            (190, 190, 200), (60, 65, 75), (96, 160, 111),
+            (190, 190, 200), (60, 65, 75), (96, 160, 111), (150, 90, 200), 
+            (200, 160, 60), (210, 70, 80), (80, 190, 220), (130, 170, 90), 
+            (180, 120, 210), (220, 180, 70), (200, 80, 90), (90, 200, 240)
         ]
         return {name: palette[i % len(palette)] for i, name in enumerate(self.tower_names)}
 
@@ -291,18 +443,22 @@ class TowerGame(Scene):
         if event.type != pygame.KEYDOWN:
             return
 
-        if event.key == pygame.K_ESCAPE:
+        if self.state == "info" and event.key == KEY_QUIT:
+            self._close_tower_info()
+            return
+
+        if event.key == KEY_QUIT:
             if self.exit_confirm_timer > 0:
                 from ui.Games_menu import Game_Menu
                 self.manager.set_scene(Game_Menu(self.manager))
             else:
                 self.exit_confirm_timer = 2.5
-                self._flash_banner("Press Esc again to quit")
-                self.message = "Press Esc again to quit."
+                self._flash_banner(f"Press {KEY_QUIT_LABEL} again to quit")
+                self.message = f"Press {KEY_QUIT_LABEL} again to quit."
             return
 
         if self.game_over:
-            if event.key == pygame.K_b:
+            if event.key == KEY_CONFIRM:
                 self.__init__(self.manager)
             return
 
@@ -310,11 +466,17 @@ class TowerGame(Scene):
             self._handle_placing(event.key)
         elif self.state == "actions":
             self._handle_actions(event.key)
+        elif self.state == "info":
+            self._handle_info(event.key)
         else:
             self._handle_normal(event.key)
 
     def _handle_normal(self, key):
-        if key == pygame.K_l:
+        if key == KEY_INFO:
+            self._open_hovered_tower_info()
+            return
+
+        if key == KEY_MENU:
             self.focus = "field" if self.focus == "menu" else "menu"
             self.message = self._field_hover_message() if self.focus == "field" else self._menu_selection_label()
             return
@@ -322,7 +484,7 @@ class TowerGame(Scene):
         if self.focus == "menu":
             if key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
                 self._move_menu_selection(key)
-            elif key == pygame.K_b:
+            elif key == KEY_CONFIRM:
                 if self.menu_index < self._control_count():
                     self._activate_menu_control()
                 else:
@@ -331,7 +493,7 @@ class TowerGame(Scene):
             self._move_cursor(key)
             if key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
                 self.message = self._field_hover_message()
-            if key == pygame.K_b:
+            if key == KEY_CONFIRM:
                 tower = self._tower_at(tuple(self.cursor))
                 if tower:
                     self.selected_tower = tower
@@ -342,25 +504,56 @@ class TowerGame(Scene):
                     self.message = "No tower here."
 
     def _handle_placing(self, key):
-        if key == pygame.K_l:
+        if key == KEY_MENU:
             self.state = "playing"
             self.focus = "menu"
             self.message = "Placement canceled."
-        elif key == pygame.K_b:
+        elif key == KEY_CONFIRM:
             self._place_selected_tower()
         else:
             self._move_cursor(key)
 
     def _handle_actions(self, key):
-        if key == pygame.K_l:
+        if key == KEY_MENU:
             self.state = "playing"
             self.message = "Action closed."
         elif key == pygame.K_UP:
             self.action_index = (self.action_index - 1) % 3
         elif key == pygame.K_DOWN:
             self.action_index = (self.action_index + 1) % 3
-        elif key == pygame.K_b:
+        elif key == KEY_CONFIRM:
             self._confirm_action()
+
+    def _handle_info(self, key):
+        if key in (KEY_INFO, KEY_CONFIRM, KEY_MENU):
+            self._close_tower_info()
+
+    def _open_hovered_tower_info(self):
+        self.info_tower = None
+        self.info_tower_name = None
+
+        if self.focus == "field":
+            tower = self._tower_at(tuple(self.cursor))
+            if tower is None:
+                self.message = "No tower here."
+                return
+            self.info_tower = tower
+            self.info_tower_name = tower.name
+        else:
+            tower_index = self._selected_tower_index()
+            if tower_index < 0 or tower_index >= len(self.tower_names):
+                self.message = "Select a tower first."
+                return
+            self.info_tower_name = self.tower_names[tower_index]
+
+        self.state = "info"
+        self.message = f"{self._display_name(self.info_tower_name)} info."
+
+    def _close_tower_info(self):
+        self.info_tower = None
+        self.info_tower_name = None
+        self.state = "playing"
+        self.message = self._field_hover_message() if self.focus == "field" else self._menu_selection_label()
 
     def _move_cursor(self, key):
         if key == pygame.K_LEFT:
@@ -373,7 +566,7 @@ class TowerGame(Scene):
             self.cursor[1] = min(ROWS - 1, self.cursor[1] + 1)
 
     def _move_menu_selection(self, key):
-        columns = 2
+        columns = 3
         controls = self._control_count()
         if self.menu_index < controls:
             if key == pygame.K_LEFT and self.menu_index > 0:
@@ -454,9 +647,12 @@ class TowerGame(Scene):
         if len(self.towers) >= MAX_TOWERS:
             self.message = "Tower limit reached."
             return
+        if name == "bank" and self._bank_count() >= MAX_BANKS:
+            self.message = f"Bank limit reached ({MAX_BANKS})."
+            return
         self.state = "placing"
         self.focus = "field"
-        self.message = "D-pad moves. B places. L cancels."
+        self.message = f"D-pad moves. {KEY_CONFIRM_LABEL} places. {KEY_MENU_LABEL} cancels."
 
     def _place_selected_tower(self):
         cell = tuple(self.cursor)
@@ -466,8 +662,11 @@ class TowerGame(Scene):
             return
         name = self.tower_names[tower_index]
         cost = int(self.stats["towers"][name].get("cost", 0))
-        if not self._can_place(cell):
-            self.message = "Can't place there."
+        if not self._can_place(cell, name):
+            if name == "bank" and self._bank_count() >= MAX_BANKS:
+                self.message = f"Bank limit reached ({MAX_BANKS})."
+            else:
+                self.message = "Can't place there."
             return
         if self.money < cost:
             self.message = "Not enough money."
@@ -480,11 +679,21 @@ class TowerGame(Scene):
         self.state = "playing"
         self.message = f"{self._short_name(name)} placed."
 
-    def _can_place(self, cell):
+    def _can_place(self, cell, tower_name=None):
+        if tower_name is None:
+            tower_index = self._selected_tower_index()
+            tower_name = (
+                self.tower_names[tower_index]
+                if 0 <= tower_index < len(self.tower_names)
+                else None
+            )
+        if tower_name == "bank" and self._bank_count() >= MAX_BANKS:
+            return False
+        path_rule = cell in self.path_cells if tower_name == "bomb" else cell not in self.path_cells
         return (
             0 <= cell[0] < COLS
             and 0 <= cell[1] < ROWS
-            and cell not in self.path_cells
+            and path_rule
             and self._tower_at(cell) is None
             and len(self.towers) < MAX_TOWERS
         )
@@ -494,6 +703,9 @@ class TowerGame(Scene):
             if tower.cell == cell:
                 return tower
         return None
+
+    def _bank_count(self):
+        return sum(1 for tower in self.towers if tower.name == "bank")
 
     def _confirm_action(self):
         tower = self.selected_tower
@@ -535,12 +747,12 @@ class TowerGame(Scene):
         speed_dt = dt * self.game_speed
         self._update_enemies(dt)
         self._update_towers(speed_dt)
+        self._update_delayed_attacks(speed_dt)
         self._update_mines()
         self._update_effects(dt)
 
         if self.lives <= 0:
-            self.game_over = True
-            self.message = "Game over. Press B to restart."
+            self._finish_game()
 
     def _spawn_rounds(self, dt):
         if self.preparing:
@@ -677,7 +889,7 @@ class TowerGame(Scene):
         return random.uniform(fast, slow)
 
     def _round_factor(self):
-        return 2 ** ((self.round - 1) / 5)
+        return 1 + (self.round - 1) / 6
 
     def _spawn_enemy(self, name):
         data = self.stats["enemies"].get(name, self.stats["enemies"][self.enemy_names[0]])
@@ -686,14 +898,14 @@ class TowerGame(Scene):
             name,
             data["health"] * factor,
             data["health"] * factor,
-            max(1, int(data["damage"] * factor)),
+            max(1, int(data["damage"])),
             data["speed"],
             int(data["reward"]),
         )
         enemy.armored = bool(data.get("armored"))
         enemy.stealth = bool(data.get("stealth"))
         enemy.regeneration_rate = data.get("regeneration_rate", 0.0)
-        enemy.regeneration_amount = data.get("regeneration_amount", 0.0) * factor
+        enemy.regeneration_amount = data.get("regeneration_amount", 0.0) * factor * 0.5
         enemy.regeneration_timer = enemy.regeneration_rate
         enemy.freeze_radius = data.get("freeze_radius", 0.0)
         enemy.freeze_duration = data.get("freeze_duration", 0.0)
@@ -720,13 +932,90 @@ class TowerGame(Scene):
             tower.flash_timer = max(0, tower.flash_timer - dt)
             if tower.freeze_timer > 0:
                 continue
+            if tower.name == "inferno":
+                self._update_inferno(tower, dt)
+                continue
+            if tower.name == "black hole generator":
+                self._update_black_hole(tower, dt)
+                continue
+            if tower.name == "bank":
+                self._update_bank(tower, dt)
+                continue
             if tower.name == "mine placer":
                 self._update_mine_placer(tower)
                 continue
             if tower.cooldown <= 0:
                 if self._fire_tower(tower):
-                    tower.cooldown = 1 / tower.fire_rate
+                    tower.cooldown = 1 / self._tower_fire_rate(tower)
                     tower.flash_timer = 0.08
+
+    def _update_inferno(self, tower, dt):
+        targets = self._targets_in_range(tower)
+        if not targets:
+            tower.inferno_target = None
+            tower.inferno_charge = 0.0
+            return
+
+        target = tower.inferno_target
+        if target not in targets:
+            target = targets[0]
+            tower.inferno_target = target
+            tower.inferno_charge = 0.0
+
+        tower.inferno_charge = min(tower.stat("time_to_max_damage", 5.0), tower.inferno_charge + dt)
+        damage = self._tower_damage(tower)
+        max_dps = tower.stat("max_damage_per_second", tower.damage) * self._buffer_multiplier(tower)
+        ramp_time = max(0.01, tower.stat("time_to_max_damage", 5.0))
+        ramp = clamp(tower.inferno_charge / ramp_time, 0, 1)
+        dps = damage + (max_dps - damage) * ramp
+        self._damage_enemy(target, tower, dps * dt)
+        self.shots.append((tower.center, target, 0, tower.color, 0.05))
+        tower.flash_timer = 0.05
+
+    def _update_black_hole(self, tower, dt):
+        affected = False
+        max_slow = clamp(tower.stat("pull_strength", 0.2), 0, 0.9)
+        tower_range = self._tower_range(tower)
+        radius = tower.stat("pull_radius", tower_range) or tower_range
+        damage = self._tower_damage(tower) * dt
+        for enemy in self.enemies:
+            if not self._tower_can_hit_enemy(tower, enemy):
+                continue
+            dist = distance(tower.center, (enemy.x, enemy.y))
+            if dist > tower_range:
+                continue
+            self._damage_enemy(enemy, tower, damage)
+            if not self._can_slow(enemy):
+                affected = True
+                continue
+            closeness = 1 - clamp(dist / max(1, radius), 0, 1)
+            slow_factor = 1 - max_slow * closeness
+            previous_slow = enemy.slow_factor if enemy.slow_timer > 0 else 1.0
+            enemy.slow_timer = max(enemy.slow_timer, 0.14)
+            enemy.slow_factor = min(previous_slow, slow_factor)
+            affected = True
+
+        if affected:
+            tower.flash_timer = 0.05
+            if tower.cooldown <= 0:
+                self.shots.append((tower.center, None, tower_range, tower.color, 0.10))
+                tower.cooldown = 1 / tower.fire_rate
+
+    def _update_bank(self, tower, dt):
+        interval = max(0.05, tower.stat("money_generation_interval", 1.0))
+        if tower.income_timer <= 0:
+            tower.income_timer = interval
+
+        tower.income_timer -= dt
+        while tower.income_timer <= 0:
+            income = int(tower.stat("money_generation", 0))
+            if income <= 0:
+                tower.income_timer = interval
+                return
+            self.money += income
+            self.texts.append(FloatingText(f"+{income}", tower.center[0] - 6, tower.center[1] - 14, (255, 236, 130)))
+            tower.flash_timer = 0.08
+            tower.income_timer += interval
 
     def _update_mine_placer(self, tower):
         if tower.cooldown > 0:
@@ -735,27 +1024,29 @@ class TowerGame(Scene):
         if active_mines >= int(tower.stat("max_mines_per_tower", 4)):
             return
         px, py = self._mine_position_near_tower(tower)
-        mine = Mine(px, py, 28 * (1.25 ** (tower.level - 1)), 36, tower.stat("trigger_radius", 30), tower.color, tower)
+        mine_damage = 28 * (1.25 ** (tower.level - 1)) * self._buffer_multiplier(tower)
+        mine = Mine(px, py, mine_damage, 36, tower.stat("trigger_radius", 30), tower.color, tower)
         self.mines.append(mine)
         tower.cooldown = 1 / tower.fire_rate
         tower.flash_timer = 0.08
 
     def _mine_position_near_tower(self, tower):
         cx, cy = tower.center
+        tower_range = self._tower_range(tower)
         for _ in range(35):
             start, end = random.choice(list(zip(self.path, self.path[1:])))
             t = random.random()
             px = start[0] + (end[0] - start[0]) * t
             py = start[1] + (end[1] - start[1]) * t
             angle = random.random() * math.tau
-            jitter = random.uniform(0, min(10, tower.range * 0.25))
+            jitter = random.uniform(0, min(10, tower_range * 0.25))
             px += math.cos(angle) * jitter
             py += math.sin(angle) * jitter
-            if 0 <= px <= FIELD_WIDTH and 0 <= py <= BASE_HEIGHT and distance((cx, cy), (px, py)) <= tower.range:
+            if 0 <= px <= FIELD_WIDTH and 0 <= py <= BASE_HEIGHT and distance((cx, cy), (px, py)) <= tower_range:
                 return px, py
 
         angle = random.random() * math.tau
-        radius = random.uniform(0, tower.range)
+        radius = random.uniform(0, tower_range)
         return (
             clamp(cx + math.cos(angle) * radius, 0, FIELD_WIDTH),
             clamp(cy + math.sin(angle) * radius, 0, BASE_HEIGHT),
@@ -767,15 +1058,19 @@ class TowerGame(Scene):
             return False
 
         if tower.base.get("360_degree_attack"):
+            damage = self._tower_damage(tower)
             for enemy in targets:
-                self._damage_enemy(enemy, tower, tower.damage)
-            self.shots.append((tower.center, None, tower.range, tower.color, 0.08))
+                self._damage_enemy(enemy, tower, damage)
+            if tower.base.get("delayed_2nd_attack"):
+                delay = tower.stat("delay_duration", 0.25)
+                self.delayed_attacks.append(DelayedAttack(delay, tower, list(targets), damage * 0.5))
+            self.shots.append((tower.center, None, self._tower_range(tower), tower.color, 0.08))
             return True
 
         if tower.base.get("piercing"):
             line_targets, endpoint = self._piercing_line_targets(tower, targets[0])
             for enemy in line_targets:
-                self._damage_enemy(enemy, tower, tower.damage)
+                self._damage_enemy(enemy, tower, self._tower_damage(tower))
             self.shots.append((tower.center, endpoint, 0, tower.color, 0.12))
             return True
 
@@ -787,12 +1082,15 @@ class TowerGame(Scene):
                 if distance((enemy.x, enemy.y), (chain[-1].x, chain[-1].y)) <= tower.stat("chain_range", 3) * GRID:
                     chain.append(enemy)
             for enemy in chain:
-                self._damage_enemy(enemy, tower, tower.damage)
+                self._damage_enemy(enemy, tower, self._tower_damage(tower))
             self.shots.append((tower.center, chain[0], 0, tower.color, 0.08))
             return True
 
         target = targets[0]
-        self._damage_enemy(target, tower, tower.damage)
+        damage = self._tower_damage(tower)
+        self._damage_enemy(target, tower, damage)
+        if tower.base.get("knockback_distance") and self._can_knock_back(target):
+            target.knock_back(self.path, tower.stat("knockback_distance", 0))
         splash = tower.stat("splash_damage", 0) or tower.stat("explosion_radius", 0)
         if splash:
             for enemy in self.enemies:
@@ -801,24 +1099,93 @@ class TowerGame(Scene):
                     and self._tower_can_hit_enemy(tower, enemy)
                     and distance((enemy.x, enemy.y), (target.x, target.y)) <= splash
                 ):
-                    self._damage_enemy(enemy, tower, tower.damage * 0.55)
+                    self._damage_enemy(enemy, tower, damage * 0.55)
             if tower.name == "bomb":
                 self.towers.remove(tower)
+                if self.selected_tower is tower:
+                    self.selected_tower = None
         self.shots.append((tower.center, target, splash, tower.color, 0.08))
         return True
 
+    def _tower_damage(self, tower):
+        damage = tower.damage * self._buffer_multiplier(tower)
+        if tower.base.get("upgrade_link"):
+            damage *= self._upgrade_link_multiplier(tower)
+        return damage
+
+    def _tower_range(self, tower):
+        return tower.range * self._buffer_multiplier(tower)
+
+    def _buffer_multiplier(self, tower):
+        best_bonus = 0.0
+        for buffer_tower in self.towers:
+            if buffer_tower is tower or buffer_tower.name != "buffer":
+                continue
+            if distance(buffer_tower.center, tower.center) <= buffer_tower.range:
+                best_bonus = max(best_bonus, buffer_tower.stat("buff_effect", 0.125))
+        return 1.0 + best_bonus
+
+    def _tower_fire_rate(self, tower):
+        fire_rate = tower.fire_rate
+        if tower.base.get("upgrade_link"):
+            fire_rate *= self._upgrade_link_multiplier(tower)
+        return fire_rate
+
+    def _upgrade_link_multiplier(self, tower):
+        links = self._nearby_upgrade_links(tower)
+        return 1 + len(links) * tower.stat("upgrade_effect", 0.2)
+
+    def _nearby_upgrade_links(self, tower):
+        link_range = tower.stat("upgrade_range", tower.range)
+        max_links = int(tower.stat("upgrade_max_links", 9999))
+        links = [
+            (distance(tower.center, other.center), other) for other in self.towers
+            if other is not tower
+            and other.base.get("upgrade_link")
+            and distance(tower.center, other.center) <= link_range
+        ]
+        links.sort(key=lambda item: item[0])
+        return [other for _, other in links[:max_links]]
+
+    def _update_delayed_attacks(self, dt):
+        for attack in list(self.delayed_attacks):
+            attack.timer -= dt
+            if attack.timer > 0:
+                continue
+            self.delayed_attacks.remove(attack)
+            if attack.tower not in self.towers or attack.tower.freeze_timer > 0:
+                continue
+            hit_any = False
+            for enemy in attack.targets:
+                if enemy in self.enemies and self._tower_can_hit_enemy(attack.tower, enemy):
+                    self._damage_enemy(enemy, attack.tower, attack.damage)
+                    hit_any = True
+            if hit_any:
+                self.shots.append((attack.tower.center, None, self._tower_range(attack.tower), attack.tower.color, 0.10))
+
     def _targets_in_range(self, tower):
         cx, cy = tower.center
+        tower_range = self._tower_range(tower)
         targets = [
             e for e in self.enemies
             if self._tower_can_hit_enemy(tower, e)
-            and distance((cx, cy), (e.x, e.y)) <= tower.range
+            and distance((cx, cy), (e.x, e.y)) <= tower_range
         ]
-        targets.sort(key=lambda enemy: enemy.progress, reverse=True)
+        targets.sort(key=lambda enemy: self._target_sort_key(tower, enemy))
         return targets
 
     def _tower_can_hit_enemy(self, tower, enemy):
         return not enemy.stealth or tower.base.get("detect_stealth", False)
+
+    def _target_sort_key(self, tower, enemy):
+        priority = tower.base.get("targeting_priority", "first")
+        if priority == "strongest":
+            return (-enemy.health, -enemy.max_health, -enemy.progress)
+        if priority == "weakest":
+            return (enemy.health, enemy.max_health, -enemy.progress)
+        if priority == "last":
+            return (enemy.progress,)
+        return (-enemy.progress,)
 
     def _piercing_line_targets(self, tower, primary):
         cx, cy = tower.center
@@ -830,7 +1197,7 @@ class TowerGame(Scene):
 
         ux = dx / length
         uy = dy / length
-        shot_range = tower.range * tower.base.get("pierce_range_multiplier", PIERCING_RANGE_MULTIPLIER)
+        shot_range = self._tower_range(tower) * tower.base.get("pierce_range_multiplier", PIERCING_RANGE_MULTIPLIER)
         endpoint = (cx + ux * shot_range, cy + uy * shot_range)
         line_width = max(7, GRID * 0.35)
         hits = []
@@ -853,6 +1220,7 @@ class TowerGame(Scene):
         if enemy.armored:
             amount *= 0.65
         enemy.health -= amount
+        enemy._shed_armor_if_weakened()
         if tower.base.get("slow_effect"):
             self._apply_slow_area(enemy, tower)
         self._apply_status_effects(enemy, tower)
@@ -868,12 +1236,14 @@ class TowerGame(Scene):
         area = tower.stat("area_of_effect", 0)
         affected = self.enemies if area else [enemy]
         for other in affected:
+            if not self._can_slow(other):
+                continue
             if self._tower_can_hit_enemy(tower, other) and (not area or distance((enemy.x, enemy.y), (other.x, other.y)) <= area):
                 other.slow_timer = 1.4
                 other.slow_factor = tower.base["slow_effect"]
 
     def _apply_status_effects(self, enemy, tower):
-        if tower.base.get("freeze_duration"):
+        if tower.base.get("freeze_duration") and self._can_freeze(enemy):
             enemy.freeze_timer = max(enemy.freeze_timer, tower.stat("freeze_duration"))
         if tower.base.get("poison_duration"):
             enemy.poison_timer = max(enemy.poison_timer, tower.stat("poison_duration"))
@@ -883,6 +1253,15 @@ class TowerGame(Scene):
             enemy.burn_dps = max(enemy.burn_dps, tower.damage * 0.35)
         if tower.base.get("stun_effect") and random.random() < tower.base["stun_effect"]:
             enemy.stun_timer = max(enemy.stun_timer, 0.45)
+
+    def _can_freeze(self, enemy):
+        return enemy.kind != "boss"
+
+    def _can_knock_back(self, enemy):
+        return enemy.kind != "boss" and not enemy.armored
+
+    def _can_slow(self, enemy):
+        return not enemy.armored
 
     def _update_mines(self):
         for mine in list(self.mines):
@@ -915,14 +1294,18 @@ class TowerGame(Scene):
         self._draw_field(surface)
         self._draw_path(surface)
         self._draw_mines(surface)
+        self._draw_upgrade_links(surface)
         self._draw_towers(surface)
         self._draw_tower_range(surface)
         self._draw_enemies(surface)
         self._draw_shots(surface)
         self._draw_cursor(surface)
         self._draw_texts(surface)
+        self._draw_hud(surface)
         self._draw_menu(surface)
         self._draw_banner(surface)
+        if self.state == "info":
+            self._draw_tower_info(surface)
 
         if self.game_over:
             self._draw_game_over(surface)
@@ -948,6 +1331,20 @@ class TowerGame(Scene):
         for mine in self.mines:
             pygame.draw.circle(surface, mine.color, (int(mine.x), int(mine.y)), 4)
             pygame.draw.circle(surface, (20, 25, 25), (int(mine.x), int(mine.y)), 4, 1)
+
+    def _draw_upgrade_links(self, surface):
+        links = [tower for tower in self.towers if tower.base.get("upgrade_link")]
+        drawn = set()
+        for tower in links:
+            for other in self._nearby_upgrade_links(tower):
+                key = tuple(sorted((id(tower), id(other))))
+                if key in drawn:
+                    continue
+                drawn.add(key)
+                pulse = 1 + int((tower.flash_timer > 0 or other.flash_timer > 0))
+                pygame.draw.line(surface, (150, 235, 255), tower.center, other.center, pulse)
+                mid = ((tower.center[0] + other.center[0]) // 2, (tower.center[1] + other.center[1]) // 2)
+                pygame.draw.circle(surface, (245, 250, 190), mid, 2)
 
     def _draw_towers(self, surface):
         for tower in self.towers:
@@ -1018,12 +1415,15 @@ class TowerGame(Scene):
 
     def _draw_tower_range(self, surface):
         tower = self.selected_tower if self.state == "actions" else None
+        if tower is None and self.state == "info":
+            tower = self.info_tower
         if tower is None and self.focus == "field" and self.state == "playing":
             tower = self._tower_at(tuple(self.cursor))
         if tower is None:
             return
 
-        pygame.draw.circle(surface, tuple(min(255, c + 65) for c in tower.color), tower.center, int(tower.range), 1)
+        radius = tower.stat("upgrade_range", tower.range) if tower.base.get("upgrade_link") else self._tower_range(tower)
+        pygame.draw.circle(surface, tuple(min(255, c + 65) for c in tower.color), tower.center, int(radius), 1)
 
     def _draw_cursor(self, surface):
         if self.focus != "field" and self.state != "placing":
@@ -1046,10 +1446,32 @@ class TowerGame(Scene):
             label = self.small_font.render(text.text, True, text.color)
             surface.blit(label, (int(text.x), int(text.y)))
 
+    def _draw_hud(self, surface):
+        values = [
+            f"${self.money}",
+            "Prep" if self.preparing else f"R{self.round}",
+            f"L{self.lives}",
+            f"T{len(self.towers)}/{MAX_TOWERS}",
+            f"{KEY_MENU_LABEL} Menu" if self.focus != "menu" else f"{KEY_MENU_LABEL} Close",
+        ]
+        text = "  ".join(values)
+        label = self.small_font.render(text, True, (242, 244, 236))
+        box = pygame.Rect(4, 4, label.get_width() + 10, 15)
+        overlay = pygame.Surface(box.size, pygame.SRCALPHA)
+        overlay.fill((20, 26, 30, 170))
+        surface.blit(overlay, box.topleft)
+        pygame.draw.rect(surface, (248, 210, 93), box, 1, border_radius=3)
+        surface.blit(label, (box.x + 5, box.y + 4))
+
     def _draw_menu(self, surface):
-        menu = pygame.Rect(FIELD_WIDTH, 0, MENU_WIDTH, BASE_HEIGHT)
-        pygame.draw.rect(surface, (31, 40, 48), menu)
-        pygame.draw.line(surface, (8, 12, 16), (FIELD_WIDTH, 0), (FIELD_WIDTH, BASE_HEIGHT), 2)
+        if self.focus != "menu" and self.state != "actions":
+            return
+
+        menu = pygame.Rect(MENU_X, 0, MENU_WIDTH, BASE_HEIGHT)
+        overlay = pygame.Surface(menu.size, pygame.SRCALPHA)
+        overlay.fill((31, 40, 48, 232))
+        surface.blit(overlay, menu.topleft)
+        pygame.draw.line(surface, (8, 12, 16), (MENU_X, 0), (MENU_X, BASE_HEIGHT), 2)
 
         stats = [
             f"${self.money}",
@@ -1059,7 +1481,7 @@ class TowerGame(Scene):
         ]
         for i, value in enumerate(stats):
             label = self.font.render(value, True, (242, 244, 236))
-            surface.blit(label, (FIELD_WIDTH + 4, 5 + i * 12))
+            surface.blit(label, (MENU_X + 6, 5 + i * 12))
 
         if self.state == "actions":
             self._draw_action_menu(surface)
@@ -1070,14 +1492,14 @@ class TowerGame(Scene):
         lines = self._wrap_text(self.message, MENU_WIDTH - 5)[:3]
         for i, line in enumerate(lines):
             label = self.small_font.render(line, True, (230, 236, 220))
-            surface.blit(label, (FIELD_WIDTH + 3, 250 + i * 9))
+            surface.blit(label, (MENU_X + 6, 244 + i * 9))
 
     def _draw_tower_menu(self, surface):
         padding = 4
         gap = 4
-        start_x = FIELD_WIDTH + padding
+        start_x = MENU_X + padding
         start_y = 80
-        columns = 2
+        columns = 3
         slot_width = (MENU_WIDTH - padding * 2 - gap) // columns
         slot_height = 17
 
@@ -1108,7 +1530,7 @@ class TowerGame(Scene):
         gap = 4
         y = 56
         if self.preparing:
-            rect = pygame.Rect(FIELD_WIDTH + padding, y, MENU_WIDTH - padding * 2, 19)
+            rect = pygame.Rect(MENU_X + padding, y, MENU_WIDTH - padding * 2, 19)
             selected = self.menu_index == 0 and self.focus == "menu"
             fill = (248, 210, 93) if selected else (63, 91, 70)
             pygame.draw.rect(surface, fill, rect, border_radius=3)
@@ -1119,7 +1541,7 @@ class TowerGame(Scene):
 
         button_width = (MENU_WIDTH - padding * 2 - gap) // 2
         for i, text in enumerate(("1x", "2x")):
-            rect = pygame.Rect(FIELD_WIDTH + padding + i * (button_width + gap), y, button_width, 19)
+            rect = pygame.Rect(MENU_X + padding + i * (button_width + gap), y, button_width, 19)
             selected = self.menu_index == i and self.focus == "menu"
             active = self.game_speed == i + 1
             fill = (248, 210, 93) if selected else ((74, 111, 84) if active else (52, 65, 74))
@@ -1132,9 +1554,9 @@ class TowerGame(Scene):
         tower = self.selected_tower
         title = self._short_name(tower.name) if tower else "Tower"
         label = self.font.render(title, True, (245, 245, 245))
-        surface.blit(label, (FIELD_WIDTH + 4, 60))
+        surface.blit(label, (MENU_X + 6, 60))
         level = self.font.render(f"L{tower.level}" if tower else "", True, (245, 245, 245))
-        surface.blit(level, (FIELD_WIDTH + 4, 74))
+        surface.blit(level, (MENU_X + 6, 74))
 
         upgrade_cost = tower.upgrade_cost if tower and tower.upgrade_cost is not None else "--"
         sell_value = (tower.total_spent if self.preparing else int(tower.total_spent * 0.75)) if tower else 0
@@ -1143,11 +1565,189 @@ class TowerGame(Scene):
             y = 96 + i * 22
             selected = i == self.action_index
             fill = (248, 210, 93) if selected else (52, 65, 74)
-            rect = pygame.Rect(FIELD_WIDTH + 4, y, MENU_WIDTH - 8, 18)
+            rect = pygame.Rect(MENU_X + 6, y, MENU_WIDTH - 12, 18)
             pygame.draw.rect(surface, fill, rect, border_radius=3)
             color = (25, 28, 30) if selected else (235, 240, 232)
             option_label = self.small_font.render(option, True, color)
             surface.blit(option_label, (rect.x + 4, rect.y + 5))
+
+        self._draw_upgrade_preview(surface, tower)
+
+    def _draw_upgrade_preview(self, surface, tower):
+        if tower is None:
+            return
+
+        green = (105, 238, 132)
+        y = 164
+        if tower.upgrade_cost is None:
+            label = self.small_font.render("Max level", True, green)
+            surface.blit(label, (MENU_X + 6, y))
+            return
+
+        current_damage, damage_gain, current_range, range_gain = self._upgrade_preview_values(tower)
+        self._draw_upgrade_preview_line(surface, "Damage", current_damage, damage_gain, y, green)
+        self._draw_upgrade_preview_line(surface, "Range", current_range, range_gain, y + 10, green)
+
+    def _draw_upgrade_preview_line(self, surface, label, current, gain, y, gain_color):
+        x = MENU_X + 6
+        current_text = f"{label}: {self._format_stat(current)} "
+        current_label = self.small_font.render(current_text, True, (235, 240, 232))
+        surface.blit(current_label, (x, y))
+
+        gain_label = self.small_font.render(f"+{self._format_stat(gain)}", True, gain_color)
+        surface.blit(gain_label, (x + current_label.get_width(), y))
+
+    def _upgrade_preview_values(self, tower):
+        next_level = tower.level + 1
+        if tower.name == "mine placer":
+            current_damage = 28 * (1.25 ** (tower.level - 1))
+            next_damage = 28 * (1.25 ** (next_level - 1))
+        else:
+            current_damage = tower.damage
+            next_damage = self._tower_info_stat(tower.base, "damage", next_level, 0)
+        current_range = tower.range
+        next_range = self._tower_info_stat(tower.base, "range", next_level, 0)
+        return current_damage, next_damage - current_damage, current_range, next_range - current_range
+
+    def _draw_tower_info(self, surface):
+        if not self.info_tower_name:
+            return
+
+        box = pygame.Rect(34, 28, BASE_WIDTH - 68, BASE_HEIGHT - 56)
+        overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 90))
+        surface.blit(overlay, (0, 0))
+
+        panel = pygame.Surface(box.size, pygame.SRCALPHA)
+        panel.fill((28, 37, 44, 238))
+        surface.blit(panel, box.topleft)
+        pygame.draw.rect(surface, (248, 210, 93), box, 2, border_radius=5)
+
+        color = self.colors.get(self.info_tower_name, (230, 230, 230))
+        pygame.draw.rect(surface, color, (box.x + 10, box.y + 12, 8, 22), border_radius=2)
+
+        level = self.info_tower.level if self.info_tower else 1
+        title = self._display_name(self.info_tower_name)
+        if self.info_tower:
+            title = f"{title} L{level}"
+        title_label = self.title_font.render(title, True, (250, 250, 244))
+        surface.blit(title_label, (box.x + 24, box.y + 10))
+
+        y = box.y + 42
+        for line in self._tower_info_lines(self.info_tower_name, level):
+            for wrapped in self._wrap_text(line, box.width - 24):
+                label = self.small_font.render(wrapped, True, (232, 238, 226))
+                surface.blit(label, (box.x + 12, y))
+                y += 10
+            y += 2
+            if y > box.bottom - 22:
+                break
+
+        hint = self.small_font.render(
+            f"{KEY_INFO_LABEL}/{KEY_CONFIRM_LABEL}/{KEY_MENU_LABEL} closes",
+            True,
+            (248, 210, 93),
+        )
+        surface.blit(hint, (box.right - hint.get_width() - 10, box.bottom - 16))
+
+    def _tower_info_lines(self, name, level=1):
+        base = self.stats["towers"].get(name, {})
+        cost = int(base.get("cost", 0))
+        damage = self._tower_info_stat(base, "damage", level, 0)
+        tower_range = self._tower_info_stat(base, "range", level, 0)
+        fire_rate = self._tower_info_stat(base, "fire_rate", level, 0)
+
+        lines = [f"Cost ${cost}"]
+        if damage:
+            lines.append(f"Damage {self._format_stat(damage)}")
+        elif name == "mine placer":
+            lines.append(f"Mine damage {self._format_stat(28 * (1.25 ** (level - 1)))}")
+        else:
+            lines.append("Damage 0")
+        lines.append(f"Range {self._format_stat(tower_range)}")
+        if fire_rate:
+            lines.append(f"Fire rate {self._format_stat(fire_rate)} shots/sec")
+
+        abilities = self._tower_ability_lines(base, level)
+        if abilities:
+            lines.append("Abilities:")
+            lines.extend(abilities)
+        return lines
+
+    def _tower_info_stat(self, base, key, level, default=0):
+        value = base.get(key, default)
+        if not isinstance(value, (int, float)):
+            return value
+        if key == "range":
+            return value * (1.10 ** (level - 1))
+        if key == "buff_effect":
+            return value * (1 + (level - 1) / 4)
+        if key in (
+            "trigger_radius", "chain_range", "area_of_effect", "poison_duration", "burn_duration",
+            "freeze_duration", "delay_duration", "time_to_max_damage", "pull_strength",
+            "pull_radius", "upgrade_range", "upgrade_effect", "upgrade_max_links", "knockback_distance",
+            "money_generation_interval",
+        ):
+            return value
+        return value * (1.25 ** (level - 1))
+
+    def _tower_ability_lines(self, base, level):
+        lines = []
+        if base.get("targeting_priority"):
+            lines.append(f"Targets {base['targeting_priority']} enemies first")
+        if base.get("piercing"):
+            pierce_range = self._tower_info_stat(base, "range", level, 0) * base.get("pierce_range_multiplier", PIERCING_RANGE_MULTIPLIER)
+            lines.append(f"Piercing shot travels {self._format_stat(pierce_range)} px in a line")
+        if base.get("360_degree_attack"):
+            lines.append("Hits every enemy inside range")
+        if base.get("splash_damage"):
+            lines.append(f"Splash damage around the target: {self._format_stat(base['splash_damage'])}")
+        if base.get("explosion_radius"):
+            lines.append(f"Explodes in a {self._format_stat(base['explosion_radius'])} px radius")
+        if base.get("chain_effect"):
+            lines.append(f"Chains to nearby enemies within {self._format_stat(base.get('chain_range', 0) * GRID)} px")
+        if base.get("slow_effect"):
+            slow_percent = int((1 - base["slow_effect"]) * 100)
+            lines.append(f"Slows enemies by {slow_percent}%")
+        if base.get("delayed_2nd_attack"):
+            lines.append("Fires a delayed second hit for 50% damage")
+        if base.get("increasing_damage"):
+            max_dps = self._tower_info_stat(base, "max_damage_per_second", level, 0)
+            ramp_time = self._tower_info_stat(base, "time_to_max_damage", level, 0)
+            lines.append(f"Locks onto one enemy and ramps to {self._format_stat(max_dps)} DPS over {self._format_stat(ramp_time)} sec")
+        if base.get("pull_strength"):
+            slow_percent = int(base["pull_strength"] * 100)
+            lines.append(f"Slows enemies by up to {slow_percent}% near the center")
+        if base.get("knockback_distance"):
+            lines.append(f"Knocks enemies back {self._format_stat(base['knockback_distance'])} px")
+        if base.get("upgrade_link"):
+            effect_percent = int(base.get("upgrade_effect", 0) * 100)
+            link_range = self._tower_info_stat(base, "upgrade_range", level, 0)
+            max_links = int(self._tower_info_stat(base, "upgrade_max_links", level, 9999))
+            lines.append(f"Links to up to {max_links} upgrade links within {self._format_stat(link_range)} px for +{effect_percent}% damage/fire rate each")
+        if base.get("buff_effect"):
+            effect_percent = int(self._tower_info_stat(base, "buff_effect", level, 0) * 100)
+            lines.append(f"Buffs nearby towers once with +{effect_percent}% damage and range")
+        if base.get("money_generation"):
+            income = self._tower_info_stat(base, "money_generation", level, 0)
+            interval = self._tower_info_stat(base, "money_generation_interval", level, 1.0)
+            lines.append(f"Generates ${self._format_stat(income)} every {self._format_stat(interval)} sec. Max {MAX_BANKS} banks")
+        if base.get("freeze_duration"):
+            lines.append(f"Freezes for {self._format_stat(base['freeze_duration'])} sec")
+        if base.get("poison_duration"):
+            lines.append(f"Poisons for {self._format_stat(base['poison_duration'])} sec")
+        if base.get("burn_duration"):
+            lines.append(f"Burns for {self._format_stat(base['burn_duration'])} sec")
+        if base.get("trigger_radius"):
+            lines.append(f"Places mines with {self._format_stat(base['trigger_radius'])} px trigger radius")
+        if base.get("detect_stealth"):
+            lines.append("Can detect stealth enemies")
+        return lines
+
+    def _format_stat(self, value):
+        if isinstance(value, float) and not value.is_integer():
+            return f"{value:.1f}"
+        return str(int(value))
 
     def _draw_game_over(self, surface):
         overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
@@ -1155,10 +1755,22 @@ class TowerGame(Scene):
         surface.blit(overlay, (0, 0))
         title = self.big_font.render("Game Over", True, (255, 255, 255))
         detail = self.title_font.render(f"Reached round {self.round}", True, (245, 245, 245))
-        hint = self.title_font.render("Press B to restart", True, (245, 220, 120))
+        if self.new_highscore:
+            best = self.title_font.render("NEW HIGHSCORE!", True, (255, 215, 0))
+            highscore_detail = self.title_font.render(f"Best round: {self.highscore}", True, (255, 215, 0))
+        else:
+            best = self.title_font.render(f"Best round: {self.highscore}", True, (210, 216, 210))
+            highscore_detail = None
+        hint = self.title_font.render(f"Press {KEY_CONFIRM_LABEL} to restart", True, (245, 220, 120))
         surface.blit(title, title.get_rect(center=(FIELD_WIDTH // 2, 105)))
         surface.blit(detail, detail.get_rect(center=(FIELD_WIDTH // 2, 135)))
-        surface.blit(hint, hint.get_rect(center=(FIELD_WIDTH // 2, 160)))
+        surface.blit(best, best.get_rect(center=(FIELD_WIDTH // 2, 160)))
+        if highscore_detail:
+            surface.blit(highscore_detail, highscore_detail.get_rect(center=(FIELD_WIDTH // 2, 181)))
+            hint_y = 207
+        else:
+            hint_y = 187
+        surface.blit(hint, hint.get_rect(center=(FIELD_WIDTH // 2, hint_y)))
 
     def _short_name(self, name):
         pieces = {
@@ -1174,21 +1786,29 @@ class TowerGame(Scene):
 
     def _abbr_name(self, name):
         pieces = {
-            "starter": "Str",
-            "sniper": "Snp",
-            "cannon": "Can",
-            "slowing tower": "Slw",
-            "earthquake machine": "Qak",
-            "laser": "Las",
-            "missile": "Msl",
-            "freeze": "Frz",
-            "poison": "Psn",
-            "tesla": "Tsl",
-            "flame": "Flm",
-            "shock": "Shk",
-            "railgun": "Rlg",
-            "bomb": "Bmb",
-            "mine placer": "Min",
+            "starter": "Starter",
+            "piercer": "Piercer",
+            "sniper": "Sniper",
+            "cannon": "Cannon",
+            "slowing tower": "Slowing tower",
+            "earthquake machine": "Earthquake machine",
+            "laser": "Laser",
+            "missile": "Missile",
+            "freeze": "Freeze",
+            "poison": "Poison",
+            "tesla": "Tesla",
+            "flame": "Flame",
+            "shock": "Shock",
+            "railgun": "Railgun",
+            "bomb": "Bomb",
+            "mine placer": "Mine Placer",
+            "excavator": "Excavator",
+            "inferno": "Inferno",
+            "black hole generator": "Black Hole Generator",
+            "buffer": "Buffer",
+            "bank": "Bank",
+            "boxer": "Boxer",
+            "upgrade link": "Upgrade Link"
         }
         return pieces.get(name, name[:3].title())
 
