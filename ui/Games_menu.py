@@ -10,6 +10,7 @@ from games.dungeon.game import DungeonGame
 from games.monkey_stacker.game import MonkeyStacker
 from games.tower_defense.game import TowerGame
 from games.Pixelspin.game import PixelspinGame
+from games.farm_nation.game import FarmNationGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
 
@@ -26,7 +27,8 @@ class Game_Menu(Scene):
             ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
             ("Tower Defense", TowerGame),
-            ("Pixelspin", PixelspinGame)
+            ("Pixelspin", PixelspinGame),
+            ("Farm Nation", FarmNationGame)
         ]
 
         self.selected = 0
