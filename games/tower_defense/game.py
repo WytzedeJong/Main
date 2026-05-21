@@ -10,6 +10,7 @@ from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
 from ui.lockscreen import LockScreen
 
+from core.input_manager import InputHandler
 
 FIELD_WIDTH = BASE_WIDTH
 MENU_WIDTH = BASE_WIDTH // 2
