@@ -85,6 +85,8 @@ class InputHandler:
         self.extra_keys = {
             "SPACE": pygame.K_SPACE,
             "ENTER": pygame.K_RETURN,
+            "ESCAPE": pygame.K_ESCAPE,
+            "INFO": pygame.K_i,
         }
 
     def update(self):
