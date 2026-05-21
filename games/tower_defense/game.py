@@ -24,10 +24,11 @@ MAX_BANKS = 8
 PIERCING_RANGE_MULTIPLIER = 2.0
 ARMORED_SHED_HEALTH_RATIO = 0.80
 
-KEY_QUIT = pygame.K_ESCAPE
-KEY_CONFIRM = pygame.K_b
-KEY_MENU = pygame.K_l
-KEY_INFO = pygame.K_i
+BUTTON_QUIT = "ESCAPE"
+BUTTON_CONFIRM = "B"
+BUTTON_MENU = "L"
+BUTTON_INFO = "INFO"
+DIRECTION_BUTTONS = ("LEFT", "RIGHT", "UP", "DOWN")
 
 KEY_QUIT_LABEL = "Esc"
 KEY_CONFIRM_LABEL = "B"
@@ -253,6 +254,7 @@ class TowerGame(Scene):
         self.font = pygame.font.SysFont("arial", 10)
         self.small_font = pygame.font.SysFont("arial", 8)
         self.big_font = pygame.font.SysFont("arial", 20, bold=True)
+        self.input = InputHandler()
 
         self.stats = self._load_stats()
         self.tower_names = list(self.stats["towers"].keys())
@@ -441,60 +443,75 @@ class TowerGame(Scene):
         return best
 
     def handle_events(self, event):
-        if event.type != pygame.KEYDOWN:
-            return
+        return
 
-        if self.state == "info" and event.key == KEY_QUIT:
-            self._close_tower_info()
-            return
+    def _handle_input(self):
+        if self.input.just_pressed(BUTTON_QUIT):
+            if self.state == "info":
+                self._close_tower_info()
+                return True
 
-        if event.key == KEY_QUIT:
             if self.exit_confirm_timer > 0:
                 from ui.Games_menu import Game_Menu
+                self.input.close()
                 self.manager.set_scene(Game_Menu(self.manager))
+                return True
             else:
                 self.exit_confirm_timer = 2.5
                 self._flash_banner(f"Press {KEY_QUIT_LABEL} again to quit")
                 self.message = f"Press {KEY_QUIT_LABEL} again to quit."
-            return
+                return True
 
         if self.game_over:
-            if event.key == KEY_CONFIRM:
+            if self.input.just_pressed(BUTTON_CONFIRM):
+                self.input.close()
                 self.__init__(self.manager)
-            return
+                return True
+            return False
+
+        button = self._next_pressed_button()
+        if button is None:
+            return False
 
         if self.state == "placing":
-            self._handle_placing(event.key)
+            self._handle_placing(button)
         elif self.state == "actions":
-            self._handle_actions(event.key)
+            self._handle_actions(button)
         elif self.state == "info":
-            self._handle_info(event.key)
+            self._handle_info(button)
         else:
-            self._handle_normal(event.key)
+            self._handle_normal(button)
+        return False
 
-    def _handle_normal(self, key):
-        if key == KEY_INFO:
+    def _next_pressed_button(self):
+        for button in (BUTTON_INFO, BUTTON_MENU, BUTTON_CONFIRM, *DIRECTION_BUTTONS):
+            if self.input.just_pressed(button):
+                return button
+        return None
+
+    def _handle_normal(self, button):
+        if button == BUTTON_INFO:
             self._open_hovered_tower_info()
             return
 
-        if key == KEY_MENU:
+        if button == BUTTON_MENU:
             self.focus = "field" if self.focus == "menu" else "menu"
             self.message = self._field_hover_message() if self.focus == "field" else self._menu_selection_label()
             return
 
         if self.focus == "menu":
-            if key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
-                self._move_menu_selection(key)
-            elif key == KEY_CONFIRM:
+            if button in DIRECTION_BUTTONS:
+                self._move_menu_selection(button)
+            elif button == BUTTON_CONFIRM:
                 if self.menu_index < self._control_count():
                     self._activate_menu_control()
                 else:
                     self._start_placing()
         else:
-            self._move_cursor(key)
-            if key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
+            self._move_cursor(button)
+            if button in DIRECTION_BUTTONS:
                 self.message = self._field_hover_message()
-            if key == KEY_CONFIRM:
+            if button == BUTTON_CONFIRM:
                 tower = self._tower_at(tuple(self.cursor))
                 if tower:
                     self.selected_tower = tower
@@ -504,29 +521,29 @@ class TowerGame(Scene):
                 else:
                     self.message = "No tower here."
 
-    def _handle_placing(self, key):
-        if key == KEY_MENU:
+    def _handle_placing(self, button):
+        if button == BUTTON_MENU:
             self.state = "playing"
             self.focus = "menu"
             self.message = "Placement canceled."
-        elif key == KEY_CONFIRM:
+        elif button == BUTTON_CONFIRM:
             self._place_selected_tower()
         else:
-            self._move_cursor(key)
+            self._move_cursor(button)
 
-    def _handle_actions(self, key):
-        if key == KEY_MENU:
+    def _handle_actions(self, button):
+        if button == BUTTON_MENU:
             self.state = "playing"
             self.message = "Action closed."
-        elif key == pygame.K_UP:
+        elif button == "UP":
             self.action_index = (self.action_index - 1) % 3
-        elif key == pygame.K_DOWN:
+        elif button == "DOWN":
             self.action_index = (self.action_index + 1) % 3
-        elif key == KEY_CONFIRM:
+        elif button == BUTTON_CONFIRM:
             self._confirm_action()
 
-    def _handle_info(self, key):
-        if key in (KEY_INFO, KEY_CONFIRM, KEY_MENU):
+    def _handle_info(self, button):
+        if button in (BUTTON_INFO, BUTTON_CONFIRM, BUTTON_MENU):
             self._close_tower_info()
 
     def _open_hovered_tower_info(self):
@@ -556,25 +573,25 @@ class TowerGame(Scene):
         self.state = "playing"
         self.message = self._field_hover_message() if self.focus == "field" else self._menu_selection_label()
 
-    def _move_cursor(self, key):
-        if key == pygame.K_LEFT:
+    def _move_cursor(self, button):
+        if button == "LEFT":
             self.cursor[0] = max(0, self.cursor[0] - 1)
-        elif key == pygame.K_RIGHT:
+        elif button == "RIGHT":
             self.cursor[0] = min(COLS - 1, self.cursor[0] + 1)
-        elif key == pygame.K_UP:
+        elif button == "UP":
             self.cursor[1] = max(0, self.cursor[1] - 1)
-        elif key == pygame.K_DOWN:
+        elif button == "DOWN":
             self.cursor[1] = min(ROWS - 1, self.cursor[1] + 1)
 
-    def _move_menu_selection(self, key):
+    def _move_menu_selection(self, button):
         columns = 3
         controls = self._control_count()
         if self.menu_index < controls:
-            if key == pygame.K_LEFT and self.menu_index > 0:
+            if button == "LEFT" and self.menu_index > 0:
                 self.menu_index -= 1
-            elif key == pygame.K_RIGHT and self.menu_index + 1 < controls:
+            elif button == "RIGHT" and self.menu_index + 1 < controls:
                 self.menu_index += 1
-            elif key == pygame.K_DOWN:
+            elif button == "DOWN":
                 self.menu_index = controls + min(self.menu_index, columns - 1)
             self.message = self._menu_selection_label()
             return
@@ -584,18 +601,18 @@ class TowerGame(Scene):
         col = tower_idx % columns
         total = len(self.tower_names)
 
-        if key == pygame.K_LEFT and col > 0:
+        if button == "LEFT" and col > 0:
             tower_idx -= 1
-        elif key == pygame.K_RIGHT and col < columns - 1 and tower_idx + 1 < total:
+        elif button == "RIGHT" and col < columns - 1 and tower_idx + 1 < total:
             tower_idx += 1
-        elif key == pygame.K_UP:
+        elif button == "UP":
             if row > 0:
                 tower_idx -= columns
             elif controls:
                 self.menu_index = min(col, controls - 1)
                 self.message = self._menu_selection_label()
                 return
-        elif key == pygame.K_DOWN and tower_idx + columns < total:
+        elif button == "DOWN" and tower_idx + columns < total:
             tower_idx += columns
 
         self.menu_index = controls + tower_idx
@@ -739,6 +756,10 @@ class TowerGame(Scene):
     def update(self, dt):
         self.exit_confirm_timer = max(0, self.exit_confirm_timer - dt)
         self.banner_timer = max(0, self.banner_timer - dt)
+        self.input.update()
+
+        if self._handle_input():
+            return
 
         if self.game_over:
             return
@@ -781,11 +802,10 @@ class TowerGame(Scene):
             self.held_move_timer = 0.0
             return
 
-        pressed = pygame.key.get_pressed()
         held_key = None
-        for key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
-            if pressed[key]:
-                held_key = key
+        for button in DIRECTION_BUTTONS:
+            if self.input.is_pressed(button):
+                held_key = button
                 break
 
         if held_key is None:
