@@ -232,6 +232,7 @@ class LockScreen(Scene):
                 self.manager.current_user = user
                 self.user = user
                 self.apply_user_style(user)
+                self.success_timer = self.success_delay
 
 
     def handle_password(self, event):
