@@ -467,7 +467,7 @@ class PixelspinGame(Scene):
             # Pas effecten toe voor symbool-upgrades
             self._apply_item_effect(item_name, item_type)
         else:
-            # Je hebt dit item al of niet genoeg muneten
+            # Je hebt dit item al of niet genoeg munten
             return
 
     def _apply_item_effect(self, item_name, item_type):
@@ -636,15 +636,15 @@ class PixelspinGame(Scene):
         cost_txt = sf.render(f"Doel ATM: {target}  |  ATM: {self.atm}", True, WHITE)
         surface.blit(cost_txt, (WIDTH//2 - cost_txt.get_width()//2, 34))
 
-        coins_txt = sf.render(f"Muneten: {self.coins}  |  Luck: {self.luck}", True, GOLD)
+        coins_txt = sf.render(f"Munten: {self.coins}  |  Luck: {self.luck}", True, GOLD)
         surface.blit(coins_txt, (WIDTH//2 - coins_txt.get_width()//2, 52))
 
         info = sf.render("Kies hoeveel spins:", True, WHITE)
         surface.blit(info, (WIDTH//2 - info.get_width()//2, 82))
 
-        c3 = sf.render("3 spins = 15 muneten", True, (180, 180, 180))
+        c3 = sf.render("3 spins = 15 munten", True, (180, 180, 180))
         surface.blit(c3, (WIDTH//2 - c3.get_width()//2, 100))
-        c7 = sf.render("7 spins = 35 muneten", True, (180, 180, 180))
+        c7 = sf.render("7 spins = 35 munten", True, (180, 180, 180))
         surface.blit(c7, (WIDTH//2 - c7.get_width()//2, 116))
 
         can_3 = self.coins >= 15
@@ -654,7 +654,7 @@ class PixelspinGame(Scene):
         self._draw_btn(surface, "3 SPINS", WIDTH//2 - 80, HEIGHT - 100, 70, 40, col_3, (lambda: self.choose_spins(3)) if can_3 else (lambda: None))
         self._draw_btn(surface, "7 SPINS", WIDTH//2 + 10, HEIGHT - 100, 70, 40, col_7, (lambda: self.choose_spins(7)) if can_7 else (lambda: None))
         if not can_3:
-            warn = sf.render("Te weinig muneten!", True, RED)
+            warn = sf.render("Te weinig munten!", True, RED)
             surface.blit(warn, (WIDTH//2 - warn.get_width()//2, HEIGHT - 55))
         self._draw_btn(surface, "SHOP", WIDTH - 55, HEIGHT - 45, 50, 35, GOLD, self.shop)
 
@@ -671,7 +671,7 @@ class PixelspinGame(Scene):
         )
         surface.blit(hdr, (5, 5))
 
-        stats_line = sf.render(f"MUNETEN: {self.coins}   ATM: {self.atm}   LUCK: {self.luck}", True, WHITE)
+        stats_line = sf.render(f"MUNTEN: {self.coins}   ATM: {self.atm}   LUCK: {self.luck}", True, WHITE)
         surface.blit(stats_line, (5, 22))
 
         grid_margin = 8
@@ -825,7 +825,7 @@ class PixelspinGame(Scene):
         title = pygame.font.SysFont("monospace", 18, bold=True).render("SHOP", True, GOLD)
         surface.blit(title, (WIDTH//2 - title.get_width()//2, 5))
 
-        coins_txt = small_font.render(f"MUNETEN: {self.coins}", True, GOLD)
+        coins_txt = small_font.render(f"MUNTEN: {self.coins}", True, GOLD)
         surface.blit(coins_txt, (5, 25))
 
         total_owned = sum(len(items) for items in self.purchased_items.values())
