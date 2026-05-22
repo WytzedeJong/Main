@@ -7,6 +7,7 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 import os
 import json
 from ui.lockscreen import LockScreen
+from core.input_manager import InputHandler
 
 pygame.init()
 
@@ -197,6 +198,7 @@ class Player:
 class AdventureGame(Scene):
     def __init__(self, manager, num_players=4):
         super().__init__(manager)
+        self.input = InputHandler()
         
         # Use base surface dimensions for scaling consistency
         if num_players is None:
@@ -464,7 +466,7 @@ class AdventureGame(Scene):
         
         # Instructions text (keyboard only)
         font_small = pygame.font.Font(None, 28)
-        instructions = font_small.render("Press SPACE or ENTER to play again", True, (200, 230, 255))
+        instructions = font_small.render("Press B to play again", True, (200, 230, 255))
         instructions_rect = instructions.get_rect(center=(self.window_width // 2, overlay_y + 170))
         self.screen.blit(instructions, instructions_rect)
     
@@ -492,7 +494,7 @@ class AdventureGame(Scene):
         self.screen.blit(title, title_rect)
         
         # Instructions text
-        instructions = font_medium.render("Press ENTER to continue", True, (200, 230, 255))
+        instructions = font_medium.render("Press B to continue", True, (200, 230, 255))
         instructions_rect = instructions.get_rect(center=(self.window_width // 2, self.window_height // 2 + 100))
         self.screen.blit(instructions, instructions_rect)
     
@@ -664,6 +666,9 @@ class AdventureGame(Scene):
     
     def update(self, dt):
         """Update game state"""
+        self.input.update()
+        self._handle_input_actions()
+
         if self.state == GameState.MOVING:
             for player in self.get_alive_players():
                 player.update()
@@ -724,55 +729,53 @@ class AdventureGame(Scene):
                         player.push(player.scheduled_direction, player.scheduled_force)
                     self.state = GameState.MOVING
             
-            # Handle continuous keyboard input for smooth control
+            # Handle continuous input for smooth control
             if human_player:
-                keys = pygame.key.get_pressed()
-                
                 rotation_speed = 300 * dt  # 300 degrees per second
                 force_speed = 0.4 * dt  # Change 0.4 per second
                 
-                if keys[pygame.K_LEFT]:
+                if self.input.is_pressed("LEFT"):
                     self.direction_angle -= rotation_speed
                     self.direction_angle %= 360
-                if keys[pygame.K_RIGHT]:
+                if self.input.is_pressed("RIGHT"):
                     self.direction_angle += rotation_speed
                     self.direction_angle %= 360
                 
-                if keys[pygame.K_UP]:
+                if self.input.is_pressed("UP"):
                     self.current_force = min(self.current_force + force_speed, 1.0)
-                if keys[pygame.K_DOWN]:
+                if self.input.is_pressed("DOWN"):
                     self.current_force = max(self.current_force - force_speed, 0.1)
         
         self.wave_offset += 0.02
+
+    def _handle_input_actions(self):
+        if self.input.just_pressed("ESCAPE") and self.state != GameState.WINNER_SCREEN:
+            from ui.home_menu import HomeMenu
+            self.manager.set_scene(HomeMenu(self.manager))
+            return
+
+        if self.state == GameState.START_SCREEN:
+            if self.input.just_pressed("LEFT"):
+                self.selected_players = max(2, self.selected_players - 1)
+            elif self.input.just_pressed("RIGHT"):
+                self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
+            elif self.input.just_pressed("B"):
+                self.start_game()
+            return
+
+        if self.state == GameState.WAITING_FOR_INPUT:
+            human_player = next((p for p in self.get_alive_players() if p.is_human), None)
+            if human_player and self.input.just_pressed("B"):
+                human_player.scheduled_force = self.current_force
+                human_player.scheduled_direction = self.direction_angle
+            return
+
+        if self.state == GameState.WINNER_SCREEN:
+            if self.input.just_pressed("B"):
+                self.state = GameState.START_SCREEN
     
     def handle_events(self, event):
         """Handle player input"""
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE and self.state != GameState.WINNER_SCREEN:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
-                return
-            
-            if self.state == GameState.START_SCREEN:
-                if event.key == pygame.K_LEFT:
-                    self.selected_players = max(2, self.selected_players - 1)
-                elif event.key == pygame.K_RIGHT:
-                    self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
-                elif event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
-                    self.start_game()
-                    return
-            
-            if self.state == GameState.WAITING_FOR_INPUT:
-                human_player = next((p for p in self.get_alive_players() if p.is_human), None)
-                if human_player:
-                    if event.key == pygame.K_SPACE:
-                        human_player.scheduled_force = self.current_force
-                        human_player.scheduled_direction = self.direction_angle
-            
-            if self.state == GameState.WINNER_SCREEN:
-                if event.key == pygame.K_RETURN or event.key == pygame.K_SPACE:
-                    self.state = GameState.START_SCREEN
-        
         if event.type == pygame.MOUSEBUTTONDOWN:
             # Scale mouse position from screen space to base surface space
             from settings import screen
@@ -869,7 +872,7 @@ class AdventureGame(Scene):
                     force_pct = int(self.current_force * 100)
                     angle_txt = int(self.direction_angle)
                     instruction = small_font.render(
-                        f"←/→ to rotate ({angle_txt}°) | ↑/↓ for power ({force_pct}%) | SPACE to push", 
+                        f"LEFT/RIGHT to rotate ({angle_txt} deg) | UP/DOWN for power ({force_pct}%) | B to push", 
                         True, (255, 255, 255)
                     )
                     text_rect = instruction.get_rect()

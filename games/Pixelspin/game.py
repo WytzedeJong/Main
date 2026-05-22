@@ -5,6 +5,7 @@ import os
 
 from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
+from core.input_manager import InputHandler
 
 # --- CONFIGURATIE ---
 WIDTH, HEIGHT = BASE_WIDTH, BASE_HEIGHT
@@ -81,6 +82,7 @@ class PixelspinGame(Scene):
         self.button_cooldown = 0
         self.selected_button = 0
         self.buttons = []
+        self.input = InputHandler()
         self.reset_game()
 
     def reset_game(self):
@@ -388,6 +390,8 @@ class PixelspinGame(Scene):
     # 666 pattern removed - no more evil patterns!
 
     def update(self, dt):
+        self.input.update()
+        self._handle_input_actions()
         self.button_cooldown -= 1
         self.flash_counter += 1
 
@@ -522,6 +526,7 @@ class PixelspinGame(Scene):
         self.current_screen = "game"
 
     def handle_events(self, event):
+        return
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 from ui.home_menu import HomeMenu
@@ -532,6 +537,31 @@ class PixelspinGame(Scene):
                 self._press_selected_button()
             elif event.key == pygame.K_b:
                 self._handle_back_button()
+
+    def _handle_input_actions(self):
+        if self.input.just_pressed("ESCAPE"):
+            from ui.home_menu import HomeMenu
+            self.manager.set_scene(HomeMenu(self.manager))
+            return
+
+        direction = self._just_pressed_direction()
+        if direction:
+            self._navigate_buttons(direction)
+        elif self.input.just_pressed("L"):
+            self._press_selected_button()
+        elif self.input.just_pressed("B"):
+            self._handle_back_button()
+
+    def _just_pressed_direction(self):
+        for button, key in (
+            ("LEFT", pygame.K_LEFT),
+            ("RIGHT", pygame.K_RIGHT),
+            ("UP", pygame.K_UP),
+            ("DOWN", pygame.K_DOWN),
+        ):
+            if self.input.just_pressed(button):
+                return key
+        return None
 
     def _navigate_buttons(self, key):
         if self.button_cooldown > 0:

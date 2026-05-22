@@ -6,6 +6,7 @@ import pygame
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
 from ui.lockscreen import LockScreen
+from core.input_manager import InputHandler
 
 
 class PuzzleGame(Scene):
@@ -65,6 +66,7 @@ class PuzzleGame(Scene):
         self.subtitle_font = pygame.font.SysFont("arial", 18, bold=True)
         self.body_font = pygame.font.SysFont("arial", 14)
         self.small_font = pygame.font.SysFont("arial", 12)
+        self.input = InputHandler()
 
         self.state = "difficulty"
         self.selected_difficulty = 0
@@ -100,6 +102,7 @@ class PuzzleGame(Scene):
         self.timer_running = False
 
     def handle_events(self, event):
+        return
         if event.type != pygame.KEYDOWN:
             return
 
@@ -148,6 +151,9 @@ class PuzzleGame(Scene):
 
     def update(self, dt):
         """Wordt elke frame aangeroepen"""
+        self.input.update()
+        self._handle_input_actions()
+
         if self.timer_running and self.state == "playing":
             current_time = pygame.time.get_ticks()
             self.elapsed_time = (current_time - self.start_time) // 1000   # in seconden
@@ -174,11 +180,11 @@ class PuzzleGame(Scene):
             self.selected_difficulty = self._move_difficulty_selection(
                 self.selected_difficulty, key
             )
-        elif key in (pygame.K_RETURN, pygame.K_b):
+        elif key == pygame.K_b:
             self._start_game(self.selected_difficulty)
 
     def _handle_won_events(self, key):
-        if key in (pygame.K_RETURN, pygame.K_b):
+        if key == pygame.K_b:
             self._start_game(self.selected_difficulty)
         elif key in (
             pygame.K_UP,
@@ -190,6 +196,72 @@ class PuzzleGame(Scene):
                 self.selected_difficulty, key
             )
             self._start_game(self.selected_difficulty)
+
+    def _handle_input_actions(self):
+        direction = self._just_pressed_direction()
+
+        if self.exit_dialog_open:
+            if direction:
+                self._handle_exit_dialog_events(direction)
+            elif self.input.just_pressed("B"):
+                self._confirm_exit_dialog_choice()
+            elif self.input.just_pressed("ESCAPE"):
+                self._close_exit_dialog()
+            return
+
+        if self.input.just_pressed("ESCAPE"):
+            if self.state == "won":
+                self.timer_running = False
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
+                return
+
+            if self.state == "playing":
+                if self.selected_piece_id is not None:
+                    self._cancel_selected_piece()
+                else:
+                    self._open_exit_dialog()
+                return
+
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
+            return
+
+        if self.state == "difficulty":
+            if direction:
+                self._handle_difficulty_events(direction)
+            elif self.input.just_pressed("B"):
+                self._handle_difficulty_events(pygame.K_b)
+            return
+
+        if self.state == "won":
+            if direction:
+                self._handle_won_events(direction)
+            elif self.input.just_pressed("B"):
+                self._handle_won_events(pygame.K_b)
+            return
+
+        if self.input.just_pressed("L") and self.selected_piece_id is not None:
+            self._rotate_selected_piece()
+            return
+
+        if self.input.just_pressed("B"):
+            self._handle_b_action()
+            return
+
+        if direction:
+            self._handle_direction(direction)
+
+    def _just_pressed_direction(self):
+        for button, key in (
+            ("LEFT", pygame.K_LEFT),
+            ("RIGHT", pygame.K_RIGHT),
+            ("UP", pygame.K_UP),
+            ("DOWN", pygame.K_DOWN),
+        ):
+            if self.input.just_pressed(button):
+                return key
+        return None
 
     def get_user(self):
         """Get current user from manager or lockscreen"""
@@ -274,7 +346,7 @@ class PuzzleGame(Scene):
             self.exit_dialog_index = (self.exit_dialog_index - 1) % len(self.exit_options)
         elif key == pygame.K_DOWN:
             self.exit_dialog_index = (self.exit_dialog_index + 1) % len(self.exit_options)
-        elif key in (pygame.K_RETURN, pygame.K_b):
+        elif key == pygame.K_b:
             self._confirm_exit_dialog_choice()
         elif key == pygame.K_ESCAPE:
             self._close_exit_dialog()

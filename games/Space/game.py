@@ -7,6 +7,7 @@ import pygame
 
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
+from core.input_manager import InputHandler
 
 
 @dataclass
@@ -77,6 +78,7 @@ class SpaceGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.asset_dir = os.path.join(os.path.dirname(__file__), "images")
+        self.input = InputHandler()
         self.hud_height = 54
         self.play_height = BASE_HEIGHT - self.hud_height
         self.title_font = pygame.font.SysFont("arial", 28, bold=True)
@@ -398,20 +400,26 @@ class SpaceGame(Scene):
         self.enemies.append(enemy)
 
     def handle_events(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
-                return
-
-            if self.show_instructions and event.key == pygame.K_RETURN:
-                self.show_instructions = False
-                return
-
-            if self.game_over and event.key == pygame.K_RETURN:
-                self.reset_game()
+        pass
 
     def update(self, dt):
+        self.input.update()
+
+        if self.input.just_pressed("ESCAPE"):
+            from ui.home_menu import HomeMenu
+            self.manager.set_scene(HomeMenu(self.manager))
+            return
+
+        if self.show_instructions:
+            if self.input.just_pressed("B"):
+                self.show_instructions = False
+            return
+
+        if self.game_over:
+            if self.input.just_pressed("B"):
+                self.reset_game()
+            return
+
         if self.show_instructions or self.game_over:
             return
 
@@ -425,17 +433,16 @@ class SpaceGame(Scene):
         self.check_round_clear()
 
     def update_player(self, dt):
-        keys = pygame.key.get_pressed()
         move_x = 0
         move_y = 0
 
-        if keys[pygame.K_LEFT]:
+        if self.input.is_pressed("LEFT"):
             move_x -= 1
-        if keys[pygame.K_RIGHT]:
+        if self.input.is_pressed("RIGHT"):
             move_x += 1
-        if keys[pygame.K_UP]:
+        if self.input.is_pressed("UP"):
             move_y -= 1
-        if keys[pygame.K_DOWN]:
+        if self.input.is_pressed("DOWN"):
             move_y += 1
 
         if move_x or move_y:
@@ -899,7 +906,7 @@ class SpaceGame(Scene):
 
             y += 3
 
-        start_text = self.small_font.render("ENTER om te starten", True, (120, 255, 160))
+        start_text = self.small_font.render("B om te starten", True, (120, 255, 160))
         surface.blit(start_text, (panel.x + 18, panel.bottom - 22))
 
     def draw_game_over(self, surface):
@@ -914,7 +921,7 @@ class SpaceGame(Scene):
         title = self.big_font.render("Game Over", True, (255, 180, 180))
         score = self.text_font.render(f"Score: {self.score}", True, (255, 255, 255))
         round_text = self.text_font.render(f"Gehaald tot ronde {self.round_number}", True, (255, 255, 255))
-        retry = self.text_font.render("ENTER = opnieuw  |  ESC = menu", True, (120, 255, 160))
+        retry = self.text_font.render("B = opnieuw  |  ESC = menu", True, (120, 255, 160))
 
         surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 98)))
         surface.blit(score, score.get_rect(center=(BASE_WIDTH // 2, 128)))

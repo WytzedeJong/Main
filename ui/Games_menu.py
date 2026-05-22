@@ -11,6 +11,7 @@ from games.monkey_stacker.game import MonkeyStacker
 from games.tower_defense.game import TowerGame
 from games.Pixelspin.game import PixelspinGame
 from games.farm_nation.game import FarmNationGame
+from games.racer.game import RacerGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
 
@@ -28,7 +29,8 @@ class Game_Menu(Scene):
             ("Monkey", MonkeyStacker),
             ("Tower Defense", TowerGame),
             ("Pixelspin", PixelspinGame),
-            ("Farm Nation", FarmNationGame)
+            ("Farm Nation", FarmNationGame),
+            ("Speed Racer", RacerGame)
         ]
 
         self.selected = 0
