@@ -70,6 +70,8 @@ def load_shop_items():
         return {"charms": {}, "powerups": {}, "upgrades": {}}
 
 SHOP_ITEMS = load_shop_items()
+SHOP_ROLL_SIZE = 7
+REPEATABLE_SHOP_ITEMS = {"Coin Doubler", "Extra Spins"}
 
 class PixelspinGame(Scene):
     def __init__(self, manager):
@@ -91,7 +93,9 @@ class PixelspinGame(Scene):
         self.luck = 0
         self.spin_count = 0
         self.atm_interest_rate = 0.05
-        self.has_666_protection = False
+        self.pattern_chance_bonus = 0.0
+        self.coin_doubler_spins_left = 0
+        self.extra_spins_pending = 0
 
         # Deadline / ronde systeem
         self.deadline_number = 1
@@ -112,6 +116,9 @@ class PixelspinGame(Scene):
         self.current_screen = "game"
         self.selected_button = 0
         self.buttons = []
+        self.shop_scroll_y = 0
+        self.shop_items_for_phase = []
+        self.repeatable_items_bought_this_round = set()
 
         self.winning_coords = []
         self.winning_patterns = []
@@ -122,11 +129,7 @@ class PixelspinGame(Scene):
             "upgrades": set()
         }
 
-        self.purchased_items = {
-            "charms": set(),
-            "powerups": set(),
-            "upgrades": set()
-        }
+        self._roll_shop_items()
 
     def _deadline_cost_for(self, deadline_num):
         """Bereken de ATM-doelwaarde voor een bepaalde deadline"""
@@ -136,7 +139,7 @@ class PixelspinGame(Scene):
         """Genereert het grid.
         Bij luck >= 15: alle cellen krijgen hetzelfde symbool → jackpot gegarandeerd.
         Anders: puur random gewogen per symbool.
-        Luck bepaalt verder hoeveel patronen actief worden (zie _pattern_activation_chance)."""
+        Luck plaatst daarna extra gunstige patronen op het bord."""
         grid = []
         if self.luck >= 15:
             # Forceer één symbool zodat jackpot geometrisch klopt
@@ -150,21 +153,76 @@ class PixelspinGame(Scene):
                 for r in range(GRID_H):
                     col.append(self.weighted_choice(SYMBOLS))
                 grid.append(col)
+            self._apply_luck_patterns(grid)
         return grid
 
-    def get_pattern_activation_count(self):
-        """Bepaal hoeveel patronen deze spin geactiveerd worden op basis van luck.
-        
-        Luck bepaalt het AANTAL patronen, niet de kans per patroon:
-          luck=0  → 0 patronen
-          luck=1  → 1 patroon
-          luck=5  → 5 patronen
-          luck=10 → 10 patronen
-          luck=15+ → alle patronen
-        """
-        if self.luck >= 15:
-            return 999  # Alle patronen
-        return max(0, self.luck)
+    def _luck_pattern_count(self):
+        """Luck verhoogt het aantal gegarandeerde patronen op het eindbord."""
+        if self.luck <= 0:
+            return 1 if random.random() < self.pattern_chance_bonus else 0
+
+        pattern_count = min(3, self.luck // 5)
+        if random.random() < (self.luck % 5) / 5:
+            pattern_count += 1
+        if random.random() < self.pattern_chance_bonus:
+            pattern_count += 1
+        return max(1, min(3, pattern_count))
+
+    def _luck_symbol_choice(self):
+        """Kies vaker waardevollere symbolen naarmate luck hoger wordt."""
+        symbols = list(SYMBOLS.keys())
+        weights = []
+        for sym in symbols:
+            value_bias = max(1, get_effective_value(sym)) ** (1 + self.luck / 10)
+            weights.append(get_effective_weight(sym) * value_bias)
+        return random.choices(symbols, weights=weights, k=1)[0]
+
+    def _coords_for_pattern(self, pattern):
+        pattern_type = pattern["type"]
+        length = pattern.get("length", 3)
+
+        if pattern_type == "horizontal":
+            row = random.randrange(GRID_H)
+            start_col = random.randrange(0, GRID_W - length + 1)
+            return [(start_col + i, row) for i in range(length)]
+        if pattern_type == "vertical":
+            col = random.randrange(GRID_W)
+            return [(col, row) for row in range(GRID_H)]
+        if pattern_type == "diagonal":
+            start_col = random.randrange(0, GRID_W - 2)
+            return [(start_col + i, i) for i in range(3)]
+        if pattern_type == "zigzag":
+            start_col = random.randrange(0, GRID_W - 2)
+            return [(start_col, GRID_H - 1), (start_col + 1, GRID_H - 2), (start_col + 2, GRID_H - 3)]
+        if pattern_type == "zagzag":
+            start_col = random.randrange(0, GRID_W - 2)
+            return [(start_col, 0), (start_col + 1, 1), (start_col + 2, 2)]
+        if pattern_type == "top_row":
+            return [(col, 0) for col in range(GRID_W)]
+        if pattern_type == "bottom_row":
+            return [(col, GRID_H - 1) for col in range(GRID_W)]
+        if pattern_type == "eye":
+            return [(1, 0), (2, 0), (3, 0), (1, 2), (2, 2), (3, 2), (1, 1), (3, 1)]
+        return []
+
+    def _apply_luck_patterns(self, grid):
+        pattern_count = self._luck_pattern_count()
+        if pattern_count == 0:
+            return
+
+        max_multiplier = 1 + self.luck * 0.6
+        eligible_patterns = [
+            p for p in PATTERNS
+            if p["type"] != "jackpot" and p["multiplier"] <= max_multiplier
+        ]
+        if not eligible_patterns:
+            return
+
+        weights = [p["multiplier"] ** (1 + self.luck / 10) for p in eligible_patterns]
+        for pattern in random.choices(eligible_patterns, weights=weights, k=pattern_count):
+            symbol = self._luck_symbol_choice()
+            for c, r in self._coords_for_pattern(pattern):
+                grid[c][r] = symbol
     
     def weighted_choice(self, symbols):
         """Selecteert een symbool op basis van effectieve weight (inclusief bonussen)"""
@@ -179,9 +237,12 @@ class PixelspinGame(Scene):
 
     def choose_spins(self, amount):
         """Speler kiest 3 of 7 spins voor deze ronde"""
-        self.chosen_spins = amount
-        self.spins_left = amount
+        total_spins = amount + self.extra_spins_pending
+        self.extra_spins_pending = 0
+        self.chosen_spins = total_spins
+        self.spins_left = total_spins
         self.phase = "spinning_phase"
+        self.selected_button = 0
         self.last_wins = []
         self.total_win_anim = 0
         self.winning_coords = []
@@ -306,11 +367,10 @@ class PixelspinGame(Scene):
         return coords
 
     def check_all_patterns(self):
-        """Pattern-checking met Luck-bepaalde activatie.
-        
-        Luck bepaalt hoeveel patronen geactiveerd worden.
-        Eerst alle GOEDE patronen activeren (per luck count).
-        Daarna random goede/slechte patronen vullen tot einde.
+        """Betaal ieder gedraaid patroon uit.
+
+        Uitbetaling = symboolwaarde * aantal symbolen in het patroon * pattern multiplier.
+        Shop-charms kunnen de symboolwaarde of pattern multiplier daarna nog verhogen.
         """
         total_payout = 0
         found_any = []
@@ -324,21 +384,19 @@ class PixelspinGame(Scene):
             for p in PATTERNS:
                 pattern_coords_list = self.find_pattern_coordinates(sym_name, p["type"])
                 for match_coords in pattern_coords_list:
+                    required_length = p.get("length")
+                    if required_length is not None and len(match_coords) < required_length:
+                        continue
                     candidate_hits.append((p, sym_name, match_coords))
 
         # Sorteer op multiplier (groot → klein) zodat jackpot/complex eerst komen
         candidate_hits.sort(key=lambda x: x[0]["multiplier"], reverse=True)
 
-        # ── Stap 2: Luck bepaalt hoeveel patronen geactiveerd worden ───────
-        # Activeer de BESTE patronen tot het luck-limit
-        activated_count = self.get_pattern_activation_count()
+        # ── Stap 2: betaal alle unieke geometrisch geldige patronen ───────
         seen_pattern_coords = set()
         patterns_to_payout = []  # Patronen die uitbetaald worden
 
         for p, sym_name, match_coords in candidate_hits:
-            if len(patterns_to_payout) >= activated_count:
-                break  # Genoeg patronen geactiveerd
-
             key = (p["name"], sym_name, frozenset(match_coords))
             if key in seen_pattern_coords:
                 continue
@@ -351,18 +409,23 @@ class PixelspinGame(Scene):
             symbol_base = get_effective_value(sym_name)
             symbol_multiplier = 1.0
             pattern_multiplier = p["multiplier"]
+            symbol_count = len(match_coords)
 
-            # Big Mushroom: x2 symboolwaarde (geen combo-check meer)
-            if "Big Mushroom" in self.purchased_items["charms"]:
+            # Big Mushroom: x2 symboolwaarde bij 3+ patronen
+            if "Big Mushroom" in self.purchased_items["charms"] and len(patterns_to_payout) >= 3:
                 symbol_multiplier *= 2.0
 
-            # Pentacle: x1.5 pattern multiplier (geen combo-check meer)
-            if "Pentacle" in self.purchased_items["charms"]:
+            # Pentacle: x1.5 pattern multiplier bij 5+ patronen
+            if "Pentacle" in self.purchased_items["charms"] and len(patterns_to_payout) >= 5:
                 pattern_multiplier *= 1.5
 
-            win = int((symbol_base * symbol_multiplier) * (10 * pattern_multiplier))
+            effective_symbol_value = symbol_base * symbol_multiplier
+            win = int(round(effective_symbol_value * symbol_count * pattern_multiplier))
             total_payout += win
-            found_any.append(f"{p['name']} ({sym_name}): +{win}")
+            found_any.append(
+                f"{p['name']} ({sym_name} x{symbol_count}): "
+                f"{effective_symbol_value:g}x{pattern_multiplier:g}=+{win}"
+            )
 
             # Winning-coördinaten opslaan (voor highlight/flash)
             for coord in match_coords:
@@ -374,20 +437,24 @@ class PixelspinGame(Scene):
                 "pattern": p["name"]
             })
 
-        # ── Stap 4: Lucky Cat ATM-rente (gebaseerd op activated patterns) ───
-        if "Lucky Cat" in self.purchased_items["charms"] and len(patterns_to_payout) > 0:
-            interest = max(1, int(self.atm * self.atm_interest_rate))
+        # ── Stap 4: Lucky Cat ATM-rente per 3 patronen ─────────────────────
+        lucky_cat_groups = len(patterns_to_payout) // 3
+        if "Lucky Cat" in self.purchased_items["charms"] and lucky_cat_groups > 0:
+            interest = max(1, int(self.atm * self.atm_interest_rate)) * lucky_cat_groups
             total_payout += interest
             found_any.append(f"💰 Lucky Cat rente: +{interest}")
 
         if not found_any:
             found_any.append("Geen patronen deze spin...")
 
+        if self.coin_doubler_spins_left > 0:
+            total_payout *= 2
+            self.coin_doubler_spins_left -= 1
+            found_any.append(f"Coin Doubler x2 ({self.coin_doubler_spins_left} over)")
+
         self.coins += total_payout
         self.total_win_anim = total_payout
         self.last_wins = found_any
-    
-    # 666 pattern removed - no more evil patterns!
 
     def update(self, dt):
         self.input.update()
@@ -404,16 +471,16 @@ class PixelspinGame(Scene):
             if self.spin_timer <= 0:
                 self.spinning = False
                 self.flash_counter = 0
+                self.grid = self.generate_grid()
                 self.check_all_patterns()
                 # Als spins op zijn na deze spin → ronde klaar
-                if self.spins_left == 0:
-                    self._end_round()
 
     def _end_round(self):
         """Ronde is afgelopen: altijd eerst ATM-storting, dan volgende ronde of deadline-betaling"""
         # Ga altijd naar atm_phase na een ronde zodat speler kan storten
         self.phase = "atm_phase"
         self.current_screen = "game"
+        self._roll_shop_items()
 
     def _is_final_round(self):
         return self.round_in_deadline >= 3
@@ -443,9 +510,7 @@ class PixelspinGame(Scene):
     def _try_next_deadline(self):
         """Na betaal-knop: door naar volgende ronde of deadline"""
         if not self._is_final_round():
-            self.round_in_deadline += 1
-            self.phase = "spin_choice"
-            self.grid = self.generate_grid()  # Nieuw grid per ronde
+            self._continue_to_spin_choice()
         else:
             target = self._deadline_cost_for(self.deadline_number)
             if self.atm >= target:
@@ -456,6 +521,8 @@ class PixelspinGame(Scene):
                 self.phase = "spin_choice"
                 self.consecutive_misses = 0
                 self.last_wins = []
+                self.repeatable_items_bought_this_round.clear()
+                self.selected_button = 0
                 self.grid = self.generate_grid()  # Nieuw grid per deadline
             else:
                 self.last_wins = [
@@ -464,10 +531,50 @@ class PixelspinGame(Scene):
                 ]
                 self.phase = "game_over"
 
+    def _continue_to_spin_choice(self):
+        if self._is_final_round():
+            return
+        self.round_in_deadline += 1
+        self.phase = "spin_choice"
+        self.current_screen = "game"
+        self.repeatable_items_bought_this_round.clear()
+        self.selected_button = 0
+        self.grid = self.generate_grid()
+
+    def _skip_spin_phase(self):
+        if self._is_final_round():
+            return
+        self.round_in_deadline += 1
+        self.phase = "atm_phase"
+        self.current_screen = "game"
+        self.repeatable_items_bought_this_round.clear()
+        self.selected_button = 0
+        self._roll_shop_items()
+
     def _buy_item(self, item_name, cost, item_type):
-        if self.coins >= cost and item_name not in self.purchased_items[item_type]:
+        repeatable = item_name in REPEATABLE_SHOP_ITEMS
+        already_bought_this_round = item_name in self.repeatable_items_bought_this_round
+        can_buy = (
+            (repeatable and not already_bought_this_round)
+            or item_name not in self.purchased_items[item_type]
+        )
+
+        if self.coins >= cost and can_buy:
             self.coins -= cost
-            self.purchased_items[item_type].add(item_name)
+            if repeatable:
+                self.repeatable_items_bought_this_round.add(item_name)
+                self.shop_items_for_phase = [
+                    entry for entry in self.shop_items_for_phase
+                    if entry[1] != item_name
+                ]
+                self.selected_button = min(self.selected_button, max(0, len(self.shop_items_for_phase)))
+            else:
+                self.purchased_items[item_type].add(item_name)
+                self.shop_items_for_phase = [
+                    entry for entry in self.shop_items_for_phase
+                    if not (entry[0] == item_type and entry[1] == item_name)
+                ]
+                self.selected_button = min(self.selected_button, max(0, len(self.shop_items_for_phase)))
             # Pas effecten toe voor symbool-upgrades
             self._apply_item_effect(item_name, item_type)
         else:
@@ -494,6 +601,19 @@ class PixelspinGame(Scene):
         if item_name in value_boosts:
             sym, delta = value_boosts[item_name]
             _symbol_value_bonus[sym] += delta
+
+        if item_name == "Coin Doubler":
+            self.coin_doubler_spins_left += 3
+        elif item_name == "Extra Spins":
+            if self.phase == "spinning_phase":
+                self.spins_left += 5
+                self.chosen_spins += 5
+            else:
+                self.extra_spins_pending += 5
+        elif item_name == "Better Odds":
+            self.pattern_chance_bonus += 0.15
+        elif item_name == "Interest Boost":
+            self.atm_interest_rate = 0.07
     
     def _apply_all_luck_bonuses(self):
         """Pas alle gekochte luck-items toe aan de huidige luck stat"""
@@ -521,22 +641,62 @@ class PixelspinGame(Scene):
     def shop(self):
         if self.phase in ("spin_choice", "atm_phase"):
             self.current_screen = "shop"
+            self.selected_button = 0
+            self.shop_scroll_y = 0
 
     def back_to_game(self):
         self.current_screen = "game"
 
+    def _get_eligible_shop_items(self):
+        eligible_items = []
+        for category, items_dict in SHOP_ITEMS.items():
+            for item_name, item_data in items_dict.items():
+                already_bought = item_name in self.purchased_items.get(category, set())
+                if already_bought and item_name not in REPEATABLE_SHOP_ITEMS:
+                    continue
+                if item_name in self.repeatable_items_bought_this_round:
+                    continue
+                eligible_items.append((category, item_name, item_data))
+        return eligible_items
+
+    def _roll_shop_items(self):
+        eligible_items = self._get_eligible_shop_items()
+        roll_size = min(SHOP_ROLL_SIZE, len(eligible_items))
+        self.shop_items_for_phase = random.sample(eligible_items, roll_size)
+        self.shop_scroll_y = 0
+        self.selected_button = 0
+
+    def _get_shop_item_count(self):
+        return len(self.shop_items_for_phase)
+
+    def _sync_shop_scroll(self):
+        item_count = self._get_shop_item_count()
+        if item_count == 0:
+            self.shop_scroll_y = 0
+            return
+
+        list_top = 45
+        list_bottom = HEIGHT - 55
+        item_step = 32
+        item_height = 28
+        max_scroll = max(0, item_count * item_step - (list_bottom - list_top))
+
+        if self.selected_button >= item_count:
+            self.shop_scroll_y = max_scroll
+            return
+
+        item_top = list_top + self.selected_button * item_step
+        item_bottom = item_top + item_height
+
+        if item_top - self.shop_scroll_y < list_top:
+            self.shop_scroll_y = item_top - list_top
+        elif item_bottom - self.shop_scroll_y > list_bottom:
+            self.shop_scroll_y = item_bottom - list_bottom
+
+        self.shop_scroll_y = max(0, min(self.shop_scroll_y, max_scroll))
+
     def handle_events(self, event):
         return
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
-            elif event.key in [pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN]:
-                self._navigate_buttons(event.key)
-            elif event.key == pygame.K_l:
-                self._press_selected_button()
-            elif event.key == pygame.K_b:
-                self._handle_back_button()
 
     def _handle_input_actions(self):
         if self.input.just_pressed("ESCAPE"):
@@ -574,11 +734,8 @@ class PixelspinGame(Scene):
         in_atm_screen = self.current_screen == "atm"
 
         if in_atm_phase:
-            # ATM phase knop-layout (indices):
-            #   Rij 0: [0]=20%   [1]=ALLES
-            #   Rij 1: [2]=VOLGENDE RONDE / BETAAL
-            #   Rij 2: [3]=ATM   [4]=SHOP
-            grid = [[0, 1], [2], [3, 4]]
+            can_skip = self.atm >= self._deadline_cost_for(self.deadline_number) and not self._is_final_round()
+            grid = [[0, 1], [2, 3], [4, 5]] if can_skip else [[0, 1], [2], [3, 4]]
             # Vind huidige rij en kolom
             cur = self.selected_button
             cur_row, cur_col = 0, 0
@@ -612,6 +769,8 @@ class PixelspinGame(Scene):
                 self.selected_button = (self.selected_button - 1) % len(self.buttons)
             elif key == pygame.K_RIGHT:
                 self.selected_button = (self.selected_button + 1) % len(self.buttons)
+            if in_shop:
+                self._sync_shop_scroll()
 
         else:
             if key == pygame.K_LEFT:
@@ -720,8 +879,12 @@ class PixelspinGame(Scene):
             self._draw_winning_lines(surface, start_x, start_y, cell_w, cell_h, grid_margin)
 
         btn_y = HEIGHT - 45
-        spin_color = GREEN if (self.coins >= 5 and self.spins_left > 0 and not self.spinning) else DARK_GRAY
-        self._draw_btn(surface, "SPIN", WIDTH//2 - 25, btn_y, 50, 40, spin_color, self.spin)
+        round_done = self.spins_left == 0 and not self.spinning
+        if round_done:
+            self._draw_btn(surface, "NAAR ATM", WIDTH//2 - 45, btn_y, 90, 40, BLUE, self._end_round)
+        else:
+            spin_color = GREEN if (self.coins >= 5 and self.spins_left > 0 and not self.spinning) else DARK_GRAY
+            self._draw_btn(surface, "SPIN", WIDTH//2 - 25, btn_y, 50, 40, spin_color, self.spin)
 
         if self.total_win_anim > 0:
             win_txt = sf.render(f"WINST: +{self.total_win_anim}", True, GREEN)
@@ -730,8 +893,8 @@ class PixelspinGame(Scene):
                 lt = pygame.font.SysFont("monospace", 11, bold=True).render(log[:28], True, WHITE)
                 surface.blit(lt, (5, btn_y - 36 + 16 + i * 14))
 
-        if self.spins_left == 0 and not self.spinning:
-            done_txt = sf.render("Ronde klaar! Laden...", True, GOLD)
+        if round_done:
+            done_txt = sf.render("Laatste spin klaar", True, GOLD)
             surface.blit(done_txt, (WIDTH//2 - done_txt.get_width()//2, btn_y - 20))
 
     # ── ATM PHASE (na 3 rondes) ──────────────────────────────────────────────
@@ -794,9 +957,15 @@ class PixelspinGame(Scene):
         else:
             # Toon "SKIP RONDE" als het ATM-doel al gehaald is, anders "VOLGENDE RONDE"
             can_skip = self.atm >= target
-            skip_label = "⏩ SKIP RONDE" if can_skip else "VOLGENDE RONDE >"
-            skip_col   = (180, 120, 0) if can_skip else BLUE
-            self._draw_btn(surface, skip_label, WIDTH//2 - 100, HEIGHT - 95, 200, 40, skip_col, self._try_next_deadline)
+            if can_skip:
+                btn_w = 96
+                gap = 8
+                left_x = WIDTH//2 - btn_w - gap//2
+                right_x = WIDTH//2 + gap//2
+                self._draw_btn(surface, "SPIN", left_x, HEIGHT - 95, btn_w, 40, BLUE, self._continue_to_spin_choice)
+                self._draw_btn(surface, "SKIP", right_x, HEIGHT - 95, btn_w, 40, (180, 120, 0), self._skip_spin_phase)
+            else:
+                self._draw_btn(surface, "VOLGENDE RONDE >", WIDTH//2 - 100, HEIGHT - 95, 200, 40, BLUE, self._continue_to_spin_choice)
             if can_skip:
                 skip_hint = sf.render("Doel gehaald — sla ronde over!", True, GOLD)
                 surface.blit(skip_hint, (WIDTH//2 - skip_hint.get_width()//2, HEIGHT - 130))
@@ -851,6 +1020,7 @@ class PixelspinGame(Scene):
     def _draw_shop_screen(self, surface):
         surface.fill(BLACK)
         small_font = pygame.font.SysFont("monospace", 12, bold=True)
+        self._sync_shop_scroll()
 
         title = pygame.font.SysFont("monospace", 18, bold=True).render("SHOP", True, GOLD)
         surface.blit(title, (WIDTH//2 - title.get_width()//2, 5))
@@ -862,28 +1032,31 @@ class PixelspinGame(Scene):
         owned_txt = small_font.render(f"Items: {total_owned}", True, GREEN)
         surface.blit(owned_txt, (WIDTH - 80, 25))
 
-        y_offset = 45
+        list_top = 45
+        list_bottom = HEIGHT - 55
+        list_clip = pygame.Rect(0, list_top, WIDTH, list_bottom - list_top)
+        y_offset = list_top - self.shop_scroll_y
         item_count = 0
-        max_items = 10
+        old_clip = surface.get_clip()
+        surface.set_clip(list_clip)
 
-        for category, items_dict in SHOP_ITEMS.items():
-            for item_name, item_data in items_dict.items():
-                if item_count >= max_items:
-                    break
-                purchased = item_name in self.purchased_items.get(category, set())
-                cost = item_data["cost"]
-                status = "✓" if purchased else f"{cost}g"
-                label = f"{item_name[:12]} ({status})"
-                btn_color = GREEN if purchased else (60, 60, 60)
-                _name, _cost, _cat = item_name, cost, category
-                action = (lambda n, c, t: lambda: self._buy_item(n, c, t))(_name, _cost, _cat)
-                self._draw_btn(surface, label, 5, y_offset, WIDTH - 10, 28, btn_color, action)
-                y_offset += 32
-                item_count += 1
-            if item_count >= max_items:
-                break
+        for category, item_name, item_data in self.shop_items_for_phase:
+            purchased = (
+                item_name in self.purchased_items.get(category, set())
+                and item_name not in REPEATABLE_SHOP_ITEMS
+            )
+            cost = item_data["cost"]
+            status = "✓" if purchased else f"{cost}g"
+            label = f"{item_name[:12]} ({status})"
+            btn_color = GREEN if purchased else (60, 60, 60)
+            _name, _cost, _cat = item_name, cost, category
+            action = (lambda n, c, t: lambda: self._buy_item(n, c, t))(_name, _cost, _cat)
+            self._draw_btn(surface, label, 5, y_offset, WIDTH - 10, 28, btn_color, action, clip_rect=list_clip)
+            y_offset += 32
+            item_count += 1
+        surface.set_clip(old_clip)
 
-        self._draw_btn(surface, "BACK", WIDTH//2 - 25, HEIGHT - 45, 50, 40, WHITE, self.back_to_game)
+        self._draw_btn(surface, "BACK", WIDTH//2 - 25, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
 
     # ── GAME OVER ────────────────────────────────────────────────────────────
     def _draw_game_over_screen(self, surface):
@@ -895,7 +1068,7 @@ class PixelspinGame(Scene):
         surface.blit(go, (WIDTH//2 - go.get_width()//2, HEIGHT//2 - 60))
 
         for i, msg in enumerate(self.last_wins):
-            t = sf.render(msg[:28], True, WHITE)
+            t = sf.render(msg, True, WHITE)
             surface.blit(t, (WIDTH//2 - t.get_width()//2, HEIGHT//2 - 20 + i * 22))
 
         self._draw_btn(surface, "OPNIEUW", WIDTH//2 - 40, HEIGHT - 60, 80, 40, GREEN, self.reset_game)
@@ -942,16 +1115,19 @@ class PixelspinGame(Scene):
             for i in range(len(centers) - 1):
                 pygame.draw.line(surface, WHITE, centers[i], centers[i+1], 3)
     
-    def _draw_btn(self, surface, text, x, y, w, h, color, action):
+    def _draw_btn(self, surface, text, x, y, w, h, color, action, clip_rect=None):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         rect = pygame.Rect(x, y, w, h)
+        can_interact = clip_rect is None or clip_rect.colliderect(rect)
 
         btn_idx = len(self.buttons)
         self.buttons.append(action)
 
         is_selected = btn_idx == self.selected_button
-        is_hover = rect.collidepoint(mouse)
+        is_hover = can_interact and rect.collidepoint(mouse)
+        if is_hover and clip_rect is not None:
+            is_hover = clip_rect.collidepoint(mouse)
 
         if is_selected:
             bg = WHITE
