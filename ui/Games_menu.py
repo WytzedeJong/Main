@@ -30,7 +30,7 @@ class Game_Menu(Scene):
             ("Monkey", MonkeyStacker),
             ("Tower Defense", TowerGame),
             ("Farm Nation", FarmNationGame),
-            ("Speed Racer", RacerGame)
+            ("Speed Racer", RacerGame),
             ("Pixelspin", PixelspinGame),
             ("WinMan", WinMan),
         ]
