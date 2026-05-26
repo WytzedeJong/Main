@@ -17,9 +17,6 @@
                     "Hard": "04:05"
                 }
             },
-            "Highscore": [
-                130
-            ],
             "text_size": 20
         },
         {
@@ -37,7 +34,10 @@
                 "UP"
             ],
             "theme": "blue",
-            "text_size": 20
+            "text_size": 20,
+            "highscores": {
+                "Racer": 632
+            }
         }
     ]
 }

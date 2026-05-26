@@ -15,11 +15,6 @@
       "effect": "Symboolwaarde x2 bij 3+ patronen",
       "category": "symbol"
     },
-    "Holy Bible": {
-      "cost": 50,
-      "effect": "Bescherming tegen 666 patroon",
-      "category": "protection"
-    },
     "Golden Horseshoe": {
       "cost": 30,
       "effect": "Luck-triggers x2 effectief",
@@ -34,7 +29,7 @@
     },
     "Coin Doubler": {
       "cost": 35,
-      "effect": "Volgende 3 spins x2 muneten",
+      "effect": "Volgende 3 spins x2 munten",
       "category": "multiplier_temp"
     },
     "Extra Spins": {
@@ -71,17 +66,17 @@
     },
     "Goud Diamant": {
       "cost": 50,
-      "effect": "Diamant waarde +3 goud",
+      "effect": "Diamant waarde +3 munten",
       "category": "symbol_value"
     },
     "Goud Zeven": {
       "cost": 60,
-      "effect": "Zeven waarde +5 goud",
+      "effect": "Zeven waarde +5 munten",
       "category": "symbol_value"
     },
     "Goud Citroen": {
       "cost": 30,
-      "effect": "Citroen waarde +1 goud",
+      "effect": "Citroen waarde +1 munten",
       "category": "symbol_value"
     }
   }

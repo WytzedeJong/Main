@@ -6,6 +6,7 @@ import math
 import json
 import os
 from ui.lockscreen import LockScreen
+from core.input_manager import InputHandler
 
 
 class DungeonGame(Scene):
@@ -16,6 +17,8 @@ class DungeonGame(Scene):
         super().__init__(manager)
         self.font = pygame.font.SysFont("arial", 60)
         self.hud_font = pygame.font.SysFont("arial", 24, bold=True)
+        self.asset_dir = os.path.join(os.path.dirname(__file__), "images")
+        self.input = InputHandler()
 
         # --- Map settings ---
         self.tile_size = 30
@@ -48,22 +51,22 @@ class DungeonGame(Scene):
         # --- Generate dungeon ---
         self.walls, (self.player_x, self.player_y) = self.generate_rooms_and_corridors()
 
-        # Load player image (placeholder - replace with your PNG path)
+        # Load player image
         try:
-            self.player_image = pygame.image.load("games/dungeon/dungeon_explorer.png").convert_alpha()
+            self.player_image = pygame.image.load(self._asset_path("dungeon_explorer.png")).convert_alpha()
             self.player_image = pygame.transform.scale(self.player_image, (self.tile_size, self.tile_size))
         except:
             self.player_image = None
 
-        # Load power-up images (placeholder - replace with your PNG paths)
+        # Load power-up images
         self.powerup_images = {}
         try:
-            powerup_img = pygame.image.load("games/dungeon/time_power-up.png").convert_alpha()
+            powerup_img = pygame.image.load(self._asset_path("time_power-up.png")).convert_alpha()
             self.powerup_images['time'] = pygame.transform.scale(powerup_img, (self.tile_size, self.tile_size))
         except:
             self.powerup_images['time'] = None
         try:
-            speed_img = pygame.image.load("games/dungeon/speed_power-up.png").convert_alpha()
+            speed_img = pygame.image.load(self._asset_path("speed_power-up.png")).convert_alpha()
             self.powerup_images['speed'] = pygame.transform.scale(speed_img, (self.tile_size, self.tile_size))
         except:
             self.powerup_images['speed'] = None
@@ -71,9 +74,9 @@ class DungeonGame(Scene):
         # Load enemy and point images
         self.enemy_images = {}
         enemy_image_paths = {
-            1: "games/dungeon/red_slime.png",
-            2: "games/dungeon/purple_slime.png",
-            3: "games/dungeon/orange_slime.png",
+            1: self._asset_path("red_slime.png"),
+            2: self._asset_path("purple_slime.png"),
+            3: self._asset_path("orange_slime.png"),
         }
         enemy_image_scales = {
             1: 1.0,
@@ -91,7 +94,7 @@ class DungeonGame(Scene):
                 self.enemy_images[enemy_type] = None
 
         try:
-            point_img = pygame.image.load("games/dungeon/points.png").convert_alpha()
+            point_img = pygame.image.load(self._asset_path("points.png")).convert_alpha()
             point_size = max(1, int(self.tile_size * 0.5))
             self.point_image = pygame.transform.scale(point_img, (point_size, point_size))
         except:
@@ -137,6 +140,9 @@ class DungeonGame(Scene):
 
         # Instructions screen
         self.show_instructions = True
+
+    def _asset_path(self, filename):
+        return os.path.join(self.asset_dir, filename)
 
     def generate_rooms_and_corridors(self):
         all_walls = {(x, y) for x in range(self.map_width) for y in range(self.map_height)}
@@ -549,30 +555,34 @@ class DungeonGame(Scene):
                     self.explored.add((x, y))
 
     def handle_events(self, event):
+        pass
+
+    def _return_to_menu(self):
+        from ui.home_menu import HomeMenu
+        self.manager.set_scene(HomeMenu(self.manager))
+
+    def _handle_input_actions(self):
         if self.show_instructions:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    self.show_instructions = False
-                elif event.key == pygame.K_ESCAPE:
-                    from ui.home_menu import HomeMenu
-                    self.manager.set_scene(HomeMenu(self.manager))
+            if self.input.just_pressed("B"):
+                self.show_instructions = False
+            elif self.input.just_pressed("ESCAPE"):
+                self._return_to_menu()
             return
 
         if self.game_over:
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:
-                    self.reset_game()
-                elif event.key == pygame.K_ESCAPE:
-                    from ui.home_menu import HomeMenu
-                    self.manager.set_scene(HomeMenu(self.manager))
+            if self.input.just_pressed("B"):
+                self.reset_game()
+            elif self.input.just_pressed("ESCAPE"):
+                self._return_to_menu()
             return
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+        if self.input.just_pressed("ESCAPE"):
+            self._return_to_menu()
 
     def update(self, dt):
+        self.input.update()
+        self._handle_input_actions()
+
         if self.show_instructions or self.game_over:
             return
 
@@ -603,8 +613,6 @@ class DungeonGame(Scene):
             self._save_highscore()
             return
 
-        keys = pygame.key.get_pressed()
-
         # Apply speed boost and stun delay
         move_delay = self.move_delay / self.speed_multiplier if self.speed_boost_active else self.move_delay
         if self.stunned:
@@ -615,13 +623,13 @@ class DungeonGame(Scene):
             new_x = self.player_x
             new_y = self.player_y
 
-            if keys[pygame.K_LEFT]:
+            if self.input.is_pressed("LEFT"):
                 new_x -= 1
-            elif keys[pygame.K_RIGHT]:
+            elif self.input.is_pressed("RIGHT"):
                 new_x += 1
-            elif keys[pygame.K_UP]:
+            elif self.input.is_pressed("UP"):
                 new_y -= 1
-            elif keys[pygame.K_DOWN]:
+            elif self.input.is_pressed("DOWN"):
                 new_y += 1
 
             new_x = max(0, min(self.map_width - 1, new_x))
@@ -764,7 +772,7 @@ class DungeonGame(Scene):
         esc_text = small_font.render("ESC to return to menu", True, (200, 200, 200))
         ui_surface.blit(esc_text, (100, y_pos))
 
-        start_text = text_font.render("Press ENTER to start", True, (100, 255, 100))
+        start_text = text_font.render("Press B to start", True, (100, 255, 100))
         ui_surface.blit(
             start_text,
             (
@@ -837,7 +845,7 @@ class DungeonGame(Scene):
             )
 
         instruction_text = self.font.render(
-            "Press ENTER to play again", True, (200, 200, 200)
+            "Press B to play again", True, (200, 200, 200)
         )
 
         ui_surface.blit(

@@ -1829,7 +1829,8 @@ class TowerGame(Scene):
             "buffer": "Buffer",
             "bank": "Bank",
             "boxer": "Boxer",
-            "upgrade link": "Upgrade Link"
+            "upgrade link": "Upgrade Link",
+            "machinegunner": "Machinegunner",
         }
         return pieces.get(name, name[:3].title())
 
