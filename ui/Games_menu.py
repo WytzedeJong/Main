@@ -29,7 +29,6 @@ class Game_Menu(Scene):
             ("Space", SpaceGame),
             ("Monkey", MonkeyStacker),
             ("Tower Defense", TowerGame),
-            ("Pixelspin", PixelspinGame),
             ("Farm Nation", FarmNationGame),
             ("Speed Racer", RacerGame)
             ("Pixelspin", PixelspinGame),
