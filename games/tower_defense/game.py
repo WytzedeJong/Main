@@ -250,10 +250,11 @@ class DelayedAttack:
 class TowerGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.title_font = pygame.font.SysFont("arial", 14, bold=True)
+        self.title_font = pygame.font.SysFont("arial", 16, bold=True)
         self.font = pygame.font.SysFont("arial", 10)
         self.small_font = pygame.font.SysFont("arial", 8)
         self.big_font = pygame.font.SysFont("arial", 20, bold=True)
+        self.info_font = pygame.font.SysFont("arial", 14)
         self.input = InputHandler()
 
         self.stats = self._load_stats()
@@ -1657,9 +1658,9 @@ class TowerGame(Scene):
         y = box.y + 42
         for line in self._tower_info_lines(self.info_tower_name, level):
             for wrapped in self._wrap_text(line, box.width - 24):
-                label = self.small_font.render(wrapped, True, (232, 238, 226))
+                label = self.info_font.render(wrapped, True, (232, 238, 226))
                 surface.blit(label, (box.x + 12, y))
-                y += 10
+                y += 20
             y += 2
             if y > box.bottom - 22:
                 break
