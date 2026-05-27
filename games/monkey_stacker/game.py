@@ -11,6 +11,9 @@ from config import AppStyles
 from core.input_manager import InputHandler
 
 
+def game_name():
+    return f"Monkey", MonkeyStacker
+
 
 def lerp(a, b, t):
     return a + (b - a) * t

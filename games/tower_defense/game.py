@@ -12,6 +12,11 @@ from ui.lockscreen import LockScreen
 
 from core.input_manager import InputHandler
 
+
+def game_name():
+    return f"Tower Defense", TowerGame
+
+
 FIELD_WIDTH = BASE_WIDTH
 MENU_WIDTH = BASE_WIDTH // 2
 MENU_X = BASE_WIDTH - MENU_WIDTH

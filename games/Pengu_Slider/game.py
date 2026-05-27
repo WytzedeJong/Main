@@ -22,6 +22,9 @@ FRICTION = 0.96  # Increased from 0.98 for better control
 ACCELERATION = 5  # Slightly reduced from 6
 MAX_PLAYERS = 50  # Support many players
 
+def game_name():
+    "Pengu Slider", AdventureGame
+
 class GameState(Enum):
     START_SCREEN = 0
     WAITING_FOR_INPUT = 1

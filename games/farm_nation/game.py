@@ -11,6 +11,10 @@ from settings import BASE_HEIGHT, BASE_WIDTH
 from ui.lockscreen import LockScreen
 
 
+def game_name():
+    return f"Farm Nation", FarmNationGame
+
+
 ANIMALS = [
     {"id": "chicken", "name": "Kip", "base_income": 0.1, "base_cost": 15, "color": (255, 220, 100)},
     {"id": "cow", "name": "Koe", "base_income": 1.0, "base_cost": 100, "color": (160, 100, 60)},

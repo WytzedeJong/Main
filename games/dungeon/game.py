@@ -8,6 +8,8 @@ import os
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
+def game_name():
+    return f"Dungeon", DungeonGame
 
 class DungeonGame(Scene):
     UI_BASE_WIDTH = BASE_WIDTH * 2

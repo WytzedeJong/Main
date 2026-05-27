@@ -1,18 +1,11 @@
 import pygame
 import datetime
+import importlib.util
+import os
+from pathlib import Path
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
-from games.puzzle.game import PuzzleGame
-from games.Pengu_Slider.game import AdventureGame
-from games.Space.game import SpaceGame
-from games.dungeon.game import DungeonGame
-from games.monkey_stacker.game import MonkeyStacker
-from games.tower_defense.game import TowerGame
-from games.Pixelspin.game import PixelspinGame
-from games.winman.game import WinMan
-from games.farm_nation.game import FarmNationGame
-from games.racer.game import RacerGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
 
@@ -22,18 +15,8 @@ class Game_Menu(Scene):
         super().__init__(manager)
         self.styles = styles
         self.sq = vierkantjes
-        self.games = [
-            ("Puzzle", PuzzleGame),
-            ("Dungeon", DungeonGame),
-            ("Pengu Slider", AdventureGame),
-            ("Space", SpaceGame),
-            ("Monkey", MonkeyStacker),
-            ("Tower Defense", TowerGame),
-            ("Farm Nation", FarmNationGame),
-            ("Speed Racer", RacerGame),
-            ("Pixelspin", PixelspinGame),
-            ("WinMan", WinMan),
-        ]
+        self.games = []
+        self._load_games_dynamically()
 
         self.selected = 0
         self.current_scroll = 0
@@ -47,6 +30,33 @@ class Game_Menu(Scene):
         self.spacing = self.styles.CARD_SPACING
 
         self.font_cache = {}
+    
+    def _load_games_dynamically(self):
+        games_dir = Path(__file__).parent.parent / "games"
+        
+        for game_folder in sorted(games_dir.iterdir()):
+            if not game_folder.is_dir() or game_folder.name.startswith('_'):
+                continue
+            
+            game_file = game_folder / "game.py"
+            if not game_file.exists():
+                continue
+            
+            try:
+                # Dynamically import the game module
+                spec = importlib.util.spec_from_file_location(
+                    f"games.{game_folder.name}.game",
+                    game_file
+                )
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                
+                # Check if game_name function exists
+                if hasattr(module, 'game_name'):
+                    name, game_class = module.game_name()
+                    self.games.append((name, game_class))
+            except Exception as e:
+                print(f"Failed to load game from {game_folder.name}: {e}")
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:

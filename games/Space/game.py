@@ -10,6 +10,10 @@ from settings import BASE_HEIGHT, BASE_WIDTH
 from core.input_manager import InputHandler
 
 
+def game_name():
+    return f"Space", SpaceGame
+
+
 @dataclass
 class Bullet:
     x: float

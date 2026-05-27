@@ -8,6 +8,11 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
+
+def game_name():
+    return f"Speed Racer", RacerGame
+
+
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------

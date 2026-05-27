@@ -7,6 +7,11 @@ from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
 from core.input_manager import InputHandler
 
+
+def game_name():
+    return f"Pixelspin", PixelspinGame
+
+
 # --- CONFIGURATIE ---
 WIDTH, HEIGHT = BASE_WIDTH, BASE_HEIGHT
 FPS = 60

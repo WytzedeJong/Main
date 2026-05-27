@@ -9,6 +9,9 @@ from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
 
+def game_name():
+    return f"Puzzle", PuzzleGame
+
 class PuzzleGame(Scene):
     DIFFICULTIES = [
         {

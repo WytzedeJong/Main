@@ -6,6 +6,10 @@ from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 
 
+def game_name():
+    return f"WinMan", WinMan
+
+
 # ---------------------------------------------------------------------------
 # Small helper: floating damage numbers
 # ---------------------------------------------------------------------------
