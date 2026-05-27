@@ -108,6 +108,7 @@ class PixelspinGame(Scene):
         self.reset_game()
 
     def reset_game(self):
+        self.show_info_for = None
         self.coins = 50
         self.tickets = 5
         self.atm = 0
@@ -125,7 +126,7 @@ class PixelspinGame(Scene):
         self.chosen_spins = 0
 
         # Actieve variabelen voor Shop & Phone Call mechanics
-        self.max_charms = 3
+        self.max_charms = 7
         self.charm_discount_active = False
         self.free_charms_active = False
         self.active_phone_options = []
@@ -685,7 +686,7 @@ class PixelspinGame(Scene):
                 entry for entry in self.shop_items_for_phase
                 if not (entry[0] == item_type and entry[1] == item_name)
             ]
-            self.selected_button = min(self.selected_button, max(0, len(self.shop_items_for_phase)))
+            self.selected_button = min(self.selected_button, max(0, len(self.shop_items_for_phase) * 2 - 1))
 
     def _apply_item_effect(self, item_name, item_type):
         item_data = SHOP_ITEMS.get(item_type, {}).get(item_name, {})
@@ -755,6 +756,12 @@ class PixelspinGame(Scene):
 
     def back_to_game(self):
         self.current_screen = "game"
+    
+    def charms_menu(self):
+        if self.phase in ("spin_choice", "atm_phase"):
+            self.current_screen = "charms_menu"
+            self.selected_button = 0
+            self.shop_scroll_y = 0
 
     def _get_eligible_shop_items(self):
         eligible_items = []
@@ -784,8 +791,13 @@ class PixelspinGame(Scene):
         return len(self.shop_items_for_phase)
 
     def _sync_shop_scroll(self):
-        item_count = self._get_shop_item_count()
-        if item_count == 0:
+        if self.current_screen == "shop":
+            item_count = self._get_shop_item_count()
+        else:  # charms_menu
+            item_count = len(self.purchased_items.get("charms", set()))
+            
+        # Scroll niet als het infoscherm open is of de lijst leeg is
+        if item_count == 0 or getattr(self, "show_info_for", None) is not None:
             self.shop_scroll_y = 0
             return
 
@@ -795,11 +807,14 @@ class PixelspinGame(Scene):
         item_height = 28
         max_scroll = max(0, item_count * item_step - (list_bottom - list_top))
 
-        if self.selected_button >= item_count:
+        # Omdat er nu 2 knoppen per item zijn (koop/verkoop & info), is de index gedeeld door 2
+        item_idx = self.selected_button // 2
+
+        if item_idx >= item_count:
             self.shop_scroll_y = max_scroll
             return
 
-        item_top = list_top + self.selected_button * item_step
+        item_top = list_top + item_idx * item_step
         item_bottom = item_top + item_height
 
         if item_top - self.shop_scroll_y < list_top:
@@ -921,18 +936,60 @@ class PixelspinGame(Scene):
                 new_col = min(cur_col, len(grid[new_row]) - 1)
                 self.selected_button = grid[new_row][new_col]
 
-        elif in_shop or in_atm_screen:
-            if key == pygame.K_UP:
-                self.selected_button = (self.selected_button - 1) % len(self.buttons)
-            elif key == pygame.K_DOWN:
-                self.selected_button = (self.selected_button + 1) % len(self.buttons)
-            if key == pygame.K_LEFT:
-                self.selected_button = (self.selected_button - 1) % len(self.buttons)
-            elif key == pygame.K_RIGHT:
-                self.selected_button = (self.selected_button + 1) % len(self.buttons)
-            if in_shop:
+        elif in_shop or self.current_screen == "charms_menu":
+            if getattr(self, "show_info_for", None) is not None:
+                # Infoscherm heeft maar 1 knop, dus geen complexe navigatie nodig
+                pass
+            else:
+                if self.current_screen == "shop":
+                    item_count = self._get_shop_item_count()
+                else:  # charms_menu
+                    item_count = len(self.purchased_items.get("charms", set()))
+                
+                grid = []
+                # Rij opbouwen: [Koop/Verkoop Knop, Info Knop]
+                for i in range(item_count):
+                    grid.append([i * 2, i * 2 + 1])
+                
+                # Onderste knoppen toevoegen (Back & Reroll)
+                bottom_row = []
+                if len(self.buttons) > item_count * 2:
+                    bottom_row.append(item_count * 2)
+                if self.current_screen == "shop" and len(self.buttons) > item_count * 2 + 1:
+                    bottom_row.append(item_count * 2 + 1)
+                if bottom_row:
+                    grid.append(bottom_row)
+
+                cur = self.selected_button
+                cur_row, cur_col = 0, 0
+                for ri, row in enumerate(grid):
+                    if cur in row:
+                        cur_row = ri
+                        cur_col = row.index(cur)
+                        break
+
+                if key == pygame.K_LEFT:
+                    new_col = max(0, cur_col - 1)
+                    self.selected_button = grid[cur_row][new_col]
+                elif key == pygame.K_RIGHT:
+                    new_col = min(len(grid[cur_row]) - 1, cur_col + 1)
+                    self.selected_button = grid[cur_row][new_col]
+                elif key == pygame.K_UP:
+                    new_row = max(0, cur_row - 1)
+                    new_col = min(cur_col, len(grid[new_row]) - 1)
+                    self.selected_button = grid[new_row][new_col]
+                elif key == pygame.K_DOWN:
+                    new_row = min(len(grid) - 1, cur_row + 1)
+                    new_col = min(cur_col, len(grid[new_row]) - 1)
+                    self.selected_button = grid[new_row][new_col]
+                
                 self._sync_shop_scroll()
 
+        elif in_atm_screen:
+            if key == pygame.K_UP or key == pygame.K_LEFT:
+                self.selected_button = (self.selected_button - 1) % len(self.buttons)
+            elif key == pygame.K_DOWN or key == pygame.K_RIGHT:
+                self.selected_button = (self.selected_button + 1) % len(self.buttons)
         else:
             if key == pygame.K_LEFT:
                 self.selected_button = (self.selected_button - 1) % len(self.buttons)
@@ -953,8 +1010,27 @@ class PixelspinGame(Scene):
         if self.button_cooldown > 0:
             return
         if self.current_screen != "game":
-            self.back_to_game()
+            if getattr(self, "show_info_for", None) is not None:
+                self._close_info()
+            else:
+                self.back_to_game()
             self.button_cooldown = 10
+    
+    def _sell_charm(self, charm_name):
+        """Verkoop een charm en krijg 50% terug van de kosten"""
+        charm_data = SHOP_ITEMS.get("charms", {}).get(charm_name, {})
+        cost = charm_data.get("cost", 0)
+        refund = max(1, cost // 2)  # 50% terug
+        
+        self.purchased_items["charms"].discard(charm_name)
+        self.tickets += refund
+        
+        # Verwijder uit shop lijst
+        self.shop_items_for_phase = [
+            entry for entry in self.shop_items_for_phase
+            if not (entry[0] == "charms" and entry[1] == charm_name)
+        ]
+        self.selected_button = min(self.selected_button, max(0, len(self.purchased_items.get("charms", set())) * 2 - 1))
 
     def draw(self, surface):
         self.buttons = []
@@ -962,6 +1038,8 @@ class PixelspinGame(Scene):
             self._draw_atm_screen(surface)
         elif self.current_screen == "shop":
             self._draw_shop_screen(surface)
+        elif self.current_screen == "charms_menu":
+            self._draw_charms_menu_screen(surface)
         elif self.phase == "phone_call":
             self._draw_phone_call_screen(surface)
         elif self.phase == "spin_choice":
@@ -1110,6 +1188,7 @@ class PixelspinGame(Scene):
         self._draw_btn(surface, "7 SPINS", WIDTH//2 + 10, HEIGHT - 100, 70, 40, col_7, (lambda: self.choose_spins(7)))
         skip_btn = GREEN if self.round_in_deadline < 3 else (100, 100, 100)
         self._draw_btn(surface, "SKIP", WIDTH//2 - 25, HEIGHT - 55, 50, 35, skip_btn, self._skip_spin_phase if self.round_in_deadline < 3 else (lambda: None))
+        self._draw_btn(surface, "CHARMS", WIDTH - 110, HEIGHT - 45, 60, 35, (180, 100, 200), self.charms_menu)
         self._draw_btn(surface, "SHOP", WIDTH - 55, HEIGHT - 45, 50, 35, GOLD, self.shop)
 
     # ── SPINNING PHASE ───────────────────────────────────────────────────────
@@ -1243,8 +1322,9 @@ class PixelspinGame(Scene):
             else:
                 self._draw_btn(surface, "VOLGENDE RONDE >", WIDTH//2 - 100, HEIGHT - 95, 200, 40, BLUE, self._continue_to_spin_choice)
 
-        self._draw_btn(surface, "ATM",  5,          HEIGHT - 46, 60, 36, (0, 80, 160), self.deposit)
-        self._draw_btn(surface, "SHOP", WIDTH - 68, HEIGHT - 46, 62, 36, (140,100,0),  self.shop)
+        self._draw_btn(surface, "ATM",   5,          HEIGHT - 46, 60, 36, (0, 80, 160), self.deposit)
+        self._draw_btn(surface, "CHARMS", 68,        HEIGHT - 46, 60, 36, (180, 100, 200), self.charms_menu)
+        self._draw_btn(surface, "SHOP",  WIDTH - 68, HEIGHT - 46, 62, 36, (140,100,0),  self.shop)
 
     # ── ATM SCREEN ──────────────────────────────────────────────────────────
     def _draw_atm_screen(self, surface):
@@ -1286,8 +1366,75 @@ class PixelspinGame(Scene):
         self._draw_btn(surface, "ALLES",    10+(WIDTH-24)//2+4, 162, (WIDTH-24)//2, 32, (0,140,80), self._atm_deposit_all)
         self._draw_btn(surface, "BACK", WIDTH//2 - 28, HEIGHT - 46, 56, 36, WHITE, self.back_to_game)
 
+    # ── CHARMS INVENTORY SCREEN ───────────────────────────────────────────────
+    def _draw_charms_menu_screen(self, surface):
+        if getattr(self, "show_info_for", None) is not None:
+            self._draw_info_popup(surface)
+            return
+
+        surface.fill(BLACK)
+        small_font = pygame.font.SysFont("monospace", 12, bold=True)
+        self._sync_shop_scroll()
+
+        title = pygame.font.SysFont("monospace", 18, bold=True).render("GEKOCHTE CHARMS", True, GOLD)
+        surface.blit(title, (WIDTH//2 - title.get_width()//2, 5))
+
+        stats_txt = small_font.render(f"Tickets: {self.tickets}", True, GOLD)
+        surface.blit(stats_txt, (5, 25))
+
+        total_owned = len(self.purchased_items.get("charms", set()))
+        owned_txt = small_font.render(f"Totaal: {total_owned}/{self.max_charms}", True, GREEN)
+        surface.blit(owned_txt, (WIDTH - 110, 25))
+
+        list_top = 45
+        list_bottom = HEIGHT - 55
+        list_clip = pygame.Rect(0, list_top, WIDTH, list_bottom - list_top)
+        y_offset = list_top - self.shop_scroll_y
+        item_count = 0
+        old_clip = surface.get_clip()
+        surface.set_clip(list_clip)
+
+        charm_list = list(self.purchased_items.get("charms", set()))
+        charm_list.sort()
+
+        for charm_name in charm_list:
+            charm_data = SHOP_ITEMS.get("charms", {}).get(charm_name, {})
+            cost = charm_data.get("cost", 0)
+            refund = max(1, cost // 2)  # 50% terug voor verkoop
+            
+            label = f"{charm_name[:12]} (Refund: +{refund}T)"
+            
+            _name = charm_name
+            
+            # Knoppen afmetingen
+            sell_btn_w = WIDTH - 45
+            info_btn_w = 30
+
+            # Verkoop knop
+            sell_action = (lambda n=_name: lambda: self._sell_charm(n))
+            self._draw_btn(surface, label, 5, y_offset, sell_btn_w, 28, (200, 80, 80), sell_action, clip_rect=list_clip)
+            
+            # Info knop
+            info_action = (lambda n=_name, d=charm_data: self._open_info(n, d))
+            self._draw_btn(surface, "?", 5 + sell_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action, clip_rect=list_clip)
+            
+            y_offset += 32
+            item_count += 1
+        
+        if item_count == 0:
+            empty_txt = small_font.render("Geen charms gekocht", True, (100, 100, 100))
+            surface.blit(empty_txt, (WIDTH//2 - empty_txt.get_width()//2, list_top + 50))
+            
+        surface.set_clip(old_clip)
+
+        self._draw_btn(surface, "BACK", WIDTH//2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
+
     # ── SHOP SCREEN ──────────────────────────────────────────────────────────
     def _draw_shop_screen(self, surface):
+        if getattr(self, "show_info_for", None) is not None:
+            self._draw_info_popup(surface)
+            return
+
         surface.fill(BLACK)
         small_font = pygame.font.SysFont("monospace", 12, bold=True)
         self._sync_shop_scroll()
@@ -1317,7 +1464,6 @@ class PixelspinGame(Scene):
             )
             cost = item_data.get("cost", 0)
             
-            # Pas de weergave van kosten aan op basis van modifiers
             actual_cost = cost
             if category == "charms" and self.charm_discount_active:
                 actual_cost = max(0, actual_cost - 2)
@@ -1331,10 +1477,22 @@ class PixelspinGame(Scene):
             btn_color = GREEN if purchased else (60, 60, 60)
             
             _name, _cost, _cat = item_name, cost, category
-            action = (lambda n, c, t: lambda: self._buy_item(n, c, t))(_name, _cost, _cat)
-            self._draw_btn(surface, label, 5, y_offset, WIDTH - 10, 28, btn_color, action, clip_rect=list_clip)
+            
+            # Knoppen afmetingen
+            buy_btn_w = WIDTH - 45
+            info_btn_w = 30
+
+            # Koop knop
+            buy_action = (lambda n, c, t: lambda: self._buy_item(n, c, t))(_name, _cost, _cat)
+            self._draw_btn(surface, label, 5, y_offset, buy_btn_w, 28, btn_color, buy_action, clip_rect=list_clip)
+            
+            # Info knop
+            info_action = (lambda n=_name, d=item_data: self._open_info(n, d))
+            self._draw_btn(surface, "?", 5 + buy_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action, clip_rect=list_clip)
+            
             y_offset += 32
             item_count += 1
+            
         surface.set_clip(old_clip)
 
         self._draw_btn(surface, "BACK", WIDTH//2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
@@ -1342,6 +1500,57 @@ class PixelspinGame(Scene):
         refresh_label = f"REROLL ({SHOP_REFRESH_COST}M)"
         refresh_color = GOLD if self.coins >= SHOP_REFRESH_COST else DARK_GRAY
         self._draw_btn(surface, refresh_label, WIDTH//2 - 10, HEIGHT - 45, 90, 40, refresh_color, self._refresh_shop)
+
+    # --- INFO SCHERM METHODES ---
+    def _open_info(self, name, data):
+        self.show_info_for = {
+            "name": name,
+            "desc": data.get("effect", "Geen extra informatie beschikbaar.")
+        }
+        self.selected_button = 0  # Zet de selectie terug voor het infoscherm
+
+    def _close_info(self):
+        self.show_info_for = None
+        self.selected_button = 0  # Zet de selectie terug naar de eerste shop item
+        self._sync_shop_scroll()
+
+    def _draw_text_wrapped(self, surface, text, font, color, rect):
+        words = text.split(' ')
+        lines = []
+        current_line = []
+        for word in words:
+            test_line = ' '.join(current_line + [word])
+            if font.size(test_line)[0] <= rect.width:
+                current_line.append(word)
+            else:
+                lines.append(' '.join(current_line))
+                current_line = [word]
+        if current_line:
+            lines.append(' '.join(current_line))
+        
+        y = rect.y
+        for line in lines:
+            surface.blit(font.render(line, True, color), (rect.x, y))
+            y += font.get_linesize()
+
+    def _draw_info_popup(self, surface):
+        surface.fill(BLACK)
+        mf = pygame.font.SysFont("monospace", 16, bold=True)
+        sf = pygame.font.SysFont("monospace", 12)
+        
+        # Titel (Naam van Charm)
+        title = mf.render(self.show_info_for["name"], True, GOLD)
+        surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 30))
+        
+        # Subtitel / Decoratie lijn
+        pygame.draw.line(surface, DARK_GRAY, (20, 55), (WIDTH - 20, 55), 2)
+        
+        # Text (De Effect beschrijving - Word Wrapped)
+        text_rect = pygame.Rect(20, 70, WIDTH - 40, HEIGHT - 140)
+        self._draw_text_wrapped(surface, self.show_info_for["desc"], sf, WHITE, text_rect)
+        
+        # Terug knop
+        self._draw_btn(surface, "TERUG", WIDTH // 2 - 40, HEIGHT - 50, 80, 36, RED, self._close_info)
 
     # ── GAME OVER ────────────────────────────────────────────────────────────
     def _draw_game_over_screen(self, surface):
