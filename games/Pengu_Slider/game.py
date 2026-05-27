@@ -9,6 +9,9 @@ import json
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
+def game_name():
+   return f"Pengu Slider", AdventureGame
+
 pygame.init()
 
 FPS = 60
@@ -22,8 +25,6 @@ FRICTION = 0.96  # Increased from 0.98 for better control
 ACCELERATION = 5  # Slightly reduced from 6
 MAX_PLAYERS = 50  # Support many players
 
-def game_name():
-    "Pengu Slider", AdventureGame
 
 class GameState(Enum):
     START_SCREEN = 0

@@ -8,7 +8,8 @@ import os
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
-def game_name():
+# functie voor automatisch toevoegen game
+def game_name(): 
     return f"Dungeon", DungeonGame
 
 class DungeonGame(Scene):
@@ -22,7 +23,6 @@ class DungeonGame(Scene):
         self.asset_dir = os.path.join(os.path.dirname(__file__), "images")
         self.input = InputHandler()
 
-        # --- Map settings ---
         self.tile_size = 30
         self.viewport_width = BASE_WIDTH // self.tile_size
         self.viewport_height = BASE_HEIGHT // self.tile_size
