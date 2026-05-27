@@ -1,83 +1,508 @@
 {
   "charms": {
-    "Lucky Cat": {
-      "cost": 20,
-      "effect": "Rente bonus +5% per 3 patronen",
-      "category": "interest"
-    },
-    "Pentacle": {
-      "cost": 15,
-      "effect": "Patroon-vermenigvuldiger +0.5x bij 5+ patronen",
-      "category": "multiplier"
-    },
-    "Big Mushroom": {
-      "cost": 25,
-      "effect": "Symboolwaarde x2 bij 3+ patronen",
-      "category": "symbol"
-    },
-    "Golden Horseshoe": {
-      "cost": 30,
-      "effect": "Luck-triggers x2 effectief",
-      "category": "luck"
-    }
+    "Cherry Picture": {
+    "cost": 3,
+    "effect": "Cherries manifest more often (+2)",
+    "category": "symbol_chance",
+    "target_symbol": "Kers",
+    "weight_bonus": 0.20
   },
-  "powerups": {
-    "Luck Potion": {
-      "cost": 40,
-      "effect": "+10 Luck instant",
-      "category": "instant_luck"
-    },
-    "Coin Doubler": {
-      "cost": 35,
-      "effect": "Volgende 3 spins x2 munten",
-      "category": "multiplier_temp"
-    },
-    "Extra Spins": {
-      "cost": 60,
-      "effect": "+5 spins voor deze ronde",
-      "category": "spin_boost"
-    }
+  "Lemon Picture": {
+    "cost": 3,
+    "effect": "Lemons manifest more often (+2)",
+    "category": "symbol_chance",
+    "target_symbol": "Citroen",
+    "weight_bonus": 0.20
   },
-  "upgrades": {
-    "Better Odds": {
-      "cost": 75,
-      "effect": "Patroon kansen +15%",
-      "category": "permanent_upgrade"
+  "Fruit Basket": {
+    "cost": 5,
+    "effect": "Patterns with Fruits trigger an additional time.",
+    "category": "pattern_modifier",
+    "target_symbol": ["Citroen", "Kers"],
+    "repetition_bonus": 1
+  },
+    "Clicker": {
+      "cost": 4,
+      "effect": "+15% chance for the symbols Lemon/Cherry to have the Repetition Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Citroen", "Kers"],
+      "repetition_chance": 0.15
     },
-    "Interest Boost": {
-      "cost": 45,
-      "effect": "ATM rente 5% -> 7%",
-      "category": "permanent_upgrade"
+    "Personal Trainer": {
+      "cost": 5,
+      "effect": "+25% chance for the Repetition Modifier to be applied to any Symbol.",
+      "category": "modifier_chance",
+      "target_symbol": ["ALL"],
+      "repetition_chance": 0.25
     },
-    "Diamant Boost": {
-      "cost": 55,
-      "effect": "Diamant kans +5% (hogere droprate)",
-      "category": "symbol_chance"
+    "AA Batteries": {
+      "cost": 3,
+      "effect": "+6% chance for the symbols Clover/Bell to have the Battery Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Klaver", "Bell"],
+      "battery_chance": 0.06
     },
-    "Zeven Boost": {
-      "cost": 65,
-      "effect": "Zeven kans +4% (hogere droprate)",
-      "category": "symbol_chance"
+    "Electrician": {
+      "cost": 5,
+      "effect": "+5% chance for the Battery Modifier to be applied to any Symbol.",
+      "category": "modifier_chance",
+      "target_symbol": ["ALL"],
+      "battery_chance": 0.05
     },
-    "Klaver Boost": {
-      "cost": 40,
-      "effect": "Klaver kans +4% (hogere droprate)",
-      "category": "symbol_chance"
+    "Crystal Sphere": {
+      "cost": 5,
+      "effect": "+12% chance for Diamond/Chest/Seven to have the Chain Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Diamant", "Chest", "Zeven"],
+      "chain_chance": 0.12
     },
-    "Goud Diamant": {
-      "cost": 50,
-      "effect": "Diamant waarde +3 munten",
-      "category": "symbol_value"
+    "Fortune Teller": {
+      "cost": 6,
+      "effect": "+25% chance for the Chain Modifier to be applied to any Symbol.",
+      "category": "modifier_chance",
+      "target_symbol": ["ALL"],
+      "chain_chance": 0.25
     },
-    "Goud Zeven": {
-      "cost": 60,
-      "effect": "Zeven waarde +5 munten",
-      "category": "symbol_value"
+    "Golden Cherry": {
+      "cost": 4,
+      "effect": "+20% chance for Cherries to have the Golden Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Kers"],
+      "golden_chance": 0.20
     },
-    "Goud Citroen": {
-      "cost": 30,
-      "effect": "Citroen waarde +1 munten",
-      "category": "symbol_value"
+    "Golden Lemon": {
+      "cost": 4,
+      "effect": "+20% chance for Lemons to have the Golden Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Citroen"],
+      "golden_chance": 0.20
+    },
+    "Golden Clover": {
+      "cost": 5,
+      "effect": "+20% chance for Clovers to have the Golden Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Klaver"],
+      "golden_chance": 0.20
+    },
+    "Golden Diamond": {
+      "cost": 6,
+      "effect": "+25% chance for Diamonds to have the Golden Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Diamant"],
+      "golden_chance": 0.25
+    },
+    "Greedy King": {
+      "cost": 7,
+      "effect": "Chance for the Golden Modifier to be applied to any Symbol.",
+      "category": "modifier_chance",
+      "target_symbol": ["ALL"],
+      "golden_chance": 0.02
+    },
+    "Bricks": {
+      "cost": 3,
+      "effect": "+35% chance for any Lemon to have the Token Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Citroen"],
+      "token_chance": 0.35
+    },
+    "Harbor": {
+      "cost": 4,
+      "effect": "+20% chance for Treasures to have the Token Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Chest"],
+      "token_chance": 0.20
+    },
+    "Car": {
+      "cost": 4,
+      "effect": "+20% chance for any Diamond to have the Ticket Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Diamant"],
+      "ticket_chance": 0.20
+    },
+    "Iron": {
+      "cost": 3,
+      "effect": "+20% chance for any Bell to have the Ticket Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Bell"],
+      "ticket_chance": 0.20
+    },
+    "Shoe": {
+      "cost": 3,
+      "effect": "+20% chance for any Cherry to have the Ticket Modifier.",
+      "category": "modifier_chance",
+      "target_symbol": ["Kers"],
+      "ticket_chance": 0.20
+    },
+    "The Blood": {
+      "cost": 8,
+      "effect": "+15% Repetition (Lemon/Cherry), +5% Battery (Clover/Bell), +15% Chain (Diamond/Chest/Seven).",
+      "category": "modifier_chance_complex",
+      "repetition_targets": {"symbols": ["Citroen", "Kers"], "chance": 0.15},
+      "battery_targets": {"symbols": ["Klaver", "Bell"], "chance": 0.05},
+      "chain_targets": {"symbols": ["Diamant", "Chest", "Zeven"], "chance": 0.15}
+    },
+    "The Body": {
+      "cost": 8,
+      "effect": "+15% Token (Lemon/Cherry), +15% Ticket (Clover/Bell), +15% Golden (Diamond/Chest/Seven).",
+      "category": "modifier_chance_complex",
+      "token_targets": {"symbols": ["Citroen", "Kers"], "chance": 0.15},
+      "ticket_targets": {"symbols": ["Klaver", "Bell"], "chance": 0.15},
+      "golden_targets": {"symbols": ["Diamant", "Chest", "Zeven"], "chance": 0.15}
+    },
+    "Ancient Coin": {
+      "cost": 5,
+      "effect": "Use to gain 1 extra Spin with +7 Luck. 15% chance to discard after 3rd use per round.",
+      "category": "usable",
+      "trigger": "on_use",
+      "luck_bonus": 7,
+      "extra_spins": 1
+    },
+    "Red Shiny Rock": {
+      "cost": 3,
+      "effect": "Use to grant +4 Luck for the next spin.",
+      "category": "usable",
+      "trigger": "on_use",
+      "luck_bonus": 4
+    },
+    "Demon's Horn": {
+      "cost": 6,
+      "effect": "Whenever a 666 appears, +10 Luck on the next Spin.",
+      "category": "event_trigger",
+      "trigger": "on_666",
+      "luck_bonus": 10
+    },
+    "Fake Coin": {
+      "cost": 4,
+      "effect": "10% chance per spin: +1 extra Spin, then +4 Luck for that spin.",
+      "category": "random_trigger",
+      "trigger_chance": 0.10,
+      "extra_spins": 1,
+      "luck_bonus": 4
+    },
+    "Green Pepper": {
+      "cost": 4,
+      "effect": "15% chance per spin: +7 Luck. Discards after 9 activations.",
+      "category": "random_trigger",
+      "trigger_chance": 0.15,
+      "luck_bonus": 7,
+      "max_uses": 9
+    },
+    "Red Pepper": {
+      "cost": 5,
+      "effect": "20% chance per spin: +5 Luck. Discards after 12 activations.",
+      "category": "random_trigger",
+      "trigger_chance": 0.20,
+      "luck_bonus": 5,
+      "max_uses": 12
+    },
+    "Rotated Hamsa": {
+      "cost": 5,
+      "effect": "Grants +7 Luck for the last Spin of a Round.",
+      "category": "event_trigger",
+      "trigger": "on_last_spin",
+      "luck_bonus": 7
+    },
+    "Disc B": {
+      "cost": 5,
+      "effect": "Every 7 spins, +7 Luck.",
+      "category": "event_trigger",
+      "trigger": "every_x_spins",
+      "spin_interval": 7,
+      "luck_bonus": 7
+    },
+    "CloverBell": {
+      "cost": 6,
+      "effect": "Gain 3 Free Restocks if you score Clovers and Bells in a single spin.",
+      "category": "event_trigger",
+      "trigger": "on_pattern_match",
+      "target_symbol": ["Klaver", "Bell"],
+      "restock_bonus": 3
+    },
+    "CrowBar": {
+      "cost": 4,
+      "effect": "+3 Free Restocks. Doesn't take space.",
+      "category": "instant_consumable",
+      "takes_space": false,
+      "restock_bonus": 3
+    },
+    "D6": {
+      "cost": 5,
+      "effect": "Restock the Store for free at the end of every Round.",
+      "category": "event_trigger",
+      "trigger": "on_round_end",
+      "restock_bonus": 1
+    },
+    "Ritual Bell": {
+      "cost": 5,
+      "effect": "Whenever you see a 666, gain 3 free Restocks.",
+      "category": "event_trigger",
+      "trigger": "on_666",
+      "restock_bonus": 3
+    },
+    "Necronomicon": {
+      "cost": 6,
+      "effect": "Patroon-vermenigvuldiger +2. +3% kans op een 666.",
+      "category": "passive_boost",
+      "pattern_multiplier_bonus": 2.0,
+      "666_chance_bonus": 0.03
+    },
+    "Abstract Painting": {
+      "cost": 5,
+      "effect": "Als je een patroon van 5+ symbolen hebt, verdubbel alle patroon-waardes tot het einde van de ronde.",
+      "category": "event_trigger",
+      "trigger": "on_pattern_length",
+      "condition_length": 5,
+      "pattern_multiplier_temp": 2.0
+    },
+    "Lost Wallet": {
+      "cost": 4,
+      "effect": "Patroon-vermenigvuldiger +1 voor elke 15 Tickets die je bezit.",
+      "category": "dynamic_scaling",
+      "scale_type": "tickets",
+      "scale_ratio": 15,
+      "pattern_multiplier_bonus": 1.0
+    },
+    "CloverPet": {
+      "cost": 5,
+      "effect": "Symbool-vermenigvuldiger +1 voor elke 5 Tickets die je bezit.",
+      "category": "dynamic_scaling",
+      "scale_type": "tickets",
+      "scale_ratio": 5,
+      "symbol_multiplier_bonus": 1.0
+    },
+    "Shopping Cart": {
+      "cost": 6,
+      "effect": "Symbool-vermenigvuldiger +2 voor elke Free Restock. +1 Free Restock per deadline.",
+      "category": "dynamic_scaling",
+      "scale_type": "restocks",
+      "scale_ratio": 1,
+      "symbol_multiplier_bonus": 2.0,
+      "deadline_bonus_restock": 1
+    },
+    "Gabihbb'H": {
+      "cost": 7,
+      "effect": "Wanneer je een 666 ziet, Symbool-vermenigvuldiger x2 tot het einde van de ronde.",
+      "category": "event_trigger",
+      "trigger": "on_666",
+      "symbol_multiplier_temp": 2.0
+    },
+    "Stonks": {
+      "cost": 4,
+      "effect": "+5% aan je ATM rente.",
+      "category": "passive_boost",
+      "interest_rate_bonus": 0.05
+    },
+    "Grandma's Purse": {
+      "cost": 5,
+      "effect": "ATM rente +15%, maar daalt met 3% na elke ronde. Discard bij 0%.",
+      "category": "decaying_boost",
+      "interest_rate_bonus": 0.15,
+      "decay_per_round": 0.03
+    },
+    "Chonky Cat": {
+      "cost": 6,
+      "effect": "Wanneer 7+ patronen triggeren in een spin, verdien je munten gelijk aan dubbele rente.",
+      "category": "event_trigger",
+      "trigger": "on_patterns_count",
+      "condition_count": 7,
+      "payout_interest_multiplier": 2.0
+    },
+    "Swole Cat": {
+      "cost": 8,
+      "effect": "Wanneer 15+ patronen triggeren in een spin, verdien je munten gelijk aan 4x rente.",
+      "category": "event_trigger",
+      "trigger": "on_patterns_count",
+      "condition_count": 15,
+      "payout_interest_multiplier": 4.0
+    },
+    "Ace of Hearts": {
+      "cost": 6,
+      "effect": "Wanneer 3+ patronen triggeren in een spin, stijgt de basiswaarde van alle fruit (Citroen/Kers) permanent.",
+      "category": "event_trigger",
+      "trigger": "on_patterns_count",
+      "condition_count": 3,
+      "target_symbol": ["Citroen", "Kers"],
+      "permanent_value_increase_by_base": true
+    },
+    "Ace of Diamonds": {
+      "cost": 7,
+      "effect": "Als je 1+ patroon hebt met 4+ symbolen, stijgt de basiswaarde van Diamant/Chest permanent.",
+      "category": "event_trigger",
+      "trigger": "on_pattern_length",
+      "condition_length": 4,
+      "target_symbol": ["Diamant", "Chest"],
+      "permanent_value_increase_by_base": true
+    },
+    "Steam Locomotive": {
+      "cost": 6,
+      "effect": "Als de vorige 3 spins geen winst hadden, stijgen alle symbolen in basiswaarde permanent.",
+      "category": "event_trigger",
+      "trigger": "on_consecutive_losses",
+      "condition_losses": 3,
+      "target_symbol": ["ALL"],
+      "permanent_value_increase_by_base": true
+    },
+    "Cigarettes": {
+      "cost": 5,
+      "effect": "Verhoogt alle symbolen permanent met hun basiswaarde. Restock de winkel. Neemt geen ruimte in (Consumable).",
+      "category": "instant_consumable",
+      "takes_space": false,
+      "target_symbol": ["ALL"],
+      "permanent_value_increase_by_base": true,
+      "restock_bonus": 1
+    },
+    "Cardboard House": {
+      "cost": 8,
+      "effect": "Maakt ruimte voor 1 extra Lucky Charm! Neemt zelf geen ruimte in.",
+      "category": "instant_consumable",
+      "takes_space": false,
+      "max_charms_bonus": 1
+    },
+    "Cat Food": {
+      "cost": 4,
+      "effect": "+2 Spins per Ronde.",
+      "category": "passive_boost",
+      "extra_spins_per_round": 2
+    },
+    "Fidelity Card": {
+      "cost": 6,
+      "effect": "Lucky Charms in de store kosten 1 Ticket minder.",
+      "category": "passive_boost",
+      "shop_discount": 1
+    },
+    "Stain": {
+      "cost": 6,
+      "effect": "Wanneer je 1+ patroon van 4+ symbolen ziet, stijgt de waarde van ALLE patronen tijdelijk tot het eind van de ronde.",
+      "category": "event_trigger",
+      "trigger": "on_pattern_length",
+      "condition_length": 4,
+      "pattern_multiplier_temp": 1.0
+    },
+    "Dear Diary": {
+      "cost": 5,
+      "effect": "+1 Optie bij de Telefoon.",
+      "category": "passive_boost",
+      "phone_options_bonus": 1
+    },
+    "Megaphone": {
+      "cost": 6,
+      "effect": "Vaardigheden gekozen bij de Telefoon triggeren dubbel. -1 Charm ruimte.",
+      "category": "passive_boost",
+      "phone_trigger_multiplier": 2,
+      "max_charms_bonus": -1
+    },
+    "Voicemail": {
+      "cost": 5,
+      "effect": "Symbool-vermenigvuldiger +1 voor elke 'Reroll' bij de Telefoon gedurende deze run.",
+      "category": "dynamic_scaling",
+      "scale_type": "phone_rerolls",
+      "scale_ratio": 1,
+      "symbol_multiplier_bonus": 1.0
+    },
+    "Chastity Belt": {
+      "cost": 5,
+      "effect": "Patroon-vermenigvuldiger +1 voor elke keer dat je GEEN vaardigheid koos bij de Telefoon.",
+      "category": "dynamic_scaling",
+      "scale_type": "phone_skips",
+      "scale_ratio": 1,
+      "pattern_multiplier_bonus": 1.0
+    },
+    "Electricity Meter": {
+      "cost": 4,
+      "effect": "Elke keer dat je de Store restockt, herlaad 1 charge van een willekeurige Charm.",
+      "category": "event_trigger",
+      "trigger": "on_shop_restock",
+      "recharge_amount": 1,
+      "recharge_target": "random"
+    },
+    "Potato Battery": {
+      "cost": 4,
+      "effect": "Wanneer 2 spins op rij geen winst opleveren, herlaad 1 charge op ALLE Charms.",
+      "category": "event_trigger",
+      "trigger": "on_consecutive_losses",
+      "condition_losses": 2,
+      "recharge_amount": 1,
+      "recharge_target": "all"
+    },
+    "Property Certificate": {
+      "cost": 9,
+      "effect": "Maakt ruimte voor 2 extra Lucky Charms! Neemt zelf geen plek in.",
+      "category": "instant_consumable",
+      "takes_space": false,
+      "max_charms_bonus": 2
+    },
+    "Ankh": {
+      "cost": 8,
+      "effect": "Als je de deadline niet haalt, krijg je 2 extra rondes! Daarna discard.",
+      "category": "death_prevention",
+      "extra_rounds_on_death": 2
+    },
+    "Magical Tomato": {
+      "cost": 6,
+      "effect": "Wanneer je een 666 ziet, triggeren Fruit-patronen 1 extra keer tot het eind van de ronde.",
+      "category": "event_trigger",
+      "trigger": "on_666",
+      "target_symbol": ["Citroen", "Kers"],
+      "repetition_temp_bonus": 1
+    },
+    "Necklace": {
+      "cost": 7,
+      "effect": "Als je precies 1 patroon scoort en het is Diamant of Chest, trigger deze dan nog 2 keer. Laatste trigger geeft x2 munten.",
+      "category": "event_trigger",
+      "trigger": "on_single_pattern",
+      "target_symbol": ["Diamant", "Chest"],
+      "repetition_bonus": 2,
+      "final_trigger_multiplier": 2.0
+    },
+    "Halo": {
+      "cost": 8,
+      "effect": "Wanneer je exact 1 patroon scoort in een spin, veranderen alle aangrenzende symbolen in dat symbool.",
+      "category": "event_trigger",
+      "trigger": "on_single_pattern",
+      "transform_adjacent_to_pattern": true
+    },
+    "Pain Killers": {
+      "cost": 7,
+      "effect": "Wanneer je exact 1 patroon scoort, veranderen de symbolen van dat patroon in je hoogste waarde symbool.",
+      "category": "event_trigger",
+      "trigger": "on_single_pattern",
+      "transform_to_highest_value": true
+    },
+    "Number 1": {
+      "cost": 5,
+      "effect": "Usable: Gedurende deze ronde triggeren patronen met Gele symbolen een extra keer.",
+      "category": "usable",
+      "trigger": "on_use",
+      "target_color": "Yellow",
+      "repetition_temp_bonus": 1
+    },
+    "Number 2": {
+      "cost": 5,
+      "effect": "Usable: Gedurende deze ronde triggeren patronen met NIET-Gele symbolen een extra keer.",
+      "category": "usable",
+      "trigger": "on_use",
+      "target_color": "Non-Yellow",
+      "repetition_temp_bonus": 1
+    },
+    "Midas Touch": {
+      "cost": 9,
+      "effect": "Usable: Gedurende deze ronde stijgen alle gescoorde symbolen permanent met hun basiswaarde.",
+      "category": "usable",
+      "trigger": "on_use",
+      "permanent_value_increase_on_score": true
+    },
+    "Nuclear Button": {
+      "cost": 7,
+      "effect": "Alle Lucky Charms die door de Red Button worden geactiveerd, triggeren een extra keer. -1 Charm ruimte.",
+      "category": "passive_boost",
+      "red_button_multiplier": 2,
+      "max_charms_bonus": -1
+    },
+    "Sacred Heart": {
+      "cost": 6,
+      "effect": "50% kans dat de Red Button geen charges verbruikt bij gebruik.",
+      "category": "passive_boost",
+      "red_button_save_charge_chance": 0.50
     }
   }
 }
