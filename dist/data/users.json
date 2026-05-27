@@ -1,0 +1,15 @@
+{
+    "users": [
+        {
+            "name": "QQQQ",
+            "color": [
+                255,
+                203,
+                5
+            ],
+            "icon": "Monkey",
+            "theme": "green",
+            "text_size": 20
+        }
+    ]
+}
