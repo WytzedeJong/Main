@@ -255,12 +255,15 @@ class TowerGame(Scene):
         self.small_font = pygame.font.SysFont("arial", 8)
         self.big_font = pygame.font.SysFont("arial", 20, bold=True)
         self.info_font = pygame.font.SysFont("arial", 14)
+        self.menu_font = pygame.font.SysFont("arial", 12)
         self.input = InputHandler()
 
         self.stats = self._load_stats()
         self.tower_names = list(self.stats["towers"].keys())
         self.enemy_names = list(self.stats["enemies"].keys())
         self.colors = self._build_colors()
+        self.tower_images = self._load_tower_images()
+        self.tower_image_cache = {}
         self.user = self.get_user()
         self.highscore = 0
         self.new_highscore = False
@@ -285,7 +288,7 @@ class TowerGame(Scene):
         self.held_move_delay = 0.1
         self.held_move_interval = 0.07
 
-        self.money = 200
+        self.money = 20000000
         self.lives = 100
         self.round = 0
         self.preparing = True
@@ -325,6 +328,71 @@ class TowerGame(Scene):
         path = os.path.join(os.path.dirname(__file__), "stats.json")
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
+
+    def _load_tower_images(self):
+        image_dir = os.path.join(os.path.dirname(__file__), "images")
+        if not os.path.isdir(image_dir):
+            return {}
+
+        towers_by_key = {
+            self._image_name_key(name): name
+            for name in self.stats.get("towers", {})
+        }
+        images = {}
+        for filename in os.listdir(image_dir):
+            if not filename.lower().endswith(".png"):
+                continue
+
+            stem = os.path.splitext(filename)[0]
+            tower_name = towers_by_key.get(self._image_name_key(stem))
+            if tower_name is None:
+                continue
+
+            path = os.path.join(image_dir, filename)
+            try:
+                images[tower_name] = pygame.image.load(path).convert_alpha()
+            except pygame.error:
+                continue
+        return images
+
+    def _image_name_key(self, name):
+        return " ".join(name.replace("_", " ").replace("-", " ").lower().split())
+
+    def _tower_image(self, name, size):
+        image = self.tower_images.get(name)
+        if image is None:
+            return None
+
+        if isinstance(size, int):
+            max_width = max_height = size
+            cache_size = (size, size)
+        else:
+            max_width, max_height = size
+            cache_size = (max_width, max_height)
+
+        cache_key = (name, cache_size)
+        if cache_key in self.tower_image_cache:
+            return self.tower_image_cache[cache_key]
+
+        width, height = image.get_size()
+        if width <= 0 or height <= 0:
+            return None
+
+        scale = min(max_width / width, max_height / height)
+        scaled_size = (max(1, int(width * scale)), max(1, int(height * scale)))
+        scaled = pygame.transform.smoothscale(image, scaled_size)
+        self.tower_image_cache[cache_key] = scaled
+        return scaled
+
+    def _draw_tower_icon(self, surface, name, rect):
+        image = self._tower_image(name, rect.size)
+        if image is None:
+            pygame.draw.rect(surface, self.colors[name], rect, border_radius=3)
+            return False
+
+        image_rect = image.get_rect(center=rect.center)
+        surface.blit(image, image_rect)
+        return True
 
     def _load_highscore(self):
         self.highscore = 0
@@ -1372,12 +1440,13 @@ class TowerGame(Scene):
         for tower in self.towers:
             x, y = tower.cell[0] * GRID, tower.cell[1] * GRID
             rect = pygame.Rect(x + 2, y + 2, GRID - 4, GRID - 4)
-            pygame.draw.rect(surface, tower.color, rect, border_radius=3)
+            self._draw_tower_icon(surface, tower.name, rect)
             pygame.draw.rect(surface, (22, 28, 32), rect, 1, border_radius=3)
             if tower.freeze_timer > 0:
                 pygame.draw.rect(surface, (160, 225, 255), rect, 2, border_radius=3)
             if tower.flash_timer > 0:
                 pygame.draw.circle(surface, (255, 245, 180), tower.center, 3)
+            pygame.draw.rect(surface, (12, 16, 18), (x + 4, y + 3, 9, 9), border_radius=2)
             level = self.small_font.render(str(tower.level), True, (255, 255, 255))
             surface.blit(level, (x + 5, y + 3))
 
@@ -1460,7 +1529,10 @@ class TowerGame(Scene):
                 return
             name = self.tower_names[tower_index]
             cx, cy = rect.center
-            pygame.draw.circle(surface, self.colors[name], (cx, cy), 8)
+            preview_rect = pygame.Rect(0, 0, GRID - 6, GRID - 6)
+            preview_rect.center = (cx, cy)
+            self._draw_tower_icon(surface, name, preview_rect)
+            pygame.draw.rect(surface, (22, 28, 32), preview_rect, 1, border_radius=3)
             pygame.draw.circle(surface, (0, 0, 0), (cx, cy), int(self.stats["towers"][name].get("range", 0)), 1)
 
     def _draw_texts(self, surface):
@@ -1496,13 +1568,11 @@ class TowerGame(Scene):
         pygame.draw.line(surface, (8, 12, 16), (MENU_X, 0), (MENU_X, BASE_HEIGHT), 2)
 
         stats = [
-            f"${self.money}",
-            "Prep" if self.preparing else f"R{self.round}",
-            f"L{self.lives}",
-            f"T{len(self.towers)}/{MAX_TOWERS}",
+            f"${self.money}                      {'Preperation' if self.preparing else f'R{self.round}'}",
+            f"Lives {self.lives}                   Towers {len(self.towers)}/{MAX_TOWERS}",
         ]
         for i, value in enumerate(stats):
-            label = self.font.render(value, True, (242, 244, 236))
+            label = self.menu_font.render(value, True, (242, 244, 236))
             surface.blit(label, (MENU_X + 6, 5 + i * 12))
 
         if self.state == "actions":
@@ -1518,12 +1588,12 @@ class TowerGame(Scene):
 
     def _draw_tower_menu(self, surface):
         padding = 4
-        gap = 4
+        gap = 3
         start_x = MENU_X + padding
-        start_y = 80
+        start_y = 60
         columns = 3
         slot_width = (MENU_WIDTH - padding * 2 - gap) // columns
-        slot_height = 17
+        slot_height = 20
 
         for idx, name in enumerate(self.tower_names):
             col = idx % columns
@@ -1539,18 +1609,22 @@ class TowerGame(Scene):
             fill = (248, 210, 93) if selected else (52, 65, 74)
             rect = pygame.Rect(x, y, slot_width, slot_height)
             pygame.draw.rect(surface, fill, rect, border_radius=3)
-            pygame.draw.rect(surface, self.colors[name], (rect.x + 2, rect.y + 2, 5, 13), border_radius=2)
+            icon_rect = pygame.Rect(rect.x + 2, rect.y + 3, 14, 14)
+            has_image = self._draw_tower_icon(surface, name, icon_rect)
+            if has_image:
+                pygame.draw.rect(surface, (22, 28, 32), icon_rect, 1, border_radius=2)
             cost = int(self.stats["towers"][name].get("cost", 0))
             text_color = (25, 28, 30) if selected else (235, 240, 232)
-            name_label = self.small_font.render(self._abbr_name(name), True, text_color)
-            cost_label = self.small_font.render(str(cost), True, text_color)
-            surface.blit(name_label, (rect.x + 9, rect.y + 1))
-            surface.blit(cost_label, (rect.x + 9, rect.y + 8))
+            name_label = self.font.render(self._abbr_name(name), True, text_color)
+            cost_label = self.font.render(str(cost), True, text_color)
+            name_y = rect.y + 1
+            surface.blit(name_label, (rect.x + 18, name_y))
+            surface.blit(cost_label, (rect.x + 18, name_y + name_label.get_height() - 2.5))
 
     def _draw_control_menu(self, surface):
         padding = 4
         gap = 4
-        y = 56
+        y = 35
         if self.preparing:
             rect = pygame.Rect(MENU_X + padding, y, MENU_WIDTH - padding * 2, 19)
             selected = self.menu_index == 0 and self.focus == "menu"
@@ -1646,14 +1720,17 @@ class TowerGame(Scene):
         pygame.draw.rect(surface, (248, 210, 93), box, 2, border_radius=5)
 
         color = self.colors.get(self.info_tower_name, (230, 230, 230))
-        pygame.draw.rect(surface, color, (box.x + 10, box.y + 12, 8, 22), border_radius=2)
+        icon_rect = pygame.Rect(box.x + 10, box.y + 10, 24, 24)
+        if not self._draw_tower_icon(surface, self.info_tower_name, icon_rect):
+            pygame.draw.rect(surface, color, icon_rect, border_radius=3)
+        pygame.draw.rect(surface, (22, 28, 32), icon_rect, 1, border_radius=3)
 
         level = self.info_tower.level if self.info_tower else 1
         title = self._display_name(self.info_tower_name)
         if self.info_tower:
             title = f"{title} L{level}"
         title_label = self.title_font.render(title, True, (250, 250, 244))
-        surface.blit(title_label, (box.x + 24, box.y + 10))
+        surface.blit(title_label, (box.x + 42, box.y + 10))
 
         y = box.y + 42
         for line in self._tower_info_lines(self.info_tower_name, level):
@@ -1813,7 +1890,7 @@ class TowerGame(Scene):
             "sniper": "Sniper",
             "cannon": "Cannon",
             "slowing tower": "Slowing tower",
-            "earthquake machine": "Earthquake machine",
+            "earthquake machine": "Quake machine",
             "laser": "Laser",
             "missile": "Missile",
             "freeze": "Freeze",
@@ -1826,7 +1903,7 @@ class TowerGame(Scene):
             "mine placer": "Mine Placer",
             "excavator": "Excavator",
             "inferno": "Inferno",
-            "black hole generator": "Black Hole Generator",
+            "black hole generator": "Black Hole",
             "buffer": "Buffer",
             "bank": "Bank",
             "boxer": "Boxer",
