@@ -401,7 +401,7 @@ class Game:
 
     def _draw_hud(self):
         # Score
-        score_txt = self.fonts['med'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
+        score_txt = self.fonts['small'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
         self.screen.blit(score_txt, (20, 14))
 
         # Best
@@ -570,10 +570,6 @@ class RacerGame(Scene):
         surface.blit(scaled, (0, 0))
 
 
-# ---------------------------------------------------------------------------
-# ENTRY POINT
-# ---------------------------------------------------------------------------
-
 def main():
     pygame.init()
 
@@ -624,9 +620,3 @@ def main():
         pygame.display.flip()
 
         clock.tick(FPS)
-
-    pygame.quit()
-
-
-if __name__ == "__main__":
-    main()
