@@ -56,7 +56,7 @@ python main.py
 🛠️ Een game toevoegen
 Games worden toegevoegd door de SceneManager over te erven en er een game omheen te bouwen. Hieronder een minimaal voorbeeld van hoe je een nieuwe scene opzet:
 
-Python
+```python
 import pygame
 from core.scene import Scene
 
@@ -82,7 +82,8 @@ class TestGame(Scene):
                                           surface.get_height() // 2))
                                           
         surface.blit(text, text_rect)
-Let op: Vergeet niet om de game vervolgens te registreren in het hoofdmenu, zodat deze daadwerkelijk zichtbaar wordt en geselecteerd kan worden in de gamelijst.
+```
+Let op: Vergeet niet om de game vervolgens te registreren in gamesmenu.py, zodat deze daadwerkelijk zichtbaar wordt en geselecteerd kan worden in de gamelijst.
 
 📄 Licentie
 Dit project is gelicenseerd onder de GNU General Public License v3.0. Je mag de software vrij gebruiken, aanpassen en verspreiden, mits je de broncode beschikbaar stelt onder dezelfde licentie.
