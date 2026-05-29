@@ -387,6 +387,8 @@ class Highscore(Scene):
                     score_text = f"{game_name}\n\nWins: {score}"
                 elif game_name in ('Tower Defense', 'Space'):
                     score_text = f"{game_name}\n\nBest round: {score}"
+                elif game_name == 'Pixelspin':
+                    score_text = f"{game_name}\n\nBest deadline: {score}"
                 else:
                     score_text = f"{game_name}\n\nScore: {score}"
 
