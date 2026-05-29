@@ -134,6 +134,9 @@ class PixelspinGame(Scene):
         self.selected_button = 0
         self.buttons = []
         self.input = InputHandler()
+        self.highscore = 0
+        self.new_highscore = False
+        self._load_highscore()
         self.reset_game()
 
     def reset_game(self):
@@ -168,6 +171,8 @@ class PixelspinGame(Scene):
         # Deadline / ronde systeem
         self.deadline_number = 1
         self.round_in_deadline = 1
+        self.deadlines_reached = 0
+        self.new_highscore = False
         self.spins_left = 0
         self.chosen_spins = 0
 
@@ -209,6 +214,75 @@ class PixelspinGame(Scene):
         }
 
         self._roll_shop_items()
+
+    def _user_name(self):
+        user = getattr(self.manager, "current_user", None)
+        if isinstance(user, dict):
+            return user.get("name")
+        if isinstance(user, str):
+            return user
+        return None
+
+    def _load_highscore(self):
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        try:
+            with open(os.path.join("data", "users.json"), "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            return
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+            try:
+                self.highscore = int(player.get("highscores", {}).get("Pixelspin", 0))
+            except Exception:
+                self.highscore = 0
+            return
+
+    def _save_highscore(self):
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        path = os.path.join("data", "users.json")
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            users_data = {"users": []}
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+
+            if "highscores" not in player:
+                player["highscores"] = {}
+
+            try:
+                current = int(player["highscores"].get("Pixelspin", 0))
+            except Exception:
+                current = 0
+
+            if self.highscore > current:
+                player["highscores"]["Pixelspin"] = self.highscore
+
+            try:
+                with open(path, "w", encoding="utf-8") as file:
+                    json.dump(users_data, file, indent=4)
+            except Exception:
+                pass
+            return
+
+    def _record_deadline_reached(self, deadline_number):
+        self.deadlines_reached = max(self.deadlines_reached, deadline_number)
+        if deadline_number > self.highscore:
+            self.highscore = deadline_number
+            self.new_highscore = True
+            self._save_highscore()
 
     # Deadline kosten tabel
     DEADLINE_COSTS = {
@@ -1011,7 +1085,9 @@ class PixelspinGame(Scene):
         else:
             target = self._deadline_cost_for(self.deadline_number)
             if self.atm >= target:
+                reached_deadline = self.deadline_number
                 self.atm -= target
+                self._record_deadline_reached(reached_deadline)
                 self.deadline_number += 1
                 self.round_in_deadline = 1
                 
@@ -2185,6 +2261,13 @@ class PixelspinGame(Scene):
         for i, msg in enumerate(self.last_wins):
             t = sf.render(msg, True, WHITE)
             surface.blit(t, (WIDTH//2 - t.get_width()//2, HEIGHT//2 - 20 + i * 22))
+
+        reached = sf.render(f"Deadline gehaald: {self.deadlines_reached}", True, GOLD)
+        surface.blit(reached, (WIDTH//2 - reached.get_width()//2, HEIGHT//2 + 35))
+
+        best_label = "NIEUWE BEST!" if self.new_highscore else "Beste deadline"
+        best = sf.render(f"{best_label}: {self.highscore}", True, GREEN)
+        surface.blit(best, (WIDTH//2 - best.get_width()//2, HEIGHT//2 + 57))
 
         self._draw_btn(surface, "OPNIEUW", WIDTH//2 - 40, HEIGHT - 60, 80, 40, GREEN, self.reset_game)
 
