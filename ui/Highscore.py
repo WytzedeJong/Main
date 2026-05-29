@@ -385,7 +385,7 @@ class Highscore(Scene):
                 score = self.highscores.get(game_name, 0)
                 if game_name == 'Pengu':
                     score_text = f"{game_name}\n\nWins: {score}"
-                elif game_name == 'Tower Defense':
+                elif game_name in ('Tower Defense', 'Space'):
                     score_text = f"{game_name}\n\nBest round: {score}"
                 else:
                     score_text = f"{game_name}\n\nScore: {score}"

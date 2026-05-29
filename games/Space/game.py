@@ -1,3 +1,4 @@
+import json
 import os
 import random
 import math
@@ -8,6 +9,10 @@ import pygame
 from core.scene import Scene
 from settings import BASE_HEIGHT, BASE_WIDTH
 from core.input_manager import InputHandler
+from ui.lockscreen import LockScreen
+
+
+HIGHSCORE_KEY = "Space"
 
 
 def game_name():
@@ -89,6 +94,10 @@ class SpaceGame(Scene):
         self.text_font = pygame.font.SysFont("arial", 15)
         self.small_font = pygame.font.SysFont("arial", 12)
         self.big_font = pygame.font.SysFont("arial", 22, bold=True)
+        self.user = self.get_user()
+        self.highscore = 0
+        self.new_highscore = False
+        self._load_highscore()
 
         self.player_size = (28, 18)
         self.player_x = 48.0
@@ -151,6 +160,89 @@ class SpaceGame(Scene):
 
         self.spawn_round(self.round_number)
 
+    def get_user(self):
+        user = getattr(self.manager, "current_user", None)
+        if user:
+            return user
+
+        try:
+            lock = LockScreen(self.manager)
+            return lock.get_user() or 0
+        except Exception:
+            return 0
+
+    def _user_name(self):
+        if isinstance(self.user, dict):
+            return self.user.get("name")
+        if isinstance(self.user, str):
+            return self.user
+        return None
+
+    def _load_highscore(self):
+        self.highscore = 0
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        try:
+            with open(os.path.join("data", "users.json"), "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            return
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+            try:
+                self.highscore = int(player.get("highscores", {}).get(HIGHSCORE_KEY, 0))
+            except Exception:
+                self.highscore = 0
+            return
+
+    def _save_highscore(self):
+        user_name = self._user_name()
+        if not user_name:
+            return
+
+        path = os.path.join("data", "users.json")
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                users_data = json.load(file)
+        except Exception:
+            users_data = {"users": []}
+
+        for player in users_data.get("users", []):
+            if player.get("name") != user_name:
+                continue
+
+            if "highscores" not in player:
+                player["highscores"] = {}
+
+            try:
+                current = int(player["highscores"].get(HIGHSCORE_KEY, 0))
+            except Exception:
+                current = 0
+
+            if self.highscore > current:
+                player["highscores"][HIGHSCORE_KEY] = self.highscore
+
+            try:
+                with open(path, "w", encoding="utf-8") as file:
+                    json.dump(users_data, file, indent=4)
+            except Exception:
+                pass
+            return
+
+    def finish_game(self):
+        if self.game_over:
+            return
+
+        self.game_over = True
+        self.new_highscore = self.round_number > self.highscore
+        if self.new_highscore:
+            self.highscore = self.round_number
+            self._save_highscore()
+
     def reset_game(self):
         self.player_x = 48.0
         self.player_y = self.play_height / 2 - self.player_size[1] / 2
@@ -177,6 +269,7 @@ class SpaceGame(Scene):
         self.upgrade_drop = None
         self.round_transition_timer = 0.0
         self.game_over = False
+        self.new_highscore = False
         self.show_instructions = True
         self.upgrade_pool = []
         self.special_upgrade_pool = []
@@ -609,7 +702,7 @@ class SpaceGame(Scene):
                     bullet.has_dealt_damage = True
                     if self.player_health <= 0:
                         self.player_health = 0
-                        self.game_over = True
+                        self.finish_game()
                     if bullet.width is None or bullet.height is None:
                         continue
 
@@ -925,9 +1018,17 @@ class SpaceGame(Scene):
         title = self.big_font.render("Game Over", True, (255, 180, 180))
         score = self.text_font.render(f"Score: {self.score}", True, (255, 255, 255))
         round_text = self.text_font.render(f"Gehaald tot ronde {self.round_number}", True, (255, 255, 255))
+        if self.new_highscore:
+            best_text = "NIEUWE HIGHSCORE!"
+            best_color = (255, 215, 0)
+        else:
+            best_text = f"Beste ronde: {self.highscore}"
+            best_color = (210, 235, 255)
+        best = self.text_font.render(best_text, True, best_color)
         retry = self.text_font.render("B = opnieuw  |  ESC = menu", True, (120, 255, 160))
 
-        surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 98)))
-        surface.blit(score, score.get_rect(center=(BASE_WIDTH // 2, 128)))
-        surface.blit(round_text, round_text.get_rect(center=(BASE_WIDTH // 2, 150)))
-        surface.blit(retry, retry.get_rect(center=(BASE_WIDTH // 2, 177)))
+        surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 92)))
+        surface.blit(score, score.get_rect(center=(BASE_WIDTH // 2, 119)))
+        surface.blit(round_text, round_text.get_rect(center=(BASE_WIDTH // 2, 141)))
+        surface.blit(best, best.get_rect(center=(BASE_WIDTH // 2, 163)))
+        surface.blit(retry, retry.get_rect(center=(BASE_WIDTH // 2, 185)))
