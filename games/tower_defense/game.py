@@ -293,7 +293,7 @@ class TowerGame(Scene):
         self.held_move_delay = 0.1
         self.held_move_interval = 0.07
 
-        self.money = 20000000
+        self.money = 200
         self.lives = 100
         self.round = 0
         self.preparing = True
