@@ -1,20 +1,32 @@
 {
-  "money": 36023.22021297763,
-  "total_clicks": 965,
-  "last_timestamp": 1779358367.979253,
+  "money": 26292.065632502035,
+  "total_clicks": 2310,
+  "rebirths": 0,
+  "rebirth_bonus": 0.0,
+  "last_timestamp": 1780247477.006123,
   "animals": {
-    "chicken": 17,
-    "cow": 10,
-    "pig": 6,
-    "sheep": 3,
-    "horse": 1,
+    "chicken": 30,
+    "cow": 30,
+    "pig": 16,
+    "sheep": 6,
+    "horse": 0,
     "goat": 0,
-    "duck": 0
+    "duck": 0,
+    "unicorn": 0
   },
   "upgrades": {
-    "strong_hands": 4,
-    "golden_touch": 2,
+    "strong_hands": 11,
+    "golden_touch": 5,
     "animal_whisper": 5,
-    "mega_barn": 0
+    "mega_barn": 1
+  },
+  "animal_upgrades": {
+    "chicken_feed": 7,
+    "cow_feed": 4,
+    "pig_feed": 1,
+    "sheep_feed": 0,
+    "horse_feed": 0,
+    "goat_feed": 0,
+    "duck_feed": 0
   }
 }
