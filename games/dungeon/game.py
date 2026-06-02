@@ -442,17 +442,8 @@ class DungeonGame(Scene):
                 # fall back to legacy path below
                 pass
 
-        # fallback: load legacy Dungeon_scores.json best value
-        try:
-            with open(self._scores_path(), "r", encoding="utf-8") as f:
-                data = json.load(f)
-            self.highscore = int(data.get("best", 0))
-        except Exception:
-            self.highscore = 0
-
     def _save_highscore(self):
-        # normalize score to tens
-        best = (self.highscore // 10) * 10
+        best = int(self.highscore)
 
         # update user's Highscore in data/users.json, keeping only the highest value
         path = os.path.join("data", "users.json")
@@ -497,13 +488,6 @@ class DungeonGame(Scene):
                         json.dump(users_data, f, indent=4)
                 except Exception:
                     pass
-
-        # legacy: also save a simple best value to Dungeon_scores.json for compatibility
-        try:
-            with open(self._scores_path(), "w", encoding="utf-8") as f:
-                json.dump({"best": best}, f)
-        except Exception:
-            pass
 
     # --- Line of sight ---
     def has_line_of_sight(self, x0, y0, x1, y1):
@@ -1067,25 +1051,6 @@ class DungeonGame(Scene):
 
         self._draw_hud(surface)
 
-    def _scores_path(self):
-        return os.path.join(os.path.dirname(__file__), "data", "users.json")
-
-    def _load_highscore(self):
-        try:
-            with open(self._scores_path(), "r", encoding="utf-8") as f:
-                data = json.load(f)
-            self.highscore = int(data.get("best", 0))
-        except:
-            self.highscore = 0
-
-    def _save_highscore(self):
-        best = (self.highscore // 10) * 10
-        data = {"best": best}
-        try:
-            with open(self._scores_path(), "w", encoding="utf-8") as f:
-                json.dump(data, f)
-        except:
-            pass
 
 class Enemy:
     def __init__(self, x, y, enemy_type, walls):
