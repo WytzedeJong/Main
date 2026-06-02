@@ -1,7 +1,8 @@
-WinMan
+# WinMan
+
 WinMan is een Python-gebaseerd gamemenu-systeem voor de Raspberry Pi, speciaal ontworpen voor een handheld gameconsole. Het systeem biedt een overzichtelijk menu met 10 ingebouwde games, een highscore-systeem per game en aanpasbare gebruikersinstellingen.
 
-## 📑 Inhoud
+## Inhoud
 * [Features](#-features)
 * [Games](#-games)
 * [Installatie & Setup](#-installatie--setup)
@@ -10,7 +11,7 @@ WinMan is een Python-gebaseerd gamemenu-systeem voor de Raspberry Pi, speciaal o
 
 ---
 
-## ✨ Features
+## Features
 * **Menu met drie secties:** Games, Highscores en Settings.
 * **Highscores per game:** Lokaal opgeslagen op het apparaat.
 * **Aanpasbare instellingen:** Zoals tekstgrootte, thema en wachtwoordbeheer.
@@ -18,7 +19,7 @@ WinMan is een Python-gebaseerd gamemenu-systeem voor de Raspberry Pi, speciaal o
 
 ---
 
-## 🕹️ Games
+## Games
 WinMan wordt geleverd met de volgende 10 ingebouwde games:
 
 | # | Game | # | Game |
@@ -31,13 +32,14 @@ WinMan wordt geleverd met de volgende 10 ingebouwde games:
 
 ---
 
-## ⚙️ Installatie & Setup
+## Installatie & Setup
 
 ### Vereisten
 * Raspberry Pi / Raspberry Pi OS
 * Python 3.x
 * Git
 
+### Stappen
 ### Stappen
 
 1. **Clone de repository:**
@@ -52,10 +54,9 @@ Start het systeem:
 
 Bash
 python main.py
-🛠️ Een game toevoegen
+#### Een game toevoegen
 Games worden toegevoegd door de SceneManager over te erven en er een game omheen te bouwen. Hieronder een minimaal voorbeeld van hoe je een nieuwe scene opzet:
 
-```python
 ```python
 import pygame
 from core.scene import Scene
@@ -85,9 +86,5 @@ class TestGame(Scene):
 ```
 Let op: Vergeet niet om de game vervolgens te registreren in gamesmenu.py, zodat deze daadwerkelijk zichtbaar wordt en geselecteerd kan worden in de gamelijst.
 
-📄 Licentie
+### Licentie
 Dit project is gelicenseerd onder de GNU General Public License v3.0. Je mag de software vrij gebruiken, aanpassen en verspreiden, mits je de broncode beschikbaar stelt onder dezelfde licentie.
-
-Licentie
-Dit project is gelicenseerd onder de GNU General Public License v3.0.
-Je mag de software vrij gebruiken, aanpassen en verspreiden, mits je de broncode beschikbaar stelt onder dezelfde licentie.
