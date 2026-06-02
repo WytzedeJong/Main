@@ -269,8 +269,43 @@ class Highscore(Scene):
 
         return None
 
+    def _format_farm_money(self, value):
+        try:
+            value = float(value)
+        except (TypeError, ValueError):
+            value = 0.0
+
+        if value < 1000:
+            return f"${int(value)}" if value == int(value) else f"${value:.2f}"
+
+        suffixes = ["", "K", "M", "B", "T", "Qa", "Qi"]
+        tier = 0
+        while value >= 1000 and tier < len(suffixes) - 1:
+            value /= 1000
+            tier += 1
+
+        if value >= 100:
+            return f"${value:.1f}{suffixes[tier]}"
+        if value >= 10:
+            return f"${value:.2f}{suffixes[tier]}"
+        return f"${value:.3f}{suffixes[tier]}"
+
+    def _format_farm_score(self, score):
+        if not isinstance(score, dict):
+            return f"Farm Nation\n\nScore: {score}"
+
+        money = self._format_farm_money(score.get("money", 0))
+        total_clicks = int(score.get("total_clicks", 0))
+        rebirths = int(score.get("rebirths", 0))
+        return (
+            "Farm Nation\n"
+            f"Money: {money}\n"
+            f"Clicks: {total_clicks}\n"
+            f"Rebirths: {rebirths}"
+        )
+
     def _get_achievement_cards(self, game_name):
-        if game_name == "Puzzle":
+        if game_name in ("Puzzle", "Farm Nation"):
             return []
 
         achievement_keys = list(self.ACHIEVEMENT_TARGETS.get(game_name, {}).keys())
@@ -280,6 +315,8 @@ class Highscore(Scene):
                 achievement_keys.append(achievement_key)
 
         score = self.highscores.get(game_name, 0)
+        if isinstance(score, dict):
+            score = 0
         cards = []
 
         for achievement_key in achievement_keys:
@@ -385,6 +422,8 @@ class Highscore(Scene):
                 score = self.highscores.get(game_name, 0)
                 if game_name == 'Pengu':
                     score_text = f"{game_name}\n\nWins: {score}"
+                elif game_name == 'Farm Nation':
+                    score_text = self._format_farm_score(score)
                 elif game_name in ('Tower Defense', 'Space'):
                     score_text = f"{game_name}\n\nBest round: {score}"
                 else:

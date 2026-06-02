@@ -32,10 +32,10 @@
     "mega_barn_income_multiplier": 0.25
   },
   "rebirth": {
-    "money_per_bonus": 1000000000000000000,
-    "bonus_per_money_unit": 0.05,
+    "money_per_bonus": 1000000,
+    "bonus_per_money_unit": 0.1,
     "minimum_units": 1,
-    "reset_total_clicks": true,
+    "reset_total_clicks": false,
     "toast_seconds": 2.0
   },
   "fallback_animal_colors": {

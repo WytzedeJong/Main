@@ -17,6 +17,7 @@ def game_name():
 
 GAME_DIR = os.path.dirname(__file__)
 CONFIG_PATH = os.path.join(GAME_DIR, "config.json")
+USERS_PATH = os.path.abspath(os.path.join(GAME_DIR, "..", "..", "data", "users.json"))
 
 
 def _load_config():
@@ -32,6 +33,7 @@ def color(name):
 
 
 STATS_PATH = os.path.join(GAME_DIR, CONFIG["files"]["stats"])
+SAVE_DIR = os.path.join(GAME_DIR, "save_files")
 REQUIRED_UPGRADE_IDS = set(CONFIG["required_upgrade_ids"])
 FALLBACK_ANIMAL_COLORS = {
     animal_id: tuple(color)
@@ -179,6 +181,7 @@ class FarmNationGame(Scene):
         self.upgrade_levels = {u["id"]: 0 for u in UPGRADES}
         self.animal_upgrade_levels = {u["id"]: 0 for u in ANIMAL_UPGRADES}
         self.animal_images = self._load_animal_images()
+        self.click_button_image = self._load_click_button_image()
         self.last_timestamp = time.time()
 
         self.click_pulse = 0.0
@@ -223,6 +226,11 @@ class FarmNationGame(Scene):
     def _save_path(self):
         safe_name = "".join(c if c.isalnum() else "_" for c in self._user_key())
         save_prefix = CONFIG["files"]["save_prefix"]
+        return os.path.join(SAVE_DIR, f"{save_prefix}{safe_name}.json")
+
+    def _legacy_save_path(self):
+        safe_name = "".join(c if c.isalnum() else "_" for c in self._user_key())
+        save_prefix = CONFIG["files"]["save_prefix"]
         return os.path.join(GAME_DIR, f"{save_prefix}{safe_name}.json")
 
     def _image_slug(self, value):
@@ -252,6 +260,19 @@ class FarmNationGame(Scene):
                 except pygame.error:
                     continue
         return images
+
+    def _load_click_button_image(self):
+        path = os.path.join(GAME_DIR, "images", "farm_button.png")
+        if not os.path.exists(path):
+            return None
+        try:
+            image = pygame.image.load(path)
+            try:
+                return image.convert_alpha()
+            except pygame.error:
+                return image
+        except pygame.error:
+            return None
 
     def _animal_upgrade_level(self, animal_id):
         total = 0
@@ -314,11 +335,17 @@ class FarmNationGame(Scene):
     def _rebirth_multiplier(self):
         return 1.0 + self.rebirth_bonus
 
-    def _rebirth_units_available(self):
-        return int(self.money // CONFIG["rebirth"]["money_per_bonus"])
+    def _rebirth_cost(self):
+        base_cost = CONFIG["rebirth"]["money_per_bonus"]
+        return base_cost * (1000 ** self.rebirths)
+
+    def _can_rebirth(self):
+        return self.money >= self._rebirth_cost()
 
     def _rebirth_bonus_available(self):
-        return self._rebirth_units_available() * CONFIG["rebirth"]["bonus_per_money_unit"]
+        if not self._can_rebirth():
+            return 0.0
+        return CONFIG["rebirth"]["bonus_per_money_unit"]
 
     def _format_bonus_percent(self, bonus):
         return f"{bonus * 100:.0f}%"
@@ -364,6 +391,10 @@ class FarmNationGame(Scene):
         self.last_timestamp = now
 
     def _load_save(self):
+        legacy_path = self._legacy_save_path()
+        if not os.path.exists(self.save_path) and os.path.exists(legacy_path):
+            self.save_path = legacy_path
+
         if not os.path.exists(self.save_path):
             return
         try:
@@ -392,6 +423,44 @@ class FarmNationGame(Scene):
             self.animal_upgrade_levels[upgrade["id"]] = int(
                 saved_animal_upgrades.get(upgrade["id"], 0)
             )
+        self.save_path = self._save_path()
+
+    def _farm_highscore_data(self):
+        return {
+            "money": self.money,
+            "total_clicks": self.total_clicks,
+            "rebirths": self.rebirths,
+        }
+
+    def _save_highscore(self):
+        username = self._user_key()
+        if not username:
+            return
+
+        try:
+            with open(USERS_PATH, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return
+
+        changed = False
+        for player in data.get("users", []):
+            if player.get("name") != username:
+                continue
+            if "highscores" not in player or not isinstance(player["highscores"], dict):
+                player["highscores"] = {}
+            player["highscores"]["Farm Nation"] = self._farm_highscore_data()
+            changed = True
+            break
+
+        if not changed:
+            return
+
+        try:
+            with open(USERS_PATH, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=4)
+        except OSError:
+            pass
 
     def _save_game(self):
         data = {
@@ -405,10 +474,12 @@ class FarmNationGame(Scene):
             "animal_upgrades": dict(self.animal_upgrade_levels),
         }
         try:
+            os.makedirs(SAVE_DIR, exist_ok=True)
             with open(self.save_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         except OSError:
             pass
+        self._save_highscore()
 
     def _reset_run_progress(self):
         self.money = 0.0
@@ -423,13 +494,12 @@ class FarmNationGame(Scene):
         self.floating_texts.clear()
 
     def _rebirth(self):
-        units = self._rebirth_units_available()
-        if units < CONFIG["rebirth"]["minimum_units"]:
+        if not self._can_rebirth():
             self._show_toast("Nog niet genoeg geld voor rebirth!", 1.2)
             return False
 
-        gained_bonus = units * CONFIG["rebirth"]["bonus_per_money_unit"]
-        self.rebirths += units
+        gained_bonus = CONFIG["rebirth"]["bonus_per_money_unit"]
+        self.rebirths += 1
         self.rebirth_bonus += gained_bonus
         self._reset_run_progress()
         self._save_game()
@@ -555,18 +625,12 @@ class FarmNationGame(Scene):
                 self._clamp_selection()
 
         if inp.just_pressed("L"):
-            if self.tab in (TAB_ANIMALS, TAB_UPGRADES, TAB_ANIMAL_UPGRADES):
-                self.tab = TAB_CLICK
-                self.selected_row = 0
-                self._show_toast("Terug - wissel tabs met links/rechts", 1.2)
-                return
             if self.tab == TAB_REBIRTH and self.rebirth_confirm:
                 self.rebirth_confirm = False
-                return
+            self.tab = TAB_CLICK
+            self.selected_row = 0
+            self._show_toast("Terug naar klik-tab", 1.2)
             self._save_game()
-            from ui.Games_menu import Game_Menu
-
-            self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if inp.just_pressed("B") or inp.just_pressed("SPACE"):
@@ -666,21 +730,25 @@ class FarmNationGame(Scene):
         rect = pygame.Rect(0, 0, w, h)
         rect.center = (cx, cy)
 
-        barn_color = color("barn")
-        if self.click_pulse > 0:
-            barn_color = color("barn_pulse")
-        pygame.draw.rect(surface, color("barn_shadow"), rect, border_radius=12)
-        pygame.draw.rect(surface, barn_color, rect.inflate(-8, -8), border_radius=10)
+        if self.click_button_image:
+            scaled = pygame.transform.smoothscale(self.click_button_image, rect.size)
+            surface.blit(scaled, rect)
+        else:
+            barn_color = color("barn")
+            if self.click_pulse > 0:
+                barn_color = color("barn_pulse")
+            pygame.draw.rect(surface, color("barn_shadow"), rect, border_radius=12)
+            pygame.draw.rect(surface, barn_color, rect.inflate(-8, -8), border_radius=10)
 
-        roof = [
-            (rect.left + 8, rect.top + 28),
-            (rect.centerx, rect.top + 4),
-            (rect.right - 8, rect.top + 28),
-        ]
-        pygame.draw.polygon(surface, color("barn_roof"), roof)
+            roof = [
+                (rect.left + 8, rect.top + 28),
+                (rect.centerx, rect.top + 4),
+                (rect.right - 8, rect.top + 28),
+            ]
+            pygame.draw.polygon(surface, color("barn_roof"), roof)
 
-        label = self.big_font.render("KLIK!", True, color("white"))
-        surface.blit(label, label.get_rect(center=(rect.centerx, rect.centery + 20)))
+            label = self.big_font.render("KLIK!", True, color("white"))
+            surface.blit(label, label.get_rect(center=(rect.centerx, rect.centery + 20)))
 
         hint = self.small_font.render("SPACE / B = klikken", True, color("click_hint"))
         surface.blit(hint, (rect.x + 8, rect.bottom - 18))
@@ -886,15 +954,15 @@ class FarmNationGame(Scene):
         pygame.draw.rect(surface, color("rebirth_panel"), panel, border_radius=8)
         pygame.draw.rect(surface, color("rebirth_border"), panel, 2, border_radius=8)
 
-        units = self._rebirth_units_available()
         gained_bonus = self._rebirth_bonus_available()
-        can_rebirth = units >= CONFIG["rebirth"]["minimum_units"]
+        rebirth_cost = self._rebirth_cost()
+        can_rebirth = self._can_rebirth()
         next_bonus = self.rebirth_bonus + gained_bonus
 
         info_lines = [
             "Rebirth",
             f"Huidige permanente bonus: +{self._format_bonus_percent(self.rebirth_bonus)}",
-            f"Beschikbaar: {units} Qi",
+            f"Volgende rebirth: {format_money(rebirth_cost)}",
             f"Na rebirth: +{self._format_bonus_percent(next_bonus)} totaal",
         ]
         y = panel.y + 10
@@ -922,7 +990,7 @@ class FarmNationGame(Scene):
 
             if i == 1 and not can_rebirth:
                 text_color = color("rebirth_disabled")
-                display = "Minimaal 1 Qi nodig"
+                display = f"Nodig: {format_money(rebirth_cost)}"
             elif i == 1 and not self.rebirth_confirm:
                 text_color = color("rebirth_disabled")
                 display = "Eerst bevestigen..."
@@ -957,6 +1025,9 @@ class FarmNationGame(Scene):
         hints = "← →: tabs | UP/DOWN: kies | SPACE/B: actie | L: menu"
         if self.tab in (TAB_ANIMALS, TAB_UPGRADES, TAB_ANIMAL_UPGRADES):
             hints = "L: terug | ← →: tabs | I: 1/10/100x | UP/DOWN: kies | SPACE/B: koop"
+        hints = "LEFT/RIGHT: tabs | UP/DOWN: kies | SPACE/B: actie | L: klik-tab | Esc: menu"
+        if self.tab in (TAB_ANIMALS, TAB_UPGRADES, TAB_ANIMAL_UPGRADES):
+            hints = "L: klik-tab | LEFT/RIGHT: tabs | I: 1/10/100x | UP/DOWN: kies | SPACE/B: koop"
         label = self.small_font.render(hints, True, color("footer_hint"))
         surface.blit(label, (8, BASE_HEIGHT - CONFIG["layout"]["footer_y_offset"]))
 

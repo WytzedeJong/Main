@@ -41,6 +41,12 @@
       "name": "Eend",
       "base_income": 1500,
       "base_cost": 250000
+    },
+    "space_duck": {
+      "id": 8,
+      "name": "Ruimte-eend",
+      "base_income": 10000,
+      "base_cost": 2000000
     }
 },
 "upgrades": {
@@ -50,7 +56,7 @@
         "description": "verhoogt de inkomsten per klik met 1",
         "base_cost": 50,
         "cost_multiplier": 1.55,
-        "max_level": 100
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "golden_touch": {
         "id": 2,
@@ -58,7 +64,7 @@
         "description": "verhoogt de inkomsten per klik met 15%",
         "base_cost": 250,
         "cost_multiplier": 1.65,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
       },
      "animal_whisper": {
         "id": 3,
@@ -66,7 +72,7 @@
         "description": "verhoogt de inkomsten van dieren met 10%",
         "base_cost": 500,
         "cost_multiplier": 1.7,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
      },
      "mega_barn": {
         "id": 4,
@@ -74,7 +80,7 @@
         "description": "verhoogt alle inkomsten met 25%",
         "base_cost": 5000,
         "cost_multiplier": 2.0,
-        "max_level": 25
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
         }
 },
 "animal_upgrades": {
@@ -86,7 +92,7 @@
         "income_bonus": 0.2,
         "base_cost": 100,
         "cost_multiplier": 1.5,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "cow_feed": {
         "id": 2,
@@ -96,7 +102,7 @@
         "income_bonus": 0.2,
         "base_cost": 500,
         "cost_multiplier": 1.6,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "pig_feed": {
         "id": 3,
@@ -106,7 +112,7 @@
         "income_bonus": 0.2,
         "base_cost": 2500,
         "cost_multiplier": 1.7,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "sheep_feed": {
         "id": 4,
@@ -116,7 +122,7 @@
         "income_bonus": 0.2,
         "base_cost": 12500,
         "cost_multiplier": 1.8,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "horse_feed": {
         "id": 5,
@@ -126,7 +132,7 @@
         "income_bonus": 0.2,
         "base_cost": 60000,
         "cost_multiplier": 1.9,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
     },
     "goat_feed": {
         "id": 6,
@@ -136,7 +142,7 @@
         "income_bonus": 0.2,
         "base_cost": 300000,
         "cost_multiplier": 2.0,
-        "max_level": 50
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
         },
     "duck_feed": {
         "id": 7,
@@ -146,7 +152,17 @@
         "income_bonus": 0.2,
         "base_cost": 1500000,
         "cost_multiplier": 2.5,
-        "max_level": 50
-        }
+        "max_level": 100000000000000000000000000000000000000000000000000000000000
+        },
+    "space_duck_feed": {
+        "id": 8,
+        "name": "Ruimte-eendenvoer",
+        "description": "verhoogt de inkomsten van ruimte-eenden met 20%",
+        "target_animal_id": "8",
+        "income_bonus": 0.2,
+        "base_cost": 2000000,
+        "cost_multiplier": 2.5,
+        "max_level": 100000000000000000000000000000000000000000000000
     }
+}
 }

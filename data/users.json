@@ -15,6 +15,11 @@
                     "Easy": "00:23",
                     "Medium": "00:27",
                     "Hard": "04:05"
+                },
+                "Farm Nation": {
+                    "money": 3.8747999999999143,
+                    "total_clicks": 2786,
+                    "rebirths": 1
                 }
             },
             "text_size": 20
