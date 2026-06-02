@@ -16,7 +16,7 @@
     "Dier Upg.",
     "Rebirth"
   ],
-  "buy_modes": [1, 10, 100],
+  "buy_modes": [1, 10, 100, "max"],
   "max_offline_seconds": 86400,
   "autosave_seconds": 15.0,
   "assets": {

@@ -46,6 +46,7 @@ TAB_UPGRADES = 2
 TAB_ANIMAL_UPGRADES = 3
 TAB_REBIRTH = 4
 BUY_MODES = list(CONFIG["buy_modes"])
+BUY_MODE_MAX = "max"
 MAX_OFFLINE_SECONDS = int(CONFIG["max_offline_seconds"])
 
 
@@ -116,7 +117,7 @@ def format_money(value):
         if value == int(value):
             return f"${int(value)}"
         return f"${value:.2f}"
-    suffixes = ["", "K", "M", "B", "T", "Qa", "Qi"]
+    suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Se", "Sx", "Sp", "Oc", "No"]
     tier = 0
     while value >= 1000 and tier < len(suffixes) - 1:
         value /= 1000
@@ -185,11 +186,8 @@ class FarmNationGame(Scene):
         self.last_timestamp = time.time()
 
         self.click_pulse = 0.0
-        self.flash_timer = 0.0
         self.toast_message = ""
         self.toast_timer = 0.0
-        self.purchase_flash_row = -1
-        self.purchase_flash_timer = 0.0
         self.floating_texts = []
         self._autosave_timer = 0.0
 
@@ -304,7 +302,12 @@ class FarmNationGame(Scene):
         count = self.animal_counts[animal_id]
         total = 0.0
         for _ in range(amount):
-            total += animal["base_cost"] * (CONFIG["economy"]["animal_cost_growth"] ** count)
+            try:
+                total += animal["base_cost"] * (CONFIG["economy"]["animal_cost_growth"] ** count)
+            except OverflowError:
+                return math.inf
+            if not math.isfinite(total):
+                return math.inf
             count += 1
         return total
 
@@ -317,7 +320,12 @@ class FarmNationGame(Scene):
         for _ in range(amount):
             if level >= upgrade["max_level"]:
                 return None
-            total += upgrade["base_cost"] * (upgrade["cost_mult"] ** level)
+            try:
+                total += upgrade["base_cost"] * (upgrade["cost_mult"] ** level)
+            except OverflowError:
+                return math.inf
+            if not math.isfinite(total):
+                return math.inf
             level += 1
         return total
 
@@ -359,16 +367,60 @@ class FarmNationGame(Scene):
     def _buy_mode(self):
         return BUY_MODES[self.buy_mode_index]
 
-    def _max_affordable_bulk(self, single_cost_fn, item_id):
+    def _buy_mode_label(self):
         mode = self._buy_mode()
-        cost = single_cost_fn(item_id, mode)
+        if mode == BUY_MODE_MAX:
+            return "MAX"
+        return f"{int(mode)}x"
+
+    def _max_affordable_amount(self, cost_fn, item_id, max_amount=None):
+        if max_amount is not None and max_amount <= 0:
+            return 0
+
+        first_cost = cost_fn(item_id, 1)
+        if first_cost is None or self.money < first_cost:
+            return 0
+
+        low = 1
+        high = 1
+        search_high = 1
+        while max_amount is None or high < max_amount:
+            next_high = high * 2
+            if max_amount is not None:
+                next_high = min(next_high, max_amount)
+
+            cost = cost_fn(item_id, next_high)
+            if cost is None or self.money < cost:
+                search_high = next_high - 1
+                break
+            high = next_high
+            low = high
+
+            if max_amount is not None and high >= max_amount:
+                return high
+        else:
+            search_high = high
+
+        while low < search_high:
+            mid = (low + search_high + 1) // 2
+            cost = cost_fn(item_id, mid)
+            if cost is not None and self.money >= cost:
+                low = mid
+            else:
+                search_high = mid - 1
+        return low
+
+    def _amount_for_buy_mode(self, cost_fn, item_id, max_amount=None):
+        mode = self._buy_mode()
+        if mode == BUY_MODE_MAX:
+            return self._max_affordable_amount(cost_fn, item_id, max_amount)
+
+        amount = int(mode)
+        if max_amount is not None and amount > max_amount:
+            return 0
+        cost = cost_fn(item_id, amount)
         if cost is not None and self.money >= cost:
-            return mode
-        for fallback in (10, 1):
-            if fallback <= mode:
-                cost = single_cost_fn(item_id, fallback)
-                if cost is not None and self.money >= cost:
-                    return fallback
+            return amount
         return 0
 
     def _show_toast(self, message, duration=None):
@@ -514,7 +566,6 @@ class FarmNationGame(Scene):
         self.money += value
         self.total_clicks += 1
         self.click_pulse = 1.0
-        self.flash_timer = CONFIG["timers"]["click_flash_seconds"]
 
         fx = x if x is not None else self.click_rect.centerx
         fy = y if y is not None else self.click_rect.centery - 20
@@ -524,15 +575,13 @@ class FarmNationGame(Scene):
 
     def _buy_animals(self, index):
         animal = ANIMALS[index]
-        amount = self._max_affordable_bulk(self._animal_cost, animal["id"])
+        amount = self._amount_for_buy_mode(self._animal_cost, animal["id"])
         if amount <= 0:
             self._show_toast("Niet genoeg geld!", 1.0)
             return False
         cost = self._animal_cost(animal["id"], amount)
         self.money -= cost
         self.animal_counts[animal["id"]] += amount
-        self.purchase_flash_row = index
-        self.purchase_flash_timer = CONFIG["timers"]["purchase_flash_seconds"]
         self._show_toast(f"Gekocht: {amount}x {animal['name']}!", 1.3)
         return True
 
@@ -543,23 +592,20 @@ class FarmNationGame(Scene):
             self._show_toast("Max level bereikt!", 1.0)
             return False
 
-        amount = self._buy_mode()
-        affordable = 0
-        for try_amount in (amount, 10, 1):
-            cost = self._upgrade_cost(upgrade["id"], try_amount, upgrades, levels)
-            if cost is not None and self.money >= cost:
-                affordable = try_amount
-                break
-        if affordable <= 0:
+        remaining_levels = upgrade["max_level"] - level
+        amount = self._amount_for_buy_mode(
+            lambda upgrade_id, amount: self._upgrade_cost(upgrade_id, amount, upgrades, levels),
+            upgrade["id"],
+            remaining_levels,
+        )
+        if amount <= 0:
             self._show_toast("Niet genoeg geld!", 1.0)
             return False
 
-        cost = self._upgrade_cost(upgrade["id"], affordable, upgrades, levels)
+        cost = self._upgrade_cost(upgrade["id"], amount, upgrades, levels)
         self.money -= cost
-        levels[upgrade["id"]] += affordable
-        self.purchase_flash_row = index
-        self.purchase_flash_timer = CONFIG["timers"]["purchase_flash_seconds"]
-        self._show_toast(f"{label}: {upgrade['name']} x{affordable}!", 1.3)
+        levels[upgrade["id"]] += amount
+        self._show_toast(f"{label}: {upgrade['name']} x{amount}!", 1.3)
         return True
 
     def _buy_upgrade(self, index):
@@ -671,12 +717,8 @@ class FarmNationGame(Scene):
 
         if self.click_pulse > 0:
             self.click_pulse = max(0.0, self.click_pulse - dt * CONFIG["timers"]["click_pulse_decay"])
-        if self.flash_timer > 0:
-            self.flash_timer = max(0.0, self.flash_timer - dt)
         if self.toast_timer > 0:
             self.toast_timer = max(0.0, self.toast_timer - dt)
-        if self.purchase_flash_timer > 0:
-            self.purchase_flash_timer = max(0.0, self.purchase_flash_timer - dt)
 
         self.floating_texts = [t for t in self.floating_texts if t.alive]
         for text in self.floating_texts:
@@ -786,17 +828,10 @@ class FarmNationGame(Scene):
         for floater in self.floating_texts:
             floater.draw(surface, self.ui_font)
 
-        if self.flash_timer > 0:
-            flash = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
-            alpha = int(80 * (self.flash_timer / CONFIG["timers"]["click_flash_seconds"]))
-            flash.fill((*color("flash_overlay"), alpha))
-            surface.blit(flash, (0, 0))
-
     def _draw_buy_mode(self, surface, x, y):
-        mode = self._buy_mode()
-        label = self.small_font.render(f"Koop: {mode}x", True, color("buy_mode"))
+        label = self.small_font.render(f"Koop: {self._buy_mode_label()}", True, color("buy_mode"))
         surface.blit(label, (x, y))
-        hint = self.small_font.render("I: 1/10/100", True, color("buy_mode_hint"))
+        hint = self.small_font.render("I: 1/10/100/MAX", True, color("buy_mode_hint"))
         surface.blit(hint, (x + 80, y))
 
     def _draw_animal_icon(self, surface, animal, icon_rect):
@@ -813,8 +848,7 @@ class FarmNationGame(Scene):
         row_rect = pygame.Rect(self.list_rect.x, y, self.list_rect.width, height - 2)
 
         if selected:
-            flash = self.purchase_flash_row == index and self.purchase_flash_timer > 0
-            row_color = color("animal_row_selected") if not flash else color("animal_row_flash")
+            row_color = color("animal_row_selected")
             pygame.draw.rect(surface, row_color, row_rect, border_radius=6)
             pygame.draw.rect(surface, color("row_border"), row_rect, 2, border_radius=6)
         else:
@@ -843,14 +877,16 @@ class FarmNationGame(Scene):
         )
         surface.blit(info, (row_rect.x + 40, row_rect.y + 20))
 
-        bulk = self._max_affordable_bulk(self._animal_cost, animal["id"])
-        if bulk > 0:
+        bulk = self._amount_for_buy_mode(self._animal_cost, animal["id"])
+        if bulk <= 0:
+            bulk = self._buy_mode()
+            if bulk == BUY_MODE_MAX:
+                bulk = 1
+            cost = self._animal_cost(animal["id"], int(bulk))
+            cost_color = color("cost_unaffordable")
+        else:
             cost = self._animal_cost(animal["id"], bulk)
             cost_color = color("cost_affordable")
-        else:
-            bulk = self._buy_mode()
-            cost = self._animal_cost(animal["id"], bulk)
-            cost_color = color("cost_unaffordable")
 
         cost_text = self.small_font.render(f"{bulk}x {format_money(cost)}", True, cost_color)
         surface.blit(cost_text, (row_rect.right - cost_text.get_width() - 8, row_rect.centery - 6))
@@ -860,7 +896,6 @@ class FarmNationGame(Scene):
         levels = levels or self.upgrade_levels
         color_set = color_set or (
             color("upgrade_row_selected"),
-            color("upgrade_row_flash"),
             color("upgrade_row"),
             color("upgrade_info"),
         )
@@ -868,32 +903,30 @@ class FarmNationGame(Scene):
         selected = index == self.selected_row
         row_rect = pygame.Rect(self.list_rect.x, y, self.list_rect.width, height - 2)
         level = levels[upgrade["id"]]
-
+        row_color = color_set[0] if selected else color_set[1]
+        pygame.draw.rect(surface, row_color, row_rect, border_radius=6)
         if selected:
-            flash = self.purchase_flash_row == index and self.purchase_flash_timer > 0
-            row_color = color_set[0] if not flash else color_set[1]
-            pygame.draw.rect(surface, row_color, row_rect, border_radius=6)
             pygame.draw.rect(surface, color("row_border"), row_rect, 2, border_radius=6)
-        else:
-            pygame.draw.rect(surface, color_set[2], row_rect, border_radius=6)
 
         name = self.ui_font.render(f"{upgrade['name']} Lv.{level}", True, color("white"))
         surface.blit(name, (row_rect.x + 8, row_rect.y + 4))
 
-        desc = self.small_font.render(upgrade["desc"], True, color_set[3])
+        desc = self.small_font.render(upgrade["desc"], True, color_set[2])
         surface.blit(desc, (row_rect.x + 8, row_rect.y + 20))
 
         if level >= upgrade["max_level"]:
             cost_text = self.small_font.render("MAX", True, color("cost_affordable"))
         else:
-            bulk = self._buy_mode()
-            cost = self._upgrade_cost(upgrade["id"], bulk, upgrades, levels)
-            if cost is None or self.money < cost:
-                for try_bulk in (10, 1):
-                    cost = self._upgrade_cost(upgrade["id"], try_bulk, upgrades, levels)
-                    if cost is not None and self.money >= cost:
-                        bulk = try_bulk
-                        break
+            remaining_levels = upgrade["max_level"] - level
+            cost_fn = lambda upgrade_id, amount: self._upgrade_cost(upgrade_id, amount, upgrades, levels)
+            bulk = self._amount_for_buy_mode(cost_fn, upgrade["id"], remaining_levels)
+            if bulk <= 0:
+                bulk = self._buy_mode()
+                if bulk == BUY_MODE_MAX:
+                    bulk = min(1, remaining_levels)
+                cost = self._upgrade_cost(upgrade["id"], int(bulk), upgrades, levels)
+            else:
+                cost = self._upgrade_cost(upgrade["id"], bulk, upgrades, levels)
             cost_color = color("cost_affordable") if cost and self.money >= cost else color("cost_unaffordable")
             cost_text = self.small_font.render(
                 f"{bulk}x {format_money(cost) if cost else '?'}",
@@ -933,7 +966,6 @@ class FarmNationGame(Scene):
 
         colors = (
             color("animal_upgrade_row_selected"),
-            color("animal_upgrade_row_flash"),
             color("animal_upgrade_row"),
             color("animal_upgrade_info"),
         )
@@ -1021,20 +1053,9 @@ class FarmNationGame(Scene):
         pygame.draw.rect(surface, color("toast_border"), box, 2, border_radius=8)
         surface.blit(label, label.get_rect(center=box.center))
 
-    def _draw_footer_hints(self, surface):
-        hints = "← →: tabs | UP/DOWN: kies | SPACE/B: actie | L: menu"
-        if self.tab in (TAB_ANIMALS, TAB_UPGRADES, TAB_ANIMAL_UPGRADES):
-            hints = "L: terug | ← →: tabs | I: 1/10/100x | UP/DOWN: kies | SPACE/B: koop"
-        hints = "LEFT/RIGHT: tabs | UP/DOWN: kies | SPACE/B: actie | L: klik-tab | Esc: menu"
-        if self.tab in (TAB_ANIMALS, TAB_UPGRADES, TAB_ANIMAL_UPGRADES):
-            hints = "L: klik-tab | LEFT/RIGHT: tabs | I: 1/10/100x | UP/DOWN: kies | SPACE/B: koop"
-        label = self.small_font.render(hints, True, color("footer_hint"))
-        surface.blit(label, (8, BASE_HEIGHT - CONFIG["layout"]["footer_y_offset"]))
-
     def draw(self, surface):
         self._draw_background(surface)
         self._draw_header(surface)
-        self._draw_footer_hints(surface)
 
         if self.tab == TAB_CLICK:
             self._draw_click_tab(surface)
