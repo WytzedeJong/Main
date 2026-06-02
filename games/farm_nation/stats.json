@@ -1,0 +1,168 @@
+{
+"animals": {
+    "chicken": {
+      "id": 1,
+      "name": "Kip",
+      "base_income": 0.1,
+      "base_cost": 15
+    },
+    "cow": {
+      "id": 2,
+      "name": "Koe",
+      "base_income": 1.0,
+      "base_cost": 100
+    },
+    "pig": {
+      "id": 3,
+      "name": "Varken",
+      "base_income": 4.0,
+      "base_cost": 500
+    },
+    "sheep": {
+      "id": 4,
+      "name": "Schaap",
+      "base_income": 18,
+      "base_cost": 2500
+    },
+    "horse": {
+      "id": 5,
+      "name": "Paard",
+      "base_income": 80,
+      "base_cost": 12000
+    },
+    "goat": {
+      "id": 6,
+      "name": "Geit",
+      "base_income": 350,
+      "base_cost": 55000
+    },
+    "duck": {
+      "id": 7,
+      "name": "Eend",
+      "base_income": 1500,
+      "base_cost": 250000
+    },
+    "space_duck": {
+      "id": 8,
+      "name": "Ruimte-eend",
+      "base_income": 10000,
+      "base_cost": 2000000
+    }
+},
+"upgrades": {
+    "strong_hands": {
+        "id": 1,
+        "name": "Sterke handen",
+        "description": "verhoogt de inkomsten per klik met 1",
+        "base_cost": 50,
+        "cost_multiplier": 1.55,
+        "max_level": 1000000000
+    },
+    "golden_touch": {
+        "id": 2,
+        "name": "Gouden vingers",
+        "description": "verhoogt de inkomsten per klik met 15%",
+        "base_cost": 250,
+        "cost_multiplier": 1.65,
+        "max_level": 1000000000
+      },
+     "animal_whisper": {
+        "id": 3,
+        "name": "Dierenfluisteraar",
+        "description": "verhoogt de inkomsten van dieren met 10%",
+        "base_cost": 500,
+        "cost_multiplier": 1.7,
+        "max_level": 1000000000
+     },
+     "mega_barn": {
+        "id": 4,
+        "name": "mega schuur",
+        "description": "verhoogt alle inkomsten met 25%",
+        "base_cost": 5000,
+        "cost_multiplier": 2.0,
+        "max_level": 1000000000
+        }
+},
+"animal_upgrades": {
+     "chicken_feed": {
+        "id": 1,
+        "name": "Kippenvoer",
+        "description": "verhoogt de inkomsten van kippen met 20%",
+        "target_animal_id": "1",
+        "income_bonus": 0.2,
+        "base_cost": 100,
+        "cost_multiplier": 1.5,
+        "max_level": 1000000000
+    },
+    "cow_feed": {
+        "id": 2,
+        "name": "Koeienvoer",
+        "description": "verhoogt de inkomsten van koeien met 20%",
+        "target_animal_id": "2",
+        "income_bonus": 0.2,
+        "base_cost": 500,
+        "cost_multiplier": 1.6,
+        "max_level": 1000000000
+    },
+    "pig_feed": {
+        "id": 3,
+        "name": "Varkensvoer",
+        "description": "verhoogt de inkomsten van varkens met 20%",
+        "target_animal_id": "3",
+        "income_bonus": 0.2,
+        "base_cost": 2500,
+        "cost_multiplier": 1.7,
+        "max_level": 1000000000
+    },
+    "sheep_feed": {
+        "id": 4,
+        "name": "Schaapvoer",
+        "description": "verhoogt de inkomsten van schapen met 20%",
+        "target_animal_id": "4",
+        "income_bonus": 0.2,
+        "base_cost": 12500,
+        "cost_multiplier": 1.8,
+        "max_level": 1000000000
+    },
+    "horse_feed": {
+        "id": 5,
+        "name": "Paardenvoer",
+        "description": "verhoogt de inkomsten van paarden met 20%",
+        "target_animal_id": "5",
+        "income_bonus": 0.2,
+        "base_cost": 60000,
+        "cost_multiplier": 1.9,
+        "max_level": 1000000000
+    },
+    "goat_feed": {
+        "id": 6,
+        "name": "Geitenvoer",
+        "description": "verhoogt de inkomsten van geiten met 20%",
+        "target_animal_id": "6",
+        "income_bonus": 0.2,
+        "base_cost": 300000,
+        "cost_multiplier": 2.0,
+        "max_level": 1000000000
+        },
+    "duck_feed": {
+        "id": 7,
+        "name": "Eendenvoer",
+        "description": "verhoogt de inkomsten van eenden met 20%",
+        "target_animal_id": "7",
+        "income_bonus": 0.2,
+        "base_cost": 1500000,
+        "cost_multiplier": 2.5,
+        "max_level": 1000000000
+        },
+    "space_duck_feed": {
+        "id": 8,
+        "name": "Ruimte-eendenvoer",
+        "description": "verhoogt de inkomsten van ruimte-eenden met 20%",
+        "target_animal_id": "8",
+        "income_bonus": 0.2,
+        "base_cost": 2000000,
+        "cost_multiplier": 2.5,
+        "max_level": 1000000000
+    }
+}
+}

@@ -1,5 +1,4 @@
-# WinMan 🎮
-
+WinMan
 WinMan is een Python-gebaseerd gamemenu-systeem voor de Raspberry Pi, speciaal ontworpen voor een handheld gameconsole. Het systeem biedt een overzichtelijk menu met 10 ingebouwde games, een highscore-systeem per game en aanpasbare gebruikersinstellingen.
 
 ## 📑 Inhoud
@@ -57,6 +56,7 @@ python main.py
 Games worden toegevoegd door de SceneManager over te erven en er een game omheen te bouwen. Hieronder een minimaal voorbeeld van hoe je een nieuwe scene opzet:
 
 ```python
+```python
 import pygame
 from core.scene import Scene
 
@@ -87,3 +87,7 @@ Let op: Vergeet niet om de game vervolgens te registreren in gamesmenu.py, zodat
 
 📄 Licentie
 Dit project is gelicenseerd onder de GNU General Public License v3.0. Je mag de software vrij gebruiken, aanpassen en verspreiden, mits je de broncode beschikbaar stelt onder dezelfde licentie.
+
+Licentie
+Dit project is gelicenseerd onder de GNU General Public License v3.0.
+Je mag de software vrij gebruiken, aanpassen en verspreiden, mits je de broncode beschikbaar stelt onder dezelfde licentie.
