@@ -1,0 +1,33 @@
+{
+  "money": 3.8747999999999143,
+  "total_clicks": 2786,
+  "rebirths": 1,
+  "rebirth_bonus": 0.1,
+  "last_timestamp": 1780313661.7739344,
+  "animals": {
+    "chicken": 1,
+    "cow": 1,
+    "pig": 0,
+    "sheep": 0,
+    "horse": 0,
+    "goat": 0,
+    "duck": 0,
+    "space_duck": 0
+  },
+  "upgrades": {
+    "strong_hands": 0,
+    "golden_touch": 0,
+    "animal_whisper": 0,
+    "mega_barn": 0
+  },
+  "animal_upgrades": {
+    "chicken_feed": 0,
+    "cow_feed": 0,
+    "pig_feed": 0,
+    "sheep_feed": 0,
+    "horse_feed": 0,
+    "goat_feed": 0,
+    "duck_feed": 0,
+    "space_duck_feed": 0
+  }
+}

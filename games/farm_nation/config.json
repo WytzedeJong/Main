@@ -1,0 +1,131 @@
+{
+  "files": {
+    "stats": "stats.json",
+    "save_prefix": "save_"
+  },
+  "required_upgrade_ids": [
+    "strong_hands",
+    "golden_touch",
+    "animal_whisper",
+    "mega_barn"
+  ],
+  "tabs": [
+    "Klik",
+    "Dieren",
+    "Upgrades",
+    "Dier Upg.",
+    "Rebirth"
+  ],
+  "buy_modes": [1, 10, 100, "max"],
+  "max_offline_seconds": 86400,
+  "autosave_seconds": 15.0,
+  "assets": {
+    "animal_image_folders": ["", "assets", "images"],
+    "animal_image_suffix": "_farmnation.png"
+  },
+  "economy": {
+    "animal_cost_growth": 1.12,
+    "base_click_value": 1.0,
+    "strong_hands_click_bonus": 1.0,
+    "golden_touch_click_multiplier": 0.15,
+    "animal_whisper_income_multiplier": 0.10,
+    "mega_barn_income_multiplier": 0.25
+  },
+  "rebirth": {
+    "money_per_bonus": 1000000,
+    "bonus_per_money_unit": 0.1,
+    "minimum_units": 1,
+    "reset_total_clicks": false,
+    "toast_seconds": 2.0
+  },
+  "fallback_animal_colors": {
+    "chicken": [255, 220, 100],
+    "cow": [160, 100, 60],
+    "pig": [255, 180, 200],
+    "sheep": [230, 230, 230],
+    "horse": [140, 90, 50],
+    "goat": [200, 200, 180],
+    "duck": [100, 180, 255],
+    "default": [220, 220, 220]
+  },
+  "layout": {
+    "click_rect": [12, 52, 200],
+    "list_rect": [220, 52, 232],
+    "bottom_reserved_height": 100,
+    "footer_y_offset": 52,
+    "tab_bar_height": 36,
+    "tab_height": 34,
+    "row_height": 42,
+    "rebirth_row_height": 50,
+    "animal_icon": [6, 6, 28, 14]
+  },
+  "timers": {
+    "floating_text_lifetime": 0.9,
+    "floating_text_speed": 28,
+    "click_flash_seconds": 0.12,
+    "purchase_flash_seconds": 0.35,
+    "click_pulse_decay": 3.5,
+    "offline_toast_seconds": 2.2,
+    "toast_default_seconds": 1.4
+  },
+  "fonts": {
+    "family": "arial",
+    "title_size": 22,
+    "money_size": 20,
+    "ui_size": 14,
+    "small_size": 11,
+    "big_size": 18
+  },
+  "colors": {
+    "floating_click_text": [255, 240, 120],
+    "background_top": [135, 200, 120],
+    "background_bottom": [55, 120, 70],
+    "header_background": [40, 70, 45],
+    "header_title": [255, 245, 210],
+    "money": [255, 230, 80],
+    "header_subtext": [210, 240, 200],
+    "tab_active": [90, 160, 90],
+    "tab_inactive": [55, 95, 60],
+    "tab_border": [255, 240, 150],
+    "white": [255, 255, 255],
+    "barn_shadow": [120, 80, 50],
+    "barn": [180, 70, 55],
+    "barn_pulse": [220, 100, 75],
+    "barn_roof": [150, 40, 40],
+    "click_hint": [240, 255, 240],
+    "stats_panel": [30, 55, 35],
+    "stats_border": [80, 130, 85],
+    "stats_title": [255, 245, 200],
+    "stats_text": [210, 230, 200],
+    "buy_mode": [255, 240, 160],
+    "buy_mode_hint": [180, 210, 180],
+    "row_border": [255, 240, 140],
+    "animal_row_selected": [70, 140, 75],
+    "animal_row_flash": [100, 200, 110],
+    "animal_row": [35, 60, 40],
+    "animal_info": [200, 230, 200],
+    "cost_affordable": [255, 230, 100],
+    "cost_unaffordable": [180, 100, 100],
+    "upgrade_row_selected": [70, 120, 150],
+    "upgrade_row_flash": [90, 180, 220],
+    "upgrade_row": [35, 55, 65],
+    "upgrade_info": [200, 220, 240],
+    "animal_upgrade_row_selected": [95, 105, 65],
+    "animal_upgrade_row_flash": [150, 165, 85],
+    "animal_upgrade_row": [50, 58, 38],
+    "animal_upgrade_info": [225, 230, 190],
+    "rebirth_panel": [45, 35, 35],
+    "rebirth_border": [120, 70, 70],
+    "rebirth_row_selected": [130, 60, 60],
+    "rebirth_row_border": [255, 200, 120],
+    "rebirth_row": [70, 45, 45],
+    "rebirth_disabled": [140, 140, 140],
+    "rebirth_text": [255, 230, 230],
+    "rebirth_warning": [255, 180, 180],
+    "toast_text": [30, 30, 30],
+    "toast_background": [255, 240, 160],
+    "toast_border": [80, 60, 20],
+    "footer_hint": [220, 240, 220],
+    "flash_overlay": [255, 255, 200]
+  }
+}

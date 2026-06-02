@@ -406,7 +406,7 @@ class Game:
 
     def _draw_hud(self):
         # Score
-        score_txt = self.fonts['med'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
+        score_txt = self.fonts['small'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
         self.screen.blit(score_txt, (20, 14))
 
         # Best
@@ -437,16 +437,24 @@ class Game:
 
     def _draw_title_screen(self):
         self._draw_overlay([
-            ("SPEED RACER",  'big',   C_HUD_HI),
+            ("SPEED RACER", 'med', C_HUD_HI),
             ("dodge everything", 'small', C_HUD_TEXT),
-        ], sub="B to start   |   UP / DOWN to switch lanes   |   ESC menu")
+            ("", 'small', C_HUD_TEXT),
+            ("ENTER / SPACE  to start", 'small', C_HUD_TEXT),
+            ("↑ ↓  to switch lanes", 'small', C_HUD_TEXT),
+            ("ESC  to quit", 'small', C_HUD_TEXT),
+        ])#, sub="ENTER / SPACE  to start   •   ↑ ↓  to switch lanes   •   ESC to quit")
 
     def _draw_game_over_screen(self):
         self._draw_overlay([
-            ("GAME OVER",              'big',   C_HEART),
-            (f"SCORE  {int(self.score)}", 'med', C_HUD_TEXT),
-            (f"BEST   {self.best}",      'med',  C_HUD_HI),
-        ], sub="B play again   |   L title screen   |   ESC menu")
+            ("GAME OVER", 'med', C_HEART),
+            (f"SCORE  {int(self.score)}", 'small', C_HUD_TEXT),
+            (f"BEST   {self.best}", 'small', C_HUD_HI),
+            ("", 'small', C_HUD_TEXT),
+            ("ENTER / SPACE  play again", 'small', C_HUD_TEXT),
+            ("BACKSPACE  title screen", 'small', C_HUD_TEXT),
+            ("ESC  quit", 'small', C_HUD_TEXT),
+        ])#, sub="ENTER / SPACE  play again   •   BACKSPACE  title screen   •   ESC  quit")
 
 
 class RacerGame(Scene):
@@ -575,10 +583,6 @@ class RacerGame(Scene):
         surface.blit(scaled, (0, 0))
 
 
-# ---------------------------------------------------------------------------
-# ENTRY POINT
-# ---------------------------------------------------------------------------
-
 def main():
     pygame.init()
 
@@ -629,9 +633,3 @@ def main():
         pygame.display.flip()
 
         clock.tick(FPS)
-
-    pygame.quit()
-
-
-if __name__ == "__main__":
-    main()
