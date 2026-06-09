@@ -18,14 +18,18 @@ class EditUsername(Scene):
         self.name_font = self.styles.create_font(self.styles.FONT_EDIT_NAME_SIZE)
         self.input_font = self.styles.create_font(self.styles.FONT_EDIT_INPUT_SIZE, bold=True)
 
+        self.is_uppercase = True
         self.keyboard = [
             list("QWERTYUIOP"),
             list("ASDFGHJKL"),
             list("ZXCVBNM"),
-            ["_", "BACK", "OK"]
+            ["_", "CAPS", "BACK", "OK"]
         ]
+
         self.kb_row = 0
         self.kb_col = 0
+        self.card_height = 28
+        self.card_radius = 8
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -49,7 +53,10 @@ class EditUsername(Scene):
                 if key == "_":
                     if len(self.new_name) < 10:
                         self.new_name += "_"
-                
+
+                elif key == "CAPS":
+                    self.is_uppercase = not self.is_uppercase
+
                 elif key == "BACK":
                     self.new_name = self.new_name[:-1]
                 
@@ -57,13 +64,21 @@ class EditUsername(Scene):
                     if self.new_name.strip():
                         self.save_username()
                         self.manager.set_scene(self.parent_scene)
-                
+
                 else:
-                    if len(self.new_name) < 10:
-                        self.new_name += key
+                    if len(self.new_name) < 8:
+                        self.new_name += key if self.is_uppercase else key.lower()
             
             elif event.key == pygame.K_ESCAPE:
                 self.manager.set_scene(self.parent_scene)
+
+    def draw_gradient(self, surface):
+        for y in range(BASE_HEIGHT):
+            ratio = y / BASE_HEIGHT
+            r = int(self.styles.BG_TOP[0] * (1 - ratio) + self.styles.BG_BOTTOM[0] * ratio)
+            g = int(self.styles.BG_TOP[1] * (1 - ratio) + self.styles.BG_BOTTOM[1] * ratio)
+            b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
+            pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
     def save_username(self):
         # Update current user object
@@ -90,40 +105,59 @@ class EditUsername(Scene):
         pass
 
     def draw(self, surface):
-        surface.fill((50, 50, 50))
-        
+        self.draw_gradient(surface)
+
         # Title
-        title = self.title_font.render("Change Username", True, (255, 255, 255))
-        title_rect = title.get_rect(center=(BASE_WIDTH // 2, 20))
+        title = self.title_font.render("Change Username", True, self.styles.TEXT_COLOR)
+        title_rect = title.get_rect(center=(BASE_WIDTH // 2, 25))
         surface.blit(title, title_rect)
-        
+
         # Current input
-        input_text = self.name_font.render(f"Name: {self.new_name}_", True, self.styles.CARD_SELECTED)
-        input_rect = input_text.get_rect(center=(BASE_WIDTH // 2, 50))
+        input_text = self.name_font.render(f"Name: {self.new_name}_", True, self.styles.TEXT_SET)
+        input_rect = input_text.get_rect(center=(BASE_WIDTH // 2, 58))
         surface.blit(input_text, input_rect)
-        
+
         # Keyboard
         y = 90
         for row_idx, row in enumerate(self.keyboard):
-            x = 40
+            x = 38
             for col_idx, key in enumerate(row):
-                width = 28 if key in ["_", "OK"] else (50 if key == "BACK" else 25)
-                height = 25
-                
+                # --- OPTIONAL FIX: Added "CAPS" to the 30-width check so the text fits nicely ---
+                width = 35 if key in ["_", "CAPS", "OK"] else (62 if key == "BACK" else 26)
+                height = self.card_height
+
                 # Highlight selected
                 if row_idx == self.kb_row and col_idx == self.kb_col:
-                    pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, width, height))
-                    color = (50, 50, 50)
+                    pygame.draw.rect(surface, (0, 0, 0, 40), (x + 3, y + 3, width, height),
+                                     border_radius=self.card_radius)
+                    pygame.draw.rect(surface, self.styles.CARD_SELECTED, (x, y, width, height),
+                                     border_radius=self.card_radius)
+                    pygame.draw.rect(surface, self.styles.TEXT_COLOR, (x, y, width, height), 2,
+                                     border_radius=self.card_radius)
+                    text_color = self.styles.TEXT_SET
                 else:
-                    pygame.draw.rect(surface, (200, 200, 200), (x, y, width, height))
-                    color = (50, 50, 50)
-                
-                pygame.draw.rect(surface, (100, 100, 100), (x, y, width, height), 1)
-                
-                text = self.name_font.render(key, True, color)
+                    pygame.draw.rect(surface, (0, 0, 0, 40), (x + 3, y + 3, width, height),
+                                     border_radius=self.card_radius)
+
+                    # Visual Polish: Give the CAPS button a distinct color when active
+                    if key == "CAPS" and self.is_uppercase:
+                        pygame.draw.rect(surface, (180, 180, 180), (x, y, width, height),
+                                         border_radius=self.card_radius)
+                    else:
+                        pygame.draw.rect(surface, self.styles.CARD_COLOR, (x, y, width, height),
+                                         border_radius=self.card_radius)
+
+                    text_color = self.styles.TEXT_SET
+
+                if key in ["_", "CAPS", "BACK", "OK"]:
+                    display_text = key
+                else:
+                    display_text = key if self.is_uppercase else key.lower()
+
+                text = self.name_font.render(display_text, True, text_color)
                 text_rect = text.get_rect(center=(x + width // 2, y + height // 2))
                 surface.blit(text, text_rect)
-                
+
                 x += width + 5
-            
+
             y += 30

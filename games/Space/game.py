@@ -87,7 +87,7 @@ class SpaceGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
         self.asset_dir = os.path.join(os.path.dirname(__file__), "images")
-        self.input = InputHandler()
+        self.input = self.manager.input_handler
         self.hud_height = 54
         self.play_height = BASE_HEIGHT - self.hud_height
         self.title_font = pygame.font.SysFont("arial", 28, bold=True)
@@ -126,6 +126,9 @@ class SpaceGame(Scene):
         self.round_transition_timer = 0.0
         self.game_over = False
         self.show_instructions = True
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+        self.quit_options = ["Stoppen", "Doorgaan"]
 
         self.upgrades = [
             {"label": "Rapid Fire", "effect": "fire_rate"},
@@ -271,6 +274,8 @@ class SpaceGame(Scene):
         self.game_over = False
         self.new_highscore = False
         self.show_instructions = True
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
         self.upgrade_pool = []
         self.special_upgrade_pool = []
         self.collected_buffs = []
@@ -500,11 +505,15 @@ class SpaceGame(Scene):
         pass
 
     def update(self, dt):
-        self.input.update()
+        if self.input.just_pressed("ESC"):
+            if self.quit_dialog_open:
+                self.close_quit_dialog()
+            else:
+                self.open_quit_dialog()
+            return
 
-        if self.input.just_pressed("ESCAPE"):
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+        if self.quit_dialog_open:
+            self.update_quit_dialog()
             return
 
         if self.show_instructions:
@@ -528,6 +537,26 @@ class SpaceGame(Scene):
         self.update_bullets(dt)
         self.update_upgrade(dt)
         self.check_round_clear()
+
+    def open_quit_dialog(self):
+        self.quit_dialog_open = True
+        self.quit_dialog_index = 1
+
+    def close_quit_dialog(self):
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+
+    def update_quit_dialog(self):
+        if self.input.just_pressed("UP") or self.input.just_pressed("LEFT"):
+            self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
+        elif self.input.just_pressed("DOWN") or self.input.just_pressed("RIGHT"):
+            self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
+        elif self.input.just_pressed("B"):
+            if self.quit_options[self.quit_dialog_index] == "Stoppen":
+                from ui.home_menu import HomeMenu
+                self.manager.set_scene(HomeMenu(self.manager))
+            else:
+                self.close_quit_dialog()
 
     def update_player(self, dt):
         move_x = 0
@@ -822,6 +851,8 @@ class SpaceGame(Scene):
 
         if self.show_instructions:
             self.draw_instructions(surface)
+            if self.quit_dialog_open:
+                self.draw_quit_dialog(surface)
             return
 
         self.draw_upgrade(surface)
@@ -835,6 +866,9 @@ class SpaceGame(Scene):
 
         if self.game_over:
             self.draw_game_over(surface)
+
+        if self.quit_dialog_open:
+            self.draw_quit_dialog(surface)
 
     def draw_background(self, surface):
         if self.current_background:
@@ -1032,3 +1066,40 @@ class SpaceGame(Scene):
         surface.blit(round_text, round_text.get_rect(center=(BASE_WIDTH // 2, 141)))
         surface.blit(best, best.get_rect(center=(BASE_WIDTH // 2, 163)))
         surface.blit(retry, retry.get_rect(center=(BASE_WIDTH // 2, 185)))
+
+    def draw_quit_dialog(self, surface):
+        overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 165))
+        surface.blit(overlay, (0, 0))
+
+        panel = pygame.Rect(0, 0, 250, 112)
+        panel.center = (BASE_WIDTH // 2, BASE_HEIGHT // 2)
+        pygame.draw.rect(surface, (15, 20, 34), panel, border_radius=12)
+        pygame.draw.rect(surface, (180, 220, 255), panel, 2, border_radius=12)
+
+        title = self.big_font.render("Stoppen?", True, (255, 240, 180))
+        hint = self.small_font.render("B bevestigt, Esc annuleert", True, (210, 235, 255))
+        surface.blit(title, title.get_rect(center=(panel.centerx, panel.y + 24)))
+        surface.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 45)))
+
+        button_width = 88
+        button_height = 28
+        gap = 16
+        total_width = button_width * len(self.quit_options) + gap
+        start_x = panel.centerx - total_width // 2
+
+        for index, option in enumerate(self.quit_options):
+            rect = pygame.Rect(
+                start_x + index * (button_width + gap),
+                panel.y + 66,
+                button_width,
+                button_height,
+            )
+            selected = index == self.quit_dialog_index
+            fill = (120, 255, 160) if selected else (38, 48, 70)
+            text_color = (10, 15, 30) if selected else (235, 240, 255)
+            pygame.draw.rect(surface, fill, rect, border_radius=8)
+            pygame.draw.rect(surface, (180, 220, 255), rect, 2, border_radius=8)
+
+            label = self.text_font.render(option, True, text_color)
+            surface.blit(label, label.get_rect(center=rect.center))

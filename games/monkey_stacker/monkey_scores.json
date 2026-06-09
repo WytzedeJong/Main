@@ -1,1 +1,26 @@
-{"best": 1000}
+{
+    "users": [
+        {
+            "name": {
+                "name": "THIJSZ",
+                "color": [
+                    69,
+                    185,
+                    124
+                ],
+                "theme": "standard",
+                "text_size": 20,
+                "profile_image": "monkey.png",
+                "password": [
+                    "UP",
+                    "UP",
+                    "DOWN",
+                    "DOWN"
+                ]
+            },
+            "highscores": {
+                "Monkey": 370
+            }
+        }
+    ]
+}

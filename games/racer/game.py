@@ -8,11 +8,6 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
-
-def game_name():
-    return f"Speed Racer", RacerGame
-
-
 # ---------------------------------------------------------------------------
 # CONFIG
 # ---------------------------------------------------------------------------
@@ -212,6 +207,9 @@ class Game:
         self.track_scroll  = 0.0          # horizontal scroll offset for the track
         self.scanline_surf = self._make_scanlines()
         self.stars = StarField()
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+        self.quit_options = ["Stoppen", "Doorgaan"]
         self.reset()
 
     def _make_scanlines(self):
@@ -242,9 +240,12 @@ class Game:
     # --- input handling ---
 
     def handle_input(self, input_handler):
-        if input_handler.just_pressed("ESCAPE"):
-            if self.on_quit:
-                self.on_quit()
+        if self.quit_dialog_open:
+            self._handle_quit_dialog_input(input_handler)
+            return
+
+        if input_handler.just_pressed("ESC"):
+            self.open_quit_dialog()
             return
 
         if self.game_over:
@@ -267,6 +268,28 @@ class Game:
         if input_handler.just_pressed("DOWN") and self.lane < NUM_LANES - 1:
             self.lane += 1
             self.target_y = float(LANE_Y[self.lane] - PLAYER_H // 2)
+
+    def open_quit_dialog(self):
+        self.quit_dialog_open = True
+        self.quit_dialog_index = 1
+
+    def close_quit_dialog(self):
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+
+    def _handle_quit_dialog_input(self, input_handler):
+        if input_handler.just_pressed("ESC"):
+            self.close_quit_dialog()
+        elif input_handler.just_pressed("LEFT") or input_handler.just_pressed("UP"):
+            self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
+        elif input_handler.just_pressed("RIGHT") or input_handler.just_pressed("DOWN"):
+            self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
+        elif input_handler.just_pressed("B"):
+            if self.quit_options[self.quit_dialog_index] == "Stoppen":
+                if self.on_quit:
+                    self.on_quit()
+            else:
+                self.close_quit_dialog()
 
     # --- update ---
 
@@ -404,9 +427,12 @@ class Game:
         elif self.game_over:
             self._draw_game_over_screen()
 
+        if self.quit_dialog_open:
+            self._draw_quit_dialog()
+
     def _draw_hud(self):
         # Score
-        score_txt = self.fonts['small'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
+        score_txt = self.fonts['med'].render(f"SCORE{int(self.score):>6}", True, C_HUD_TEXT)
         self.screen.blit(score_txt, (20, 14))
 
         # Best
@@ -437,24 +463,54 @@ class Game:
 
     def _draw_title_screen(self):
         self._draw_overlay([
-            ("SPEED RACER", 'med', C_HUD_HI),
+            ("SPEED RACER",  'big',   C_HUD_HI),
             ("dodge everything", 'small', C_HUD_TEXT),
-            ("", 'small', C_HUD_TEXT),
-            ("ENTER / SPACE  to start", 'small', C_HUD_TEXT),
-            ("↑ ↓  to switch lanes", 'small', C_HUD_TEXT),
-            ("ESC  to quit", 'small', C_HUD_TEXT),
-        ])#, sub="ENTER / SPACE  to start   •   ↑ ↓  to switch lanes   •   ESC to quit")
+        ], sub="B to start   |   UP / DOWN to switch lanes   |   ESC menu")
 
     def _draw_game_over_screen(self):
         self._draw_overlay([
-            ("GAME OVER", 'med', C_HEART),
-            (f"SCORE  {int(self.score)}", 'small', C_HUD_TEXT),
-            (f"BEST   {self.best}", 'small', C_HUD_HI),
-            ("", 'small', C_HUD_TEXT),
-            ("ENTER / SPACE  play again", 'small', C_HUD_TEXT),
-            ("BACKSPACE  title screen", 'small', C_HUD_TEXT),
-            ("ESC  quit", 'small', C_HUD_TEXT),
-        ])#, sub="ENTER / SPACE  play again   •   BACKSPACE  title screen   •   ESC  quit")
+            ("GAME OVER",              'big',   C_HEART),
+            (f"SCORE  {int(self.score)}", 'med', C_HUD_TEXT),
+            (f"BEST   {self.best}",      'med',  C_HUD_HI),
+        ], sub="B play again   |   L title screen   |   ESC menu")
+
+    def _draw_quit_dialog(self):
+        overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 10, 170))
+        self.screen.blit(overlay, (0, 0))
+
+        panel = pygame.Rect(0, 0, 310, 138)
+        panel.center = (BASE_WIDTH // 2, BASE_HEIGHT // 2)
+        pygame.draw.rect(self.screen, (10, 10, 22), panel)
+        pygame.draw.rect(self.screen, C_HUD_HI, panel, 3)
+
+        title = self.fonts["med"].render("STOPPEN?", True, C_HUD_HI)
+        hint = self.fonts["small"].render("B bevestigt   ESC annuleert", True, C_HUD_TEXT)
+        self.screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 32)))
+        self.screen.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 58)))
+
+        button_width = 116
+        button_height = 34
+        gap = 18
+        total_width = button_width * len(self.quit_options) + gap
+        start_x = panel.centerx - total_width // 2
+
+        for index, option in enumerate(self.quit_options):
+            rect = pygame.Rect(
+                start_x + index * (button_width + gap),
+                panel.y + 82,
+                button_width,
+                button_height,
+            )
+            selected = index == self.quit_dialog_index
+            fill = C_HUD_HI if selected else C_LANE_DIM
+            border = C_PLAYER_D if selected else C_HUD_TEXT
+            text_color = C_BG if selected else C_HUD_TEXT
+            pygame.draw.rect(self.screen, fill, rect)
+            pygame.draw.rect(self.screen, border, rect, 3)
+
+            label = self.fonts["small"].render(option.upper(), True, text_color)
+            self.screen.blit(label, label.get_rect(center=rect.center))
 
 
 class RacerGame(Scene):
@@ -477,7 +533,7 @@ class RacerGame(Scene):
             on_quit=self._return_to_menu,
         )
         self.tick_accumulator = 0.0
-        self.input = InputHandler()
+        self.input = self.manager.input_handler
 
     def _load_font(self, size):
         try:
@@ -567,7 +623,6 @@ class RacerGame(Scene):
         pass
 
     def update(self, dt):
-        self.input.update()
         self.game.handle_input(self.input)
         self.tick_accumulator += dt
         step = 1 / FPS
@@ -582,6 +637,10 @@ class RacerGame(Scene):
         scaled = pygame.transform.smoothscale(self.canvas, (BASE_WIDTH, BASE_HEIGHT))
         surface.blit(scaled, (0, 0))
 
+
+# ---------------------------------------------------------------------------
+# ENTRY POINT
+# ---------------------------------------------------------------------------
 
 def main():
     pygame.init()
@@ -633,3 +692,9 @@ def main():
         pygame.display.flip()
 
         clock.tick(FPS)
+
+    pygame.quit()
+
+
+if __name__ == "__main__":
+    main()

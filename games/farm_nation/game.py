@@ -156,7 +156,7 @@ class FloatingText:
 class FarmNationGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.input_handler = InputHandler()
+        self.input_handler = self.manager.input_handler
 
         font_config = CONFIG["fonts"]
         font_family = font_config["family"]

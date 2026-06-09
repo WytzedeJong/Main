@@ -12,11 +12,6 @@ from ui.lockscreen import LockScreen
 
 from core.input_manager import InputHandler
 
-
-def game_name():
-    return f"Tower Defense", TowerGame
-
-
 FIELD_WIDTH = BASE_WIDTH
 MENU_WIDTH = BASE_WIDTH // 2
 MENU_X = BASE_WIDTH - MENU_WIDTH
@@ -29,15 +24,15 @@ MAX_BANKS = 8
 PIERCING_RANGE_MULTIPLIER = 2.0
 ARMORED_SHED_HEALTH_RATIO = 0.80
 
-BUTTON_QUIT = "ESCAPE"
-BUTTON_CONFIRM = "B"
-BUTTON_MENU = "L"
+BUTTON_QUIT = "B"
+BUTTON_CONFIRM = "L"
+BUTTON_MENU = "A"
 BUTTON_INFO = "INFO"
 DIRECTION_BUTTONS = ("LEFT", "RIGHT", "UP", "DOWN")
 
-KEY_QUIT_LABEL = "Esc"
-KEY_CONFIRM_LABEL = "B"
-KEY_MENU_LABEL = "L"
+KEY_QUIT_LABEL = "B"
+KEY_CONFIRM_LABEL = "L"
+KEY_MENU_LABEL = "A"
 KEY_INFO_LABEL = "I"
 
 
@@ -255,20 +250,16 @@ class DelayedAttack:
 class TowerGame(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        self.title_font = pygame.font.SysFont("arial", 16, bold=True)
+        self.title_font = pygame.font.SysFont("arial", 14, bold=True)
         self.font = pygame.font.SysFont("arial", 10)
         self.small_font = pygame.font.SysFont("arial", 8)
         self.big_font = pygame.font.SysFont("arial", 20, bold=True)
-        self.info_font = pygame.font.SysFont("arial", 14)
-        self.menu_font = pygame.font.SysFont("arial", 12)
-        self.input = InputHandler()
+        self.input = self.manager.input_handler
 
         self.stats = self._load_stats()
         self.tower_names = list(self.stats["towers"].keys())
         self.enemy_names = list(self.stats["enemies"].keys())
         self.colors = self._build_colors()
-        self.tower_images = self._load_tower_images()
-        self.tower_image_cache = {}
         self.user = self.get_user()
         self.highscore = 0
         self.new_highscore = False
@@ -287,7 +278,9 @@ class TowerGame(Scene):
         self.message = "Place towers, then start."
         self.banner_message = ""
         self.banner_timer = 0.0
-        self.exit_confirm_timer = 0.0
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+        self.quit_options = ["Stoppen", "Doorgaan"]
         self.held_move_key = None
         self.held_move_timer = 0.0
         self.held_move_delay = 0.1
@@ -333,71 +326,6 @@ class TowerGame(Scene):
         path = os.path.join(os.path.dirname(__file__), "stats.json")
         with open(path, "r", encoding="utf-8") as file:
             return json.load(file)
-
-    def _load_tower_images(self):
-        image_dir = os.path.join(os.path.dirname(__file__), "images")
-        if not os.path.isdir(image_dir):
-            return {}
-
-        towers_by_key = {
-            self._image_name_key(name): name
-            for name in self.stats.get("towers", {})
-        }
-        images = {}
-        for filename in os.listdir(image_dir):
-            if not filename.lower().endswith(".png"):
-                continue
-
-            stem = os.path.splitext(filename)[0]
-            tower_name = towers_by_key.get(self._image_name_key(stem))
-            if tower_name is None:
-                continue
-
-            path = os.path.join(image_dir, filename)
-            try:
-                images[tower_name] = pygame.image.load(path).convert_alpha()
-            except pygame.error:
-                continue
-        return images
-
-    def _image_name_key(self, name):
-        return " ".join(name.replace("_", " ").replace("-", " ").lower().split())
-
-    def _tower_image(self, name, size):
-        image = self.tower_images.get(name)
-        if image is None:
-            return None
-
-        if isinstance(size, int):
-            max_width = max_height = size
-            cache_size = (size, size)
-        else:
-            max_width, max_height = size
-            cache_size = (max_width, max_height)
-
-        cache_key = (name, cache_size)
-        if cache_key in self.tower_image_cache:
-            return self.tower_image_cache[cache_key]
-
-        width, height = image.get_size()
-        if width <= 0 or height <= 0:
-            return None
-
-        scale = min(max_width / width, max_height / height)
-        scaled_size = (max(1, int(width * scale)), max(1, int(height * scale)))
-        scaled = pygame.transform.smoothscale(image, scaled_size)
-        self.tower_image_cache[cache_key] = scaled
-        return scaled
-
-    def _draw_tower_icon(self, surface, name, rect):
-        image = self._tower_image(name, rect.size)
-        if image is None:
-            pygame.draw.rect(surface, self.colors[name], rect, border_radius=3)
-            return False
-
-        image_rect = image.get_rect(center=rect.center)
-        surface.blit(image, image_rect)
-        return True
 
     def _load_highscore(self):
         self.highscore = 0
@@ -520,21 +448,17 @@ class TowerGame(Scene):
         return
 
     def _handle_input(self):
-        if self.input.just_pressed(BUTTON_QUIT):
+        if self.quit_dialog_open:
+            self._handle_quit_dialog_input()
+            return True
+
+        if self.input.just_pressed("ESC"):
             if self.state == "info":
                 self._close_tower_info()
                 return True
 
-            if self.exit_confirm_timer > 0:
-                from ui.Games_menu import Game_Menu
-                self.input.close()
-                self.manager.set_scene(Game_Menu(self.manager))
-                return True
-            else:
-                self.exit_confirm_timer = 2.5
-                self._flash_banner(f"Press {KEY_QUIT_LABEL} again to quit")
-                self.message = f"Press {KEY_QUIT_LABEL} again to quit."
-                return True
+            self._open_quit_dialog()
+            return True
 
         if self.game_over:
             if self.input.just_pressed(BUTTON_CONFIRM):
@@ -556,6 +480,29 @@ class TowerGame(Scene):
         else:
             self._handle_normal(button)
         return False
+
+    def _open_quit_dialog(self):
+        self.quit_dialog_open = True
+        self.quit_dialog_index = 1
+
+    def _close_quit_dialog(self):
+        self.quit_dialog_open = False
+        self.quit_dialog_index = 1
+
+    def _handle_quit_dialog_input(self):
+        if self.input.just_pressed("ESC"):
+            self._close_quit_dialog()
+        elif self.input.just_pressed("LEFT") or self.input.just_pressed("UP"):
+            self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
+        elif self.input.just_pressed("RIGHT") or self.input.just_pressed("DOWN"):
+            self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
+        elif self.input.just_pressed(BUTTON_QUIT):
+            if self.quit_options[self.quit_dialog_index] == "Stoppen":
+                from ui.Games_menu import Game_Menu
+                self.input.close()
+                self.manager.set_scene(Game_Menu(self.manager))
+            else:
+                self._close_quit_dialog()
 
     def _next_pressed_button(self):
         for button in (BUTTON_INFO, BUTTON_MENU, BUTTON_CONFIRM, *DIRECTION_BUTTONS):
@@ -828,9 +775,7 @@ class TowerGame(Scene):
             self.message = "Action closed."
 
     def update(self, dt):
-        self.exit_confirm_timer = max(0, self.exit_confirm_timer - dt)
         self.banner_timer = max(0, self.banner_timer - dt)
-        self.input.update()
 
         if self._handle_input():
             return
@@ -1405,6 +1350,9 @@ class TowerGame(Scene):
         if self.game_over:
             self._draw_game_over(surface)
 
+        if self.quit_dialog_open:
+            self._draw_quit_dialog(surface)
+
     def _draw_field(self, surface):
         surface.fill((75, 122, 86))
         for y in range(0, BASE_HEIGHT, GRID):
@@ -1445,13 +1393,12 @@ class TowerGame(Scene):
         for tower in self.towers:
             x, y = tower.cell[0] * GRID, tower.cell[1] * GRID
             rect = pygame.Rect(x + 2, y + 2, GRID - 4, GRID - 4)
-            self._draw_tower_icon(surface, tower.name, rect)
+            pygame.draw.rect(surface, tower.color, rect, border_radius=3)
             pygame.draw.rect(surface, (22, 28, 32), rect, 1, border_radius=3)
             if tower.freeze_timer > 0:
                 pygame.draw.rect(surface, (160, 225, 255), rect, 2, border_radius=3)
             if tower.flash_timer > 0:
                 pygame.draw.circle(surface, (255, 245, 180), tower.center, 3)
-            pygame.draw.rect(surface, (12, 16, 18), (x + 4, y + 3, 9, 9), border_radius=2)
             level = self.small_font.render(str(tower.level), True, (255, 255, 255))
             surface.blit(level, (x + 5, y + 3))
 
@@ -1534,10 +1481,7 @@ class TowerGame(Scene):
                 return
             name = self.tower_names[tower_index]
             cx, cy = rect.center
-            preview_rect = pygame.Rect(0, 0, GRID - 6, GRID - 6)
-            preview_rect.center = (cx, cy)
-            self._draw_tower_icon(surface, name, preview_rect)
-            pygame.draw.rect(surface, (22, 28, 32), preview_rect, 1, border_radius=3)
+            pygame.draw.circle(surface, self.colors[name], (cx, cy), 8)
             pygame.draw.circle(surface, (0, 0, 0), (cx, cy), int(self.stats["towers"][name].get("range", 0)), 1)
 
     def _draw_texts(self, surface):
@@ -1573,11 +1517,13 @@ class TowerGame(Scene):
         pygame.draw.line(surface, (8, 12, 16), (MENU_X, 0), (MENU_X, BASE_HEIGHT), 2)
 
         stats = [
-            f"${self.money}                      {'Preperation' if self.preparing else f'R{self.round}'}",
-            f"Lives {self.lives}                   Towers {len(self.towers)}/{MAX_TOWERS}",
+            f"${self.money}",
+            "Prep" if self.preparing else f"R{self.round}",
+            f"L{self.lives}",
+            f"T{len(self.towers)}/{MAX_TOWERS}",
         ]
         for i, value in enumerate(stats):
-            label = self.menu_font.render(value, True, (242, 244, 236))
+            label = self.font.render(value, True, (242, 244, 236))
             surface.blit(label, (MENU_X + 6, 5 + i * 12))
 
         if self.state == "actions":
@@ -1593,12 +1539,12 @@ class TowerGame(Scene):
 
     def _draw_tower_menu(self, surface):
         padding = 4
-        gap = 3
+        gap = 4
         start_x = MENU_X + padding
-        start_y = 60
+        start_y = 80
         columns = 3
         slot_width = (MENU_WIDTH - padding * 2 - gap) // columns
-        slot_height = 20
+        slot_height = 17
 
         for idx, name in enumerate(self.tower_names):
             col = idx % columns
@@ -1614,22 +1560,18 @@ class TowerGame(Scene):
             fill = (248, 210, 93) if selected else (52, 65, 74)
             rect = pygame.Rect(x, y, slot_width, slot_height)
             pygame.draw.rect(surface, fill, rect, border_radius=3)
-            icon_rect = pygame.Rect(rect.x + 2, rect.y + 3, 14, 14)
-            has_image = self._draw_tower_icon(surface, name, icon_rect)
-            if has_image:
-                pygame.draw.rect(surface, (22, 28, 32), icon_rect, 1, border_radius=2)
+            pygame.draw.rect(surface, self.colors[name], (rect.x + 2, rect.y + 2, 5, 13), border_radius=2)
             cost = int(self.stats["towers"][name].get("cost", 0))
             text_color = (25, 28, 30) if selected else (235, 240, 232)
-            name_label = self.font.render(self._abbr_name(name), True, text_color)
-            cost_label = self.font.render(str(cost), True, text_color)
-            name_y = rect.y + 1
-            surface.blit(name_label, (rect.x + 18, name_y))
-            surface.blit(cost_label, (rect.x + 18, name_y + name_label.get_height() - 2.5))
+            name_label = self.small_font.render(self._abbr_name(name), True, text_color)
+            cost_label = self.small_font.render(str(cost), True, text_color)
+            surface.blit(name_label, (rect.x + 9, rect.y + 1))
+            surface.blit(cost_label, (rect.x + 9, rect.y + 8))
 
     def _draw_control_menu(self, surface):
         padding = 4
         gap = 4
-        y = 35
+        y = 56
         if self.preparing:
             rect = pygame.Rect(MENU_X + padding, y, MENU_WIDTH - padding * 2, 19)
             selected = self.menu_index == 0 and self.focus == "menu"
@@ -1725,24 +1667,21 @@ class TowerGame(Scene):
         pygame.draw.rect(surface, (248, 210, 93), box, 2, border_radius=5)
 
         color = self.colors.get(self.info_tower_name, (230, 230, 230))
-        icon_rect = pygame.Rect(box.x + 10, box.y + 10, 24, 24)
-        if not self._draw_tower_icon(surface, self.info_tower_name, icon_rect):
-            pygame.draw.rect(surface, color, icon_rect, border_radius=3)
-        pygame.draw.rect(surface, (22, 28, 32), icon_rect, 1, border_radius=3)
+        pygame.draw.rect(surface, color, (box.x + 10, box.y + 12, 8, 22), border_radius=2)
 
         level = self.info_tower.level if self.info_tower else 1
         title = self._display_name(self.info_tower_name)
         if self.info_tower:
             title = f"{title} L{level}"
         title_label = self.title_font.render(title, True, (250, 250, 244))
-        surface.blit(title_label, (box.x + 42, box.y + 10))
+        surface.blit(title_label, (box.x + 24, box.y + 10))
 
         y = box.y + 42
         for line in self._tower_info_lines(self.info_tower_name, level):
             for wrapped in self._wrap_text(line, box.width - 24):
-                label = self.info_font.render(wrapped, True, (232, 238, 226))
+                label = self.small_font.render(wrapped, True, (232, 238, 226))
                 surface.blit(label, (box.x + 12, y))
-                y += 20
+                y += 10
             y += 2
             if y > box.bottom - 22:
                 break
@@ -1876,6 +1815,43 @@ class TowerGame(Scene):
             hint_y = 187
         surface.blit(hint, hint.get_rect(center=(FIELD_WIDTH // 2, hint_y)))
 
+    def _draw_quit_dialog(self, surface):
+        overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 165))
+        surface.blit(overlay, (0, 0))
+
+        box = pygame.Rect(0, 0, 250, 112)
+        box.center = (BASE_WIDTH // 2, BASE_HEIGHT // 2)
+        pygame.draw.rect(surface, (28, 37, 44), box, border_radius=8)
+        pygame.draw.rect(surface, (248, 210, 93), box, 2, border_radius=8)
+
+        title = self.big_font.render("Stoppen?", True, (250, 250, 244))
+        hint = self.small_font.render(f"{KEY_QUIT_LABEL} bevestigt, Esc annuleert", True, (232, 238, 226))
+        surface.blit(title, title.get_rect(center=(box.centerx, box.y + 24)))
+        surface.blit(hint, hint.get_rect(center=(box.centerx, box.y + 45)))
+
+        button_width = 88
+        button_height = 28
+        gap = 16
+        total_width = button_width * len(self.quit_options) + gap
+        start_x = box.centerx - total_width // 2
+
+        for index, option in enumerate(self.quit_options):
+            rect = pygame.Rect(
+                start_x + index * (button_width + gap),
+                box.y + 66,
+                button_width,
+                button_height,
+            )
+            selected = index == self.quit_dialog_index
+            fill = (248, 210, 93) if selected else (52, 65, 74)
+            text_color = (25, 28, 30) if selected else (235, 240, 232)
+            pygame.draw.rect(surface, fill, rect, border_radius=5)
+            pygame.draw.rect(surface, (22, 28, 32), rect, 1, border_radius=5)
+
+            label = self.title_font.render(option, True, text_color)
+            surface.blit(label, label.get_rect(center=rect.center))
+
     def _short_name(self, name):
         pieces = {
             "starter": "Start",
@@ -1895,7 +1871,7 @@ class TowerGame(Scene):
             "sniper": "Sniper",
             "cannon": "Cannon",
             "slowing tower": "Slowing tower",
-            "earthquake machine": "Quake machine",
+            "earthquake machine": "Earthquake machine",
             "laser": "Laser",
             "missile": "Missile",
             "freeze": "Freeze",
@@ -1908,7 +1884,7 @@ class TowerGame(Scene):
             "mine placer": "Mine Placer",
             "excavator": "Excavator",
             "inferno": "Inferno",
-            "black hole generator": "Black Hole",
+            "black hole generator": "Black Hole Generator",
             "buffer": "Buffer",
             "bank": "Bank",
             "boxer": "Boxer",

@@ -1,0 +1,20 @@
+{
+  "money": 4221835040.63527,
+  "total_clicks": 1840,
+  "last_timestamp": 1780307806.030835,
+  "animals": {
+    "chicken": 18,
+    "cow": 6,
+    "pig": 4,
+    "sheep": 1,
+    "horse": 0,
+    "goat": 45,
+    "duck": 100
+  },
+  "upgrades": {
+    "strong_hands": 30,
+    "golden_touch": 21,
+    "animal_whisper": 25,
+    "mega_barn": 16
+  }
+}

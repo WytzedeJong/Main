@@ -1,49 +1,59 @@
 {
     "users": [
         {
-            "name": "ThijS",
-            "color": [
-                255,
-                200,
-                80
-            ],
-            "theme": "blue",
-            "highscores": {
-                "Pengu": 3,
-                "Monkey": 40,
-                "Puzzle": {
-                    "Easy": "00:23",
-                    "Medium": "00:27",
-                    "Hard": "04:05"
-                },
-                "Farm Nation": {
-                    "money": 3.8747999999999143,
-                    "total_clicks": 2786,
-                    "rebirths": 1
-                },
-                "Pixelspin": 2
-            },
-            "text_size": 20
-        },
-        {
-            "name": "WYTZE",
+            "name": "MAX",
             "color": [
                 69,
                 148,
                 211
             ],
-            "icon": "lorem",
+            "theme": "green",
+            "text_size": 20,
+            "profile_image": "monkey.png",
+            "highscores": {
+                "Monkey": 1001,
+                "Puzzle": {
+                    "Easy": "00:31"
+                },
+                "Racer": 28,
+                "Pengu": 2,
+                "Space": 2,
+                "Dungeon": 44,
+                "Farm Nation": {
+                    "money": 21830037.351509184,
+                    "total_clicks": 2320,
+                    "rebirths": 0
+                }
+            }
+        },
+        {
+            "name": "Thijs",
+            "color": [
+                241,
+                102,
+                130
+            ],
+            "theme": "standard",
+            "text_size": 20,
+            "profile_image": "monkey.png",
             "password": [
                 "UP",
                 "UP",
                 "UP",
                 "UP"
             ],
-            "theme": "blue",
+            "highscores": {}
+        },
+        {
+            "name": "QQQ",
+            "color": [
+                255,
+                203,
+                5
+            ],
+            "theme": "standard",
             "text_size": 20,
-            "highscores": {
-                "Racer": 632
-            }
+            "profile_image": "racer.png"
         }
     ]
 }

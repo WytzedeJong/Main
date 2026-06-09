@@ -8,9 +8,11 @@ import os
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
+
 # functie voor automatisch toevoegen game
-def game_name(): 
+def game_name():
     return f"Dungeon", DungeonGame
+
 
 class DungeonGame(Scene):
     UI_BASE_WIDTH = BASE_WIDTH * 2
@@ -21,7 +23,7 @@ class DungeonGame(Scene):
         self.font = pygame.font.SysFont("arial", 60)
         self.hud_font = pygame.font.SysFont("arial", 24, bold=True)
         self.asset_dir = os.path.join(os.path.dirname(__file__), "images")
-        self.input = InputHandler()
+        self.input = self.manager.input_handler
 
         self.tile_size = 30
         self.viewport_width = BASE_WIDTH // self.tile_size
@@ -30,14 +32,13 @@ class DungeonGame(Scene):
         self.map_height = self.viewport_height * 10
 
         self.user = self.get_user()
-        
 
         self.tile_palettes = [
-                [(156, 80, 40), (115, 51, 17), (84, 39, 14)],
-                [(60, 60, 70), (80, 80, 90), (100, 100, 110)],
-                [(40, 80, 40), (50, 100, 50), (60, 120, 60)],
-                [(176, 43, 14), (133, 40, 21), (207, 56, 27)]
-            ]
+            [(156, 80, 40), (115, 51, 17), (84, 39, 14)],
+            [(60, 60, 70), (80, 80, 90), (100, 100, 110)],
+            [(40, 80, 40), (50, 100, 50), (60, 120, 60)],
+            [(176, 43, 14), (133, 40, 21), (207, 56, 27)]
+        ]
 
         self.tile_colors = random.choice(self.tile_palettes)
 
@@ -251,9 +252,9 @@ class DungeonGame(Scene):
     def spawn_enemies(self):
         """Spawn 4 type 1, 8 type 2, 7 type 3 enemies"""
         enemy_configs = [
-            (1, 5), 
-            (2, 8), 
-            (3, 7), 
+            (1, 5),
+            (2, 8),
+            (3, 7),
         ]
 
         for enemy_type, count in enemy_configs:
@@ -308,10 +309,10 @@ class DungeonGame(Scene):
                 for x in range(self.map_width)
                 for y in range(self.map_height)
                 if (x, y) not in self.walls
-                and (x, y) != (self.player_x, self.player_y)
-                and (x, y) not in self.dots
-                and (x, y) not in self.powerups
-                and (x, y) not in {(enemy.x, enemy.y) for enemy in self.enemies}
+                   and (x, y) != (self.player_x, self.player_y)
+                   and (x, y) not in self.dots
+                   and (x, y) not in self.powerups
+                   and (x, y) not in {(enemy.x, enemy.y) for enemy in self.enemies}
             ]
             random.shuffle(available_positions)
             for pos in available_positions:
@@ -382,36 +383,35 @@ class DungeonGame(Scene):
 
     def user_highscore(self, score):
         path = os.path.join("data", "users.json")
-        target_user = self.user 
-        
+        target_user = self.user
+
         try:
             with open(path, 'r') as file:
                 data = json.load(file)
         except FileNotFoundError:
             print("User data not found")
             return
-        
+
         found = False
         for player in data["users"]:
             if player["name"] == target_user:
                 # Zorg dat highscores object bestaat
                 if "highscores" not in player:
                     player["highscores"] = {}
-                
+
                 # Update ALLEEN Dungeon, laat andere games (Racer, Adventure) ongeroerd
                 current = player["highscores"].get("Dungeon", 0)
                 if score > current:
                     player["highscores"]["Dungeon"] = score
                 found = True
                 break
-                
+
         if found:
             with open(path, 'w') as file:
                 json.dump(data, file, indent=4)
             print(f"Score {score} opgeslagen voor {target_user}")
         else:
             print(f"Gebruiker {target_user} niet gevonden in JSON")
-                
 
     def _load_highscore(self):
         # Prefer per-user highscore from data/users.json
@@ -467,7 +467,7 @@ class DungeonGame(Scene):
                 if player.get("name") == target_name:
                     if "highscores" not in player:
                         player["highscores"] = {}
-                    
+
                     cur_val = player["highscores"].get("Dungeon", 0)
                     try:
                         cur_val = int(cur_val)
@@ -551,22 +551,23 @@ class DungeonGame(Scene):
         if self.show_instructions:
             if self.input.just_pressed("B"):
                 self.show_instructions = False
-            elif self.input.just_pressed("ESCAPE"):
+            elif self.input.just_pressed("ESC"):
                 self._return_to_menu()
             return
 
         if self.game_over:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self.reset_game()
-            elif self.input.just_pressed("ESCAPE"):
+            elif self.input.just_pressed("B"):
+                self.reset_game()
+            elif self.input.just_pressed("ESC"):
                 self._return_to_menu()
             return
 
-        if self.input.just_pressed("ESCAPE"):
+        if self.input.just_pressed("B") or self.input.just_pressed("ESC"):
             self._return_to_menu()
 
     def update(self, dt):
-        self.input.update()
         self._handle_input_actions()
 
         if self.show_instructions or self.game_over:
@@ -815,10 +816,10 @@ class DungeonGame(Scene):
         if self.score > self.highscore:
             self.highscore = self.score
             new_highscore = True
-            self._save_highscore()          
+            self._save_highscore()
 
         game_over_text = self.font.render("Time's Up!", True, (255, 255, 255))
-        
+
         if new_highscore:
             highscore_text = self.font.render("NEW HIGHSCORE!", True, (255, 215, 0))
             final_score_text = self.font.render(
@@ -920,7 +921,7 @@ class DungeonGame(Scene):
                 (207, 56, 27),
                 (196, 47, 47),
                 (219, 29, 29),
-                (209, 13, 13),]
+                (209, 13, 13), ]
         ]
 
         cam_x = self.player_x - self.viewport_width // 2
@@ -1038,7 +1039,8 @@ class DungeonGame(Scene):
         if self.player_image:
             angle = {'right': 270, 'down': 180, 'left': 90, 'up': 0}[self.facing]
             rotated_image = pygame.transform.rotate(self.player_image, angle)
-            rect = rotated_image.get_rect(center=(player_x_pos + self.tile_size // 2, player_y_pos + self.tile_size // 2))
+            rect = rotated_image.get_rect(
+                center=(player_x_pos + self.tile_size // 2, player_y_pos + self.tile_size // 2))
             surface.blit(rotated_image, rect)
         else:
             player_rect = pygame.Rect(

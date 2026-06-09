@@ -1,13 +1,16 @@
 import pygame
 from typing import Dict
 
+
 GPIO_MAP = {
     "UP": 4,
     "DOWN": 17,
     "LEFT": 18,
     "RIGHT": 22,
     "L": 24,
-    "B": 23
+    "B": 23,
+    "A": 27,
+    "ESC": 25
 }
 
 
@@ -18,7 +21,7 @@ class DpadReader:
         self._buttons = {}
         self._last_keys = {
             "UP": False, "DOWN": False, "LEFT": False, "RIGHT": False,
-            "L": False, "B": False
+            "L": False, "B": False, "A": False, "ESC": False
         }
 
         try:
@@ -38,6 +41,7 @@ class DpadReader:
             except Exception:
                 self._backend = "keyboard"
 
+
     def read(self, keys=None) -> dict[str, bool]:
         if self._backend == "gpiozero":
             return {name: bool(btn.is_pressed) for name, btn in self._buttons.items()}
@@ -55,11 +59,19 @@ class DpadReader:
                 "RIGHT": bool(keys[pygame.K_RIGHT]),
                 "L": bool(keys[pygame.K_l]),
                 "B": bool(keys[pygame.K_b]),
+                "A": bool(keys[pygame.K_a]),
+                "ESC": bool(keys[pygame.K_ESCAPE]),
             }
             self._last_keys = state
             return state
 
         return {name: False for name in self.gpio_map}
+
+    @property
+    def backend(self) -> str:
+        return str(self._backend or "")
+
+
 
     def close(self) -> None:
         if self._backend == "gpiozero":
@@ -89,6 +101,10 @@ class InputHandler:
             "INFO": pygame.K_i,
         }
 
+    def clear(self):
+        self.current = {}
+        self.previous = {}
+
     def update(self):
         keys = pygame.key.get_pressed()
 
@@ -104,8 +120,11 @@ class InputHandler:
         return self.current.get(button, False)
 
     def just_pressed(self, button: str) -> bool:
-        """True alleen op het moment dat de knop ingedrukt wordt"""
         return self.current.get(button, False) and not self.previous.get(button, False)
 
     def close(self):
         self.reader.close()
+
+    @property
+    def backend(self) -> str:
+        return self.reader.backend

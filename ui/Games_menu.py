@@ -1,13 +1,21 @@
 import pygame
 import datetime
-import importlib.util
-import os
-from pathlib import Path
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from games.puzzle.game import PuzzleGame
+from games.Pengu_Slider.game import AdventureGame
+from games.Space.game import SpaceGame
+from games.dungeon.game import DungeonGame
+from games.monkey_stacker.game import MonkeyStacker
+from games.tower_defense.game import TowerGame
+from games.Pixelspin.game import PixelspinGame
+from games.winman.game import WinMan
+from games.farm_nation.game import FarmNationGame
+from games.racer.game import RacerGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
+from ui.status import draw_time_and_battery
 
 
 class Game_Menu(Scene):
@@ -15,8 +23,18 @@ class Game_Menu(Scene):
         super().__init__(manager)
         self.styles = styles
         self.sq = vierkantjes
-        self.games = []
-        self._load_games_dynamically()
+        self.games = [
+            ("Puzzle", PuzzleGame),
+            ("1 Minute Dungeon", DungeonGame),
+            ("Pengu Slider", AdventureGame),
+            ("Space", SpaceGame),
+            ("Monkey Stacker", MonkeyStacker),
+            ("Tower Defense", TowerGame),
+            ("Farm Nation", FarmNationGame),
+            ("Speed Racer", RacerGame),
+            ("Pixelspin", PixelspinGame),
+            ("System Purge", WinMan),
+        ]
 
         self.selected = 0
         self.current_scroll = 0
@@ -30,33 +48,22 @@ class Game_Menu(Scene):
         self.spacing = self.styles.CARD_SPACING
 
         self.font_cache = {}
-    
-    def _load_games_dynamically(self):
-        games_dir = Path(__file__).parent.parent / "games"
-        
-        for game_folder in sorted(games_dir.iterdir()):
-            if not game_folder.is_dir() or game_folder.name.startswith('_'):
-                continue
-            
-            game_file = game_folder / "game.py"
-            if not game_file.exists():
-                continue
-            
-            try:
-                # Dynamically import the game module
-                spec = importlib.util.spec_from_file_location(
-                    f"games.{game_folder.name}.game",
-                    game_file
-                )
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
-                
-                # Check if game_name function exists
-                if hasattr(module, 'game_name'):
-                    name, game_class = module.game_name()
-                    self.games.append((name, game_class))
-            except Exception as e:
-                print(f"Failed to load game from {game_folder.name}: {e}")
+
+        self.game_icons = {}
+        self.icon_cache = {}
+        try:
+            self.game_icons["Monkey Stacker"] = pygame.image.load("ui/images/monkeystacker.png").convert_alpha()
+            self.game_icons["System Purge"] = pygame.image.load("ui/images/systempurge.png").convert_alpha()
+            self.game_icons["Space"] = pygame.image.load("ui/images/space.png").convert_alpha()
+            self.game_icons["1 Minute Dungeon"] = pygame.image.load("ui/images/dungeon.png").convert_alpha()
+            self.game_icons["Puzzle"] = pygame.image.load("ui/images/puzzle.png").convert_alpha()
+            self.game_icons["Tower Defense"] = pygame.image.load("ui/images/towerdefence.png").convert_alpha()
+            self.game_icons["Pixelspin"] = pygame.image.load("ui/images/pixelspin.png").convert_alpha()
+            self.game_icons["Pengu Slider"] = pygame.image.load("ui/images/pinguslider.png").convert_alpha()
+            self.game_icons["Speed Racer"] = pygame.image.load("ui/images/racer.png").convert_alpha()
+            self.game_icons["Farm Nation"] = pygame.image.load("ui/images/farm.png").convert_alpha()
+        except Exception:
+            pass
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -68,6 +75,7 @@ class Game_Menu(Scene):
 
             if event.key == pygame.K_RETURN:
                 real_i = self.selected % len(self.games)
+                self.manager.game_menu_selected = real_i
                 game_class = self.games[real_i][1]
                 self.manager.set_scene(game_class(self.manager))
 
@@ -83,8 +91,25 @@ class Game_Menu(Scene):
             b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
             pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
 
-    def draw_card(self, surface, color, x, y, width, height, text, scale, border_radius):
-        pygame.draw.rect(surface, color, (x, y, width, height), border_radius = int(border_radius))
+    def _get_scaled_icon(self, name, width, height):
+        icon = self.game_icons.get(name)
+        if icon is None:
+            return None
+
+        w = max(1, int(width))
+        h = max(1, int(height))
+        key = (name, w, h)
+        cached = self.icon_cache.get(key)
+        if cached is not None:
+            return cached
+
+        scaled = pygame.transform.smoothscale(icon, (w, h))
+        self.icon_cache[key] = scaled
+        return scaled
+
+    def draw_card(self, surface, color, x, y, width, height, text, scale, border_radius, is_selected):
+        rect = pygame.Rect(int(x), int(y), int(width), int(height))
+        pygame.draw.rect(surface, color, rect, border_radius=int(border_radius))
 
         scaled_font_size = int(self.styles.FONT_HOME_CARD_SIZE * scale)
         scaled_font_size = max(10, scaled_font_size)
@@ -92,22 +117,26 @@ class Game_Menu(Scene):
         if scaled_font_size not in self.font_cache:
             self.font_cache[scaled_font_size] = pygame.font.SysFont("Arial", scaled_font_size, bold=True)
 
-        label = self.font_cache[scaled_font_size].render(text, True, self.styles.TEXT_SET)
-        label_rect = label.get_rect(center=(x + width // 2, y + height // 2))
+        scaled_icon = self._get_scaled_icon(text, rect.width, rect.height)
+        if scaled_icon is not None:
+            surface.blit(scaled_icon, rect.topleft)
+
+        if is_selected:
+            label = self.font_cache[scaled_font_size].render(text, True, self.styles.TEXT_SET)
+            label_rect = label.get_rect(center=(rect.centerx, rect.bottom + 18))
         
-        # Ensure text doesn't overflow the card width
-        if label_rect.width > width - 4:
-            label_rect.width = width - 4
-            label_rect.centerx = x + width // 2
+        if is_selected and label_rect.width > rect.width - 4:
+            label_rect.width = rect.width - 4
+            label_rect.centerx = rect.centerx
         
-        surface.blit(label, label_rect)
+        if is_selected:
+            surface.blit(label, label_rect)
 
 
     def update(self, dt):
         diff = self.selected - self.current_scroll
-        self.current_scroll += diff * 0.03
+        self.current_scroll += diff * 0.1
 
-    
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -115,14 +144,11 @@ class Game_Menu(Scene):
 
         self.sq.vierkantjes(self)
 
-
         
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
 
-        now = datetime.datetime.now().strftime("%H:%M")
-        time_text = self.time_font.render(now, True, self.styles.TEXT_COLOR)
-        base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
+        draw_time_and_battery(base_surface, self.time_font, self.styles.TEXT_COLOR, y=25, margin_right=15)
 
         start_x = BASE_WIDTH // 2
         y_centre = BASE_HEIGHT // 2
@@ -145,7 +171,6 @@ class Game_Menu(Scene):
 
             is_active = (i == real_selected)
             base_color = pygame.Color(self.styles.CARD_COLOR)
-            # afstand tot midden van x as, om kleurvervaging toe te passen
             afstand = abs(start_x - x)
             factor = max(0.0, 1.0 - (afstand / BASE_WIDTH))     
             r = int(base_color.r * factor)
@@ -155,7 +180,7 @@ class Game_Menu(Scene):
             vervaging_kleur = (r,g,b)
             color = self.styles.CARD_SELECTED if is_active else vervaging_kleur
 
-            self.draw_card(base_surface, color, x, curr_y, new_width, new_height, name, scale, border_radius)
+            self.draw_card(base_surface, color, x, curr_y, new_width, new_height, name, scale, border_radius, is_active)
 
         a_text = self.card_font.render("", True, self.styles.TEXT_COLOR)
         b_text = self.card_font.render("", True, self.styles.TEXT_COLOR)

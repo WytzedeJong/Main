@@ -8,11 +8,6 @@ from core.scene import Scene
 from settings import base_surface, BASE_WIDTH, BASE_HEIGHT
 from core.input_manager import InputHandler
 
-
-def game_name():
-    return f"Pixelspin", PixelspinGame
-
-
 # --- CONFIGURATIE ---
 WIDTH, HEIGHT = BASE_WIDTH, BASE_HEIGHT
 FPS = 60
@@ -47,26 +42,29 @@ MODIFIER_DRAW_PRIORITY = ("golden", "ticket", "token", "battery", "chain", "repe
 
 # Symbolen & Hun Basiswaarde — afgestemd op de foto (Φ-waarden en kansen)
 SYMBOLS = {
-    "Citroen":  {"color": (255, 230,  40), "value": 2,  "weight": 0.2153, "icon": "🍋"},
-    "Kers":     {"color": (220,  40,  40), "value": 2,  "weight": 0.2153, "icon": "🍒"},
-    "Klaver":   {"color": ( 30, 200,  80), "value": 3,  "weight": 0.1654, "icon": "🍀"},
-    "Diamant":  {"color": ( 80, 210, 255), "value": 5,  "weight": 0.1321, "icon": "💎"},
-    "Bell":     {"color": (240, 190,  40), "value": 5,  "weight": 0.0999, "icon": "🔔"},
-    "Chest":    {"color": (170, 110,  45), "value": 5,  "weight": 0.0888, "icon": "🧰"},
-    "Zeven":    {"color": (255,  20,  20), "value": 7,  "weight": 0.0832, "icon": "7"},
+    "Citroen": {"color": (255, 230, 40), "value": 2, "weight": 0.2153, "icon": "🍋"},
+    "Kers": {"color": (220, 40, 40), "value": 2, "weight": 0.2153, "icon": "🍒"},
+    "Klaver": {"color": (30, 200, 80), "value": 3, "weight": 0.1654, "icon": "🍀"},
+    "Diamant": {"color": (80, 210, 255), "value": 5, "weight": 0.1321, "icon": "💎"},
+    "Bell": {"color": (240, 190, 40), "value": 5, "weight": 0.0999, "icon": "🔔"},
+    "Chest": {"color": (170, 110, 45), "value": 5, "weight": 0.0888, "icon": "🧰"},
+    "Zeven": {"color": (255, 20, 20), "value": 7, "weight": 0.0832, "icon": "7"},
 }
 
 # Runtime gewichten — worden aangepast door shop-upgrades
 _symbol_weight_bonus = {name: 0.0 for name in SYMBOLS}
-_symbol_value_bonus  = {name: 0   for name in SYMBOLS}
+_symbol_value_bonus = {name: 0 for name in SYMBOLS}
+
 
 def get_effective_weight(sym_name):
     base = SYMBOLS[sym_name]["weight"]
     return max(0.01, base + _symbol_weight_bonus[sym_name])
 
+
 def get_effective_value(sym_name):
     base = SYMBOLS[sym_name]["value"]
     return base + _symbol_value_bonus[sym_name]
+
 
 # Load patterns from JSON
 def load_patterns():
@@ -78,8 +76,10 @@ def load_patterns():
     except (FileNotFoundError, json.JSONDecodeError):
         return []
 
+
 BASE_PATTERNS = load_patterns()
 PATTERNS = copy.deepcopy(BASE_PATTERNS)
+
 
 # Load shop items from JSON
 def load_shop_items():
@@ -90,9 +90,10 @@ def load_shop_items():
     except (FileNotFoundError, json.JSONDecodeError):
         return {"charms": {}, "powerups": {}, "upgrades": {}}
 
+
 SHOP_ITEMS = load_shop_items()
-SHOP_ROLL_SIZE = 4            
-SHOP_REFRESH_COST = 5         
+SHOP_ROLL_SIZE = 4
+SHOP_REFRESH_COST = 5
 REPEATABLE_SHOP_ITEMS = {"Coin Doubler", "Extra Spins"}
 
 # --- PHONE CALL MECHANIC DATA ---
@@ -102,25 +103,35 @@ PHONE_CALLS = {
         {"name": "I can't quit now!", "desc": "Jackpot waarde x2.", "type": "double_jackpot"},
         {"name": "Can I borrow some green?", "desc": "+5 Tickets.", "type": "plus_5_tickets"},
         {"name": "Can I eat something?", "desc": "Charms in shop -2 Munten korting (1x).", "type": "discount_charms"},
-        {"name": "Can you give me some Energy Drinks?", "desc": "Red Button charms zijn opnieuw bruikbaar.", "type": "restore_charges"},
-        {"name": "Fruit market: {symbol}!", "desc": "+1 kans-gewicht voor {symbol}.", "type": "plus_weight_symbol", "symbols": ["Kers", "Citroen", "Klaver"]},
-        {"name": "Treasure market: {symbol}!", "desc": "+1 kans-gewicht voor {symbol}.", "type": "plus_weight_symbol", "symbols": ["Chest", "Bell", "Diamant"]},
+        {"name": "Can you give me some Energy Drinks?", "desc": "Red Button charms zijn opnieuw bruikbaar.",
+         "type": "restore_charges"},
+        {"name": "Fruit market: {symbol}!", "desc": "+1 kans-gewicht voor {symbol}.", "type": "plus_weight_symbol",
+         "symbols": ["Kers", "Citroen", "Klaver"]},
+        {"name": "Treasure market: {symbol}!", "desc": "+1 kans-gewicht voor {symbol}.", "type": "plus_weight_symbol",
+         "symbols": ["Chest", "Bell", "Diamant"]},
         {"name": "Lucky market!", "desc": "+1 kans-gewicht voor Zeven.", "type": "plus_weight_seven"},
         {"name": "Fruit supplements!", "desc": "Verdubbel Kers, Citroen en Klaver.", "type": "double_fruit_clover"},
-        {"name": "Heavy supplements!", "desc": "Verdubbel Chest, Bell en Diamant.", "type": "double_chest_bell_diamond"},
+        {"name": "Heavy supplements!", "desc": "Verdubbel Chest, Bell en Diamant.",
+         "type": "double_chest_bell_diamond"},
         {"name": "Lucky number!", "desc": "Zeven krijgt 3x zijn basiswaarde.", "type": "triple_seven"},
-        {"name": "I'm thinking of some strategies!", "desc": "Verhoog de waarde van kleine patronen.", "type": "buff_small_patterns"}
+        {"name": "I'm thinking of some strategies!", "desc": "Verhoog de waarde van kleine patronen.",
+         "type": "buff_small_patterns"}
     ],
     "Evil": [
         {"name": "I like Cryptic values!", "desc": "Verdubbel Tickets. Munten naar 0.", "type": "evil_cryptic"},
-        {"name": "I don't care about the price!", "desc": "Shop deels gratis, maar Tickets naar 0.", "type": "evil_free_charms"},
-        {"name": "My head hurts!", "desc": "Verdubbel Kers/Citroen/Klaver en Chest/Bell/Diamant.", "type": "evil_head_hurts"},
+        {"name": "I don't care about the price!", "desc": "Shop deels gratis, maar Tickets naar 0.",
+         "type": "evil_free_charms"},
+        {"name": "My head hurts!", "desc": "Verdubbel Kers/Citroen/Klaver en Chest/Bell/Diamant.",
+         "type": "evil_head_hurts"},
         {"name": "Give me back my money!", "desc": "Verdubbel munten. Tickets naar 0.", "type": "evil_money"},
-        {"name": "Mouldy fruit...", "desc": "Halveer spawnkans van Kers, Citroen en Klaver.", "type": "evil_mould_fruit_clover"},
-        {"name": "Rusty treasure...", "desc": "Halveer spawnkans van Chest, Bell en Diamant.", "type": "evil_mould_chest_bell_diamond"},
+        {"name": "Mouldy fruit...", "desc": "Halveer spawnkans van Kers, Citroen en Klaver.",
+         "type": "evil_mould_fruit_clover"},
+        {"name": "Rusty treasure...", "desc": "Halveer spawnkans van Chest, Bell en Diamant.",
+         "type": "evil_mould_chest_bell_diamond"},
         {"name": "Broken seven...", "desc": "Halveer spawnkans van Zeven.", "type": "evil_mould_seven"}
     ]
 }
+
 
 class PixelspinGame(Scene):
     def __init__(self, manager):
@@ -133,10 +144,7 @@ class PixelspinGame(Scene):
         self.button_cooldown = 0
         self.selected_button = 0
         self.buttons = []
-        self.input = InputHandler()
-        self.highscore = 0
-        self.new_highscore = False
-        self._load_highscore()
+        self.input = self.manager.input_handler
         self.reset_game()
 
     def reset_game(self):
@@ -171,8 +179,6 @@ class PixelspinGame(Scene):
         # Deadline / ronde systeem
         self.deadline_number = 1
         self.round_in_deadline = 1
-        self.deadlines_reached = 0
-        self.new_highscore = False
         self.spins_left = 0
         self.chosen_spins = 0
 
@@ -181,7 +187,7 @@ class PixelspinGame(Scene):
         self.charm_discount_active = False
         self.free_charms_active = False
         self.active_phone_options = []
-        
+
         # Actieve Usables en Buffs (Red Button systeem)
         self.active_round_buffs = set()
         self.used_usables_this_round = set()
@@ -215,75 +221,6 @@ class PixelspinGame(Scene):
 
         self._roll_shop_items()
 
-    def _user_name(self):
-        user = getattr(self.manager, "current_user", None)
-        if isinstance(user, dict):
-            return user.get("name")
-        if isinstance(user, str):
-            return user
-        return None
-
-    def _load_highscore(self):
-        user_name = self._user_name()
-        if not user_name:
-            return
-
-        try:
-            with open(os.path.join("data", "users.json"), "r", encoding="utf-8") as file:
-                users_data = json.load(file)
-        except Exception:
-            return
-
-        for player in users_data.get("users", []):
-            if player.get("name") != user_name:
-                continue
-            try:
-                self.highscore = int(player.get("highscores", {}).get("Pixelspin", 0))
-            except Exception:
-                self.highscore = 0
-            return
-
-    def _save_highscore(self):
-        user_name = self._user_name()
-        if not user_name:
-            return
-
-        path = os.path.join("data", "users.json")
-        try:
-            with open(path, "r", encoding="utf-8") as file:
-                users_data = json.load(file)
-        except Exception:
-            users_data = {"users": []}
-
-        for player in users_data.get("users", []):
-            if player.get("name") != user_name:
-                continue
-
-            if "highscores" not in player:
-                player["highscores"] = {}
-
-            try:
-                current = int(player["highscores"].get("Pixelspin", 0))
-            except Exception:
-                current = 0
-
-            if self.highscore > current:
-                player["highscores"]["Pixelspin"] = self.highscore
-
-            try:
-                with open(path, "w", encoding="utf-8") as file:
-                    json.dump(users_data, file, indent=4)
-            except Exception:
-                pass
-            return
-
-    def _record_deadline_reached(self, deadline_number):
-        self.deadlines_reached = max(self.deadlines_reached, deadline_number)
-        if deadline_number > self.highscore:
-            self.highscore = deadline_number
-            self.new_highscore = True
-            self._save_highscore()
-
     # Deadline kosten tabel
     DEADLINE_COSTS = {
         1: 75, 2: 200, 3: 666, 4: 2222, 5: 12500,
@@ -301,7 +238,7 @@ class PixelspinGame(Scene):
         if deadline_num in self.DEADLINE_COSTS:
             return self.DEADLINE_COSTS[deadline_num]
         return self.DEADLINE_COSTS[20]
-        
+
     def generate_grid(self):
         grid = []
         if self.luck >= 15:
@@ -383,7 +320,7 @@ class PixelspinGame(Scene):
             symbol = self._luck_symbol_choice()
             for c, r in self._coords_for_pattern(pattern):
                 grid[c][r] = symbol
-    
+
     def weighted_choice(self, symbols):
         total_weight = sum(get_effective_weight(sym) for sym in symbols)
         choice = random.uniform(0, total_weight)
@@ -429,7 +366,7 @@ class PixelspinGame(Scene):
         self.spins_left = total_spins
 
         self.coins -= spin_cost
-        
+
         self.phase = "spinning_phase"
         self.selected_button = 0
         self.last_wins = []
@@ -451,16 +388,16 @@ class PixelspinGame(Scene):
             self.spin_timer = 13
             self.last_wins = []
             self.total_win_anim = 0
-            self.winning_coords = [] 
-            self.winning_patterns = [] 
+            self.winning_coords = []
+            self.winning_patterns = []
             self.modifier_coords = {}
-            
+
             self.luck = 0
             self._apply_all_luck_bonuses()
             self.luck += self.next_spin_luck_bonus
             self.next_spin_luck_bonus = 0
             self._apply_event_luck_bonuses(is_last_spin)
-            
+
             # Pas random_trigger Usables / Charms toe vóór de spin
             self._apply_random_trigger_charms()
 
@@ -476,7 +413,7 @@ class PixelspinGame(Scene):
         if not hasattr(self, "pending_charm_activations"):
             self.pending_charm_activations = {}
         self.pending_charm_activations[charm_name] = (
-            self.pending_charm_activations.get(charm_name, 0) + count
+                self.pending_charm_activations.get(charm_name, 0) + count
         )
 
     def _format_charm_activation(self, charm_name, count):
@@ -693,8 +630,8 @@ class PixelspinGame(Scene):
                 affected = targets if targets and "ALL" not in targets else list(SYMBOLS.keys())
                 for sym in affected:
                     self.round_repetition_bonus_by_symbol[sym] = (
-                        self.round_repetition_bonus_by_symbol.get(sym, 0)
-                        + charm_data["repetition_temp_bonus"]
+                            self.round_repetition_bonus_by_symbol.get(sym, 0)
+                            + charm_data["repetition_temp_bonus"]
                     )
                 activated = True
                 found_any.append(f"{charm}: extra triggers deze ronde")
@@ -733,9 +670,9 @@ class PixelspinGame(Scene):
         for charm in list(self._owned_charms()):
             charm_data = self._charm_data(charm)
             if (
-                charm_data.get("category") != "event_trigger"
-                or charm_data.get("trigger") != "on_consecutive_losses"
-                or self.consecutive_misses < charm_data.get("condition_losses", 0)
+                    charm_data.get("category") != "event_trigger"
+                    or charm_data.get("trigger") != "on_consecutive_losses"
+                    or self.consecutive_misses < charm_data.get("condition_losses", 0)
             ):
                 continue
 
@@ -759,7 +696,7 @@ class PixelspinGame(Scene):
     def find_pattern_coordinates(self, sym_name, pattern_type):
         coords = []
         found_positions = set()
-        
+
         if pattern_type == "horizontal":
             for r in range(GRID_H):
                 c = 0
@@ -769,7 +706,7 @@ class PixelspinGame(Scene):
                     while temp_c < GRID_W and self.grid[temp_c][r] == sym_name:
                         length += 1
                         temp_c += 1
-                    
+
                     if length >= 3:
                         match = tuple([(c + i, r) for i in range(length)])
                         if match not in found_positions:
@@ -778,7 +715,7 @@ class PixelspinGame(Scene):
                         c = temp_c
                     else:
                         c += 1
-        
+
         elif pattern_type == "vertical":
             for c in range(GRID_W):
                 r = 0
@@ -788,7 +725,7 @@ class PixelspinGame(Scene):
                     while temp_r < GRID_H and self.grid[c][temp_r] == sym_name:
                         length += 1
                         temp_r += 1
-                    
+
                     if length >= 3:
                         match = tuple([(c, r + i) for i in range(length)])
                         if match not in found_positions:
@@ -797,46 +734,46 @@ class PixelspinGame(Scene):
                         r = temp_r
                     else:
                         r += 1
-        
+
         elif pattern_type == "diagonal":
             for c in range(GRID_W - 2):
                 for r in range(GRID_H - 2):
-                    if (self.grid[c][r] == sym_name and 
-                        self.grid[c+1][r+1] == sym_name and 
-                        self.grid[c+2][r+2] == sym_name):
-                        coords.append([(c, r), (c+1, r+1), (c+2, r+2)])
-        
+                    if (self.grid[c][r] == sym_name and
+                            self.grid[c + 1][r + 1] == sym_name and
+                            self.grid[c + 2][r + 2] == sym_name):
+                        coords.append([(c, r), (c + 1, r + 1), (c + 2, r + 2)])
+
         elif pattern_type == "bottom_row":
-            if all(self.grid[c][GRID_H-1] == sym_name for c in range(GRID_W)):
-                coords.append([(c, GRID_H-1) for c in range(GRID_W)])
-        
+            if all(self.grid[c][GRID_H - 1] == sym_name for c in range(GRID_W)):
+                coords.append([(c, GRID_H - 1) for c in range(GRID_W)])
+
         elif pattern_type == "top_row":
             if all(self.grid[c][0] == sym_name for c in range(GRID_W)):
                 coords.append([(c, 0) for c in range(GRID_W)])
-        
+
         elif pattern_type == "eye":
-            eye_coords = [(1,0), (2,0), (3,0), (1,2), (2,2), (3,2), (1,1), (3,1)]
+            eye_coords = [(1, 0), (2, 0), (3, 0), (1, 2), (2, 2), (3, 2), (1, 1), (3, 1)]
             if all(self.grid[c][r] == sym_name for c, r in eye_coords):
                 coords.append(eye_coords)
-        
+
         elif pattern_type == "zigzag":
             for c in range(GRID_W - 2):
-                if (self.grid[c][GRID_H-1] == sym_name and
-                    self.grid[c+1][GRID_H-2] == sym_name and
-                    self.grid[c+2][GRID_H-3] == sym_name):
-                    coords.append([(c, GRID_H-1), (c+1, GRID_H-2), (c+2, GRID_H-3)])
-        
+                if (self.grid[c][GRID_H - 1] == sym_name and
+                        self.grid[c + 1][GRID_H - 2] == sym_name and
+                        self.grid[c + 2][GRID_H - 3] == sym_name):
+                    coords.append([(c, GRID_H - 1), (c + 1, GRID_H - 2), (c + 2, GRID_H - 3)])
+
         elif pattern_type == "zagzag":
             for c in range(GRID_W - 2):
                 if (self.grid[c][0] == sym_name and
-                    self.grid[c+1][1] == sym_name and
-                    self.grid[c+2][2] == sym_name):
-                    coords.append([(c, 0), (c+1, 1), (c+2, 2)])
-        
+                        self.grid[c + 1][1] == sym_name and
+                        self.grid[c + 2][2] == sym_name):
+                    coords.append([(c, 0), (c + 1, 1), (c + 2, 2)])
+
         elif pattern_type == "jackpot":
             if all(self.grid[c][r] == sym_name for c in range(GRID_W) for r in range(GRID_H)):
                 coords.append([(c, r) for c in range(GRID_W) for r in range(GRID_H)])
-        
+
         return coords
 
     def check_all_patterns(self):
@@ -959,7 +896,7 @@ class PixelspinGame(Scene):
                 _symbol_value_bonus[sym_name] += SYMBOLS[sym_name]["value"]
                 self._record_charm_activation("Midas Touch")
                 found_any.append(f"Midas Touch: {sym_name} krijgt permanente bonus!")
-                
+
             for coord in match_coords:
                 if coord not in self.winning_coords:
                     self.winning_coords.append(coord)
@@ -1006,7 +943,6 @@ class PixelspinGame(Scene):
         self.last_wins = found_any
 
     def update(self, dt):
-        self.input.update()
         self._handle_input_actions()
         self.button_cooldown -= 1
         self.flash_counter += 1
@@ -1085,15 +1021,13 @@ class PixelspinGame(Scene):
         else:
             target = self._deadline_cost_for(self.deadline_number)
             if self.atm >= target:
-                reached_deadline = self.deadline_number
                 self.atm -= target
-                self._record_deadline_reached(reached_deadline)
                 self.deadline_number += 1
                 self.round_in_deadline = 1
-                
+
                 # --- START PHONE CALL MECHANIC ---
                 self._generate_phone_calls()
-                
+
                 self.consecutive_misses = 0
                 self.last_wins = []
                 self.repeatable_items_bought_this_round.clear()
@@ -1146,17 +1080,18 @@ class PixelspinGame(Scene):
     def _buy_item(self, item_name, cost, item_type):
         repeatable = item_name in REPEATABLE_SHOP_ITEMS
         already_bought_this_round = item_name in self.repeatable_items_bought_this_round
-        
+
         # Controleer maximum charms
-        if item_type == "charms" and len(self.purchased_items.get("charms", set())) >= self.max_charms and not repeatable:
+        if item_type == "charms" and len(
+                self.purchased_items.get("charms", set())) >= self.max_charms and not repeatable:
             # Tenzij het een consumable is die geen ruimte inneemt!
             item_data = SHOP_ITEMS.get(item_type, {}).get(item_name, {})
             if item_data.get("takes_space") is not False:
                 return
 
         can_buy = (
-            (repeatable and not already_bought_this_round)
-            or item_name not in self.purchased_items.get(item_type, set())
+                (repeatable and not already_bought_this_round)
+                or item_name not in self.purchased_items.get(item_type, set())
         )
 
         actual_cost = cost
@@ -1164,7 +1099,7 @@ class PixelspinGame(Scene):
             actual_cost = max(0, actual_cost - 2)
         if item_type == "charms" and getattr(self, "free_charms_active", False):
             actual_cost = 0
-            
+
         # Fidelity Card korting
         if "Fidelity Card" in self.purchased_items.get("charms", set()):
             actual_cost = max(0, actual_cost - 1)
@@ -1172,12 +1107,12 @@ class PixelspinGame(Scene):
         if self.tickets >= actual_cost and can_buy:
             self.tickets -= actual_cost
             if item_type == "charms" and self.charm_discount_active:
-                self.charm_discount_active = False # One time use
+                self.charm_discount_active = False  # One time use
             if item_type == "charms" and getattr(self, "free_charms_active", False):
                 self.free_charms_active = False
-            
+
             item_data = SHOP_ITEMS.get(item_type, {}).get(item_name, {})
-            
+
             # Check of het een consumable is die niet in inventory moet (zoals Cardboard House of Cigarettes)
             if item_data.get("takes_space") is False:
                 self._apply_item_effect(item_name, item_type)
@@ -1187,7 +1122,7 @@ class PixelspinGame(Scene):
             else:
                 self.purchased_items[item_type].add(item_name)
                 self._apply_item_effect(item_name, item_type)
-                
+
             # Verwijder item uit huidige shop lijst
             self.shop_items_for_phase = [
                 entry for entry in self.shop_items_for_phase
@@ -1197,9 +1132,9 @@ class PixelspinGame(Scene):
 
     def _apply_item_effect(self, item_name, item_type):
         item_data = SHOP_ITEMS.get(item_type, {}).get(item_name, {})
-        
+
         # --- DYNAMIC JSON HOOKS ---
-        
+
         # 1. Dynamic Weight Boosts
         if "weight_bonus" in item_data and "target_symbol" in item_data:
             targets = item_data["target_symbol"]
@@ -1207,7 +1142,7 @@ class PixelspinGame(Scene):
             for sym in targets:
                 if sym in _symbol_weight_bonus:
                     _symbol_weight_bonus[sym] += item_data["weight_bonus"]
-                    
+
         # 2. Dynamic Value Boosts
         if "value_bonus" in item_data and "target_symbol" in item_data:
             targets = item_data["target_symbol"]
@@ -1215,7 +1150,7 @@ class PixelspinGame(Scene):
             for sym in targets:
                 if sym in _symbol_value_bonus:
                     _symbol_value_bonus[sym] += item_data["value_bonus"]
-                    
+
         # 3. Consumable Max Charms Bonus
         if "max_charms_bonus" in item_data:
             self.max_charms += item_data["max_charms_bonus"]
@@ -1275,17 +1210,18 @@ class PixelspinGame(Scene):
 
         if "interest_rate_bonus" in item_data:
             self.atm_interest_rate = max(0.0, self.atm_interest_rate - item_data["interest_rate_bonus"])
-    
+
     def _apply_all_luck_bonuses(self):
         luck_items = {
             "Luck Potion": 10,
             "Golden Horseshoe": 0,
         }
-        
+
         for item_name, luck_boost in luck_items.items():
-            if item_name in self.purchased_items.get("powerups", set()) or item_name in self.purchased_items.get("charms", set()):
+            if item_name in self.purchased_items.get("powerups", set()) or item_name in self.purchased_items.get(
+                    "charms", set()):
                 self.luck += luck_boost
-        
+
         if "Golden Horseshoe" in self.purchased_items.get("charms", set()):
             other_luck = 0
             for item_name, luck_boost in luck_items.items():
@@ -1310,7 +1246,7 @@ class PixelspinGame(Scene):
 
     def back_to_game(self):
         self.current_screen = "game"
-    
+
     def charms_menu(self):
         if self.phase in ("spin_choice", "atm_phase"):
             self.current_screen = "charms_menu"
@@ -1361,7 +1297,7 @@ class PixelspinGame(Scene):
             item_count = self._get_shop_item_count()
         else:  # charms_menu
             item_count = len(self.purchased_items.get("charms", set()))
-            
+
         # Scroll niet als het infoscherm open is of de lijst leeg is
         if item_count == 0 or getattr(self, "show_info_for", None) is not None:
             self.shop_scroll_y = 0
@@ -1399,17 +1335,17 @@ class PixelspinGame(Scene):
 
         has_nuclear = "Nuclear Button" in self.purchased_items.get("charms", set())
         has_sacred_heart = "Sacred Heart" in self.purchased_items.get("charms", set())
-        
+
         activations = 2 if has_nuclear else 1
         usables_triggered = {}
 
         for charm in list(self.purchased_items.get("charms", set())):
             charm_data = SHOP_ITEMS.get("charms", {}).get(charm, {})
-            
+
             if charm_data.get("category") == "usable":
                 if charm in self.used_usables_this_round:
                     continue
-                
+
                 for _ in range(activations):
                     luck_bonus = charm_data.get("luck_bonus", 0)
                     if luck_bonus:
@@ -1426,19 +1362,19 @@ class PixelspinGame(Scene):
                     elif charm == "Number 1":
                         self.active_round_buffs.add("number_1")
                         self.round_repetition_bonus_by_symbol["Citroen"] = (
-                            self.round_repetition_bonus_by_symbol.get("Citroen", 0) + 1
+                                self.round_repetition_bonus_by_symbol.get("Citroen", 0) + 1
                         )
                     elif charm == "Number 2":
                         self.active_round_buffs.add("number_2")
                         for sym in SYMBOLS:
                             if sym != "Citroen":
                                 self.round_repetition_bonus_by_symbol[sym] = (
-                                    self.round_repetition_bonus_by_symbol.get(sym, 0) + 1
+                                        self.round_repetition_bonus_by_symbol.get(sym, 0) + 1
                                 )
-                
+
                 self._record_charm_activation(charm, activations)
                 usables_triggered[charm] = usables_triggered.get(charm, 0) + activations
-                
+
                 save_chance = self._charm_data("Sacred Heart").get("red_button_save_charge_chance", 0)
                 if has_sacred_heart and random.random() < save_chance:
                     self._record_charm_activation("Sacred Heart")
@@ -1450,11 +1386,11 @@ class PixelspinGame(Scene):
             self.last_wins.extend(self._charm_activation_messages(usables_triggered))
 
     def _handle_input_actions(self):
-        if self.input.just_pressed("ESCAPE"):
+        if self.input.just_pressed("B") or self.input.just_pressed("ESC"):
             from ui.home_menu import HomeMenu
             self.manager.set_scene(HomeMenu(self.manager))
             return
-            
+
         if self.input.just_pressed("SPACE"):
             self._trigger_usables()
 
@@ -1463,15 +1399,15 @@ class PixelspinGame(Scene):
             self._navigate_buttons(direction)
         elif self.input.just_pressed("L"):
             self._press_selected_button()
-        elif self.input.just_pressed("B"):
+        elif self.input.just_pressed("A"):
             self._handle_back_button()
 
     def _just_pressed_direction(self):
         for button, key in (
-            ("LEFT", pygame.K_LEFT),
-            ("RIGHT", pygame.K_RIGHT),
-            ("UP", pygame.K_UP),
-            ("DOWN", pygame.K_DOWN),
+                ("LEFT", pygame.K_LEFT),
+                ("RIGHT", pygame.K_RIGHT),
+                ("UP", pygame.K_UP),
+                ("DOWN", pygame.K_DOWN),
         ):
             if self.input.just_pressed(button):
                 return key
@@ -1544,12 +1480,12 @@ class PixelspinGame(Scene):
                     item_count = self._get_shop_item_count()
                 else:  # charms_menu
                     item_count = len(self.purchased_items.get("charms", set()))
-                
+
                 grid = []
                 # Rij opbouwen: [Koop/Verkoop Knop, Info Knop]
                 for i in range(item_count):
                     grid.append([i * 2, i * 2 + 1])
-                
+
                 # Onderste knoppen toevoegen (Back & Reroll)
                 bottom_row = []
                 if len(self.buttons) > item_count * 2:
@@ -1592,17 +1528,17 @@ class PixelspinGame(Scene):
             else:
                 self.back_to_game()
             self.button_cooldown = 10
-    
+
     def _sell_charm(self, charm_name):
         """Verkoop een charm en krijg 50% terug van de kosten"""
         charm_data = SHOP_ITEMS.get("charms", {}).get(charm_name, {})
         cost = charm_data.get("cost", 0)
         refund = max(1, cost // 2)  # 50% terug
-        
+
         self._remove_item_effect(charm_name, "charms")
         self.purchased_items["charms"].discard(charm_name)
         self.tickets += refund
-        
+
         # Verwijder uit shop lijst
         self.shop_items_for_phase = [
             entry for entry in self.shop_items_for_phase
@@ -1637,11 +1573,11 @@ class PixelspinGame(Scene):
         self.phase = "phone_call"
         self.current_screen = "game"
         self.selected_button = 0
-        
+
         amount_of_options = 3
         if "Dear Diary" in self.purchased_items.get("charms", set()):
             amount_of_options += 1
-            
+
         options = []
         for _ in range(amount_of_options):
             if random.random() < 0.25:
@@ -1654,7 +1590,7 @@ class PixelspinGame(Scene):
                 option["name"] = option["name"].format(symbol=symbol)
                 option["desc"] = option["desc"].format(symbol=symbol)
             options.append(option)
-                
+
         self.active_phone_options = options
 
     def _draw_phone_call_screen(self, surface):
@@ -1664,10 +1600,10 @@ class PixelspinGame(Scene):
         sf = pygame.font.SysFont("monospace", 9)
 
         title = lf.render("📞 THE PHONE IS RINGING...", True, RED)
-        surface.blit(title, (WIDTH//2 - title.get_width()//2, 10))
+        surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 10))
 
         sub = mf.render("Kies een van de volgende opties:", True, WHITE)
-        surface.blit(sub, (WIDTH//2 - sub.get_width()//2, 30))
+        surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, 30))
 
         box_w = WIDTH - 20
         box_h = 38
@@ -1676,17 +1612,17 @@ class PixelspinGame(Scene):
 
         for i, option in enumerate(self.active_phone_options):
             y_pos = start_y + i * (box_h + spacing)
-            
+
             is_evil = option in PHONE_CALLS["Evil"]
             bg_color = (80, 0, 0) if is_evil else (0, 60, 100)
             rect = pygame.Rect(10, y_pos, box_w, box_h)
             is_hover = rect.collidepoint(pygame.mouse.get_pos())
             is_selected = len(self.buttons) == self.selected_button
-            
-            btn_label = "" 
+
+            btn_label = ""
             action = (lambda o=option: self._apply_phone_call(o))
             self._draw_btn(surface, btn_label, 10, y_pos, box_w, box_h, bg_color, action)
-            
+
             if is_selected or is_hover:
                 name_color = BLACK
                 desc_color = (40, 40, 40)
@@ -1696,7 +1632,7 @@ class PixelspinGame(Scene):
 
             name_txt = mf.render(option["name"], True, name_color)
             desc_txt = sf.render(option["desc"], True, desc_color)
-            
+
             surface.blit(name_txt, (20, y_pos + 6))
             surface.blit(desc_txt, (20, y_pos + 20))
 
@@ -1717,7 +1653,7 @@ class PixelspinGame(Scene):
         repeat_count = 1
         if "Megaphone" in self.purchased_items.get("charms", set()):
             repeat_count = SHOP_ITEMS["charms"]["Megaphone"].get("phone_trigger_multiplier", 2)
-        
+
         for _ in range(repeat_count):
             # --- NORMAL CALLS ---
             if opt_type == "charm_space":
@@ -1806,23 +1742,23 @@ class PixelspinGame(Scene):
         target = self._deadline_cost_for(self.deadline_number)
 
         dl_txt = lf.render(f"DEADLINE {self.deadline_number}  —  Ronde {self.round_in_deadline}/3", True, GOLD)
-        surface.blit(dl_txt, (WIDTH//2 - dl_txt.get_width()//2, 8))
+        surface.blit(dl_txt, (WIDTH // 2 - dl_txt.get_width() // 2, 8))
 
         cost_txt = sf.render(f"Doel ATM: {target}  |  ATM: {self.atm}", True, WHITE)
-        surface.blit(cost_txt, (WIDTH//2 - cost_txt.get_width()//2, 34))
+        surface.blit(cost_txt, (WIDTH // 2 - cost_txt.get_width() // 2, 34))
 
         coins_txt = sf.render(f"Munten: {self.coins}  |  Tickets: {self.tickets}  |  Luck: {self.luck}", True, GOLD)
-        surface.blit(coins_txt, (WIDTH//2 - coins_txt.get_width()//2, 52))
+        surface.blit(coins_txt, (WIDTH // 2 - coins_txt.get_width() // 2, 52))
 
         info = sf.render("Kies hoeveel spins:", True, WHITE)
-        surface.blit(info, (WIDTH//2 - info.get_width()//2, 82))
+        surface.blit(info, (WIDTH // 2 - info.get_width() // 2, 82))
 
         cost_3 = int(target * 0.05)
         cost_7 = int(target * 0.10)
         c3 = sf.render(f"3 spins = +2 tickets (Kost: {cost_3})", True, (180, 180, 180))
-        surface.blit(c3, (WIDTH//2 - c3.get_width()//2, 100))
+        surface.blit(c3, (WIDTH // 2 - c3.get_width() // 2, 100))
         c7 = sf.render(f"7 spins = +1 ticket (Kost: {cost_7})", True, (180, 180, 180))
-        surface.blit(c7, (WIDTH//2 - c7.get_width()//2, 116))
+        surface.blit(c7, (WIDTH // 2 - c7.get_width() // 2, 116))
 
         col_3 = BLUE if self.coins >= cost_3 else DARK_GRAY
         col_7 = GREEN if self.coins >= cost_7 else DARK_GRAY
@@ -1831,12 +1767,16 @@ class PixelspinGame(Scene):
         choice_h = 36 if emergency_spin else 40
         skip_y = HEIGHT - 82 if emergency_spin else HEIGHT - 78
         skip_h = 30 if emergency_spin else 35
-        self._draw_btn(surface, "3 SPINS", WIDTH//2 - 80, choice_y, 70, choice_h, col_3, (lambda: self.choose_spins(3)))
-        self._draw_btn(surface, "7 SPINS", WIDTH//2 + 10, choice_y, 70, choice_h, col_7, (lambda: self.choose_spins(7)))
+        self._draw_btn(surface, "3 SPINS", WIDTH // 2 - 80, choice_y, 70, choice_h, col_3,
+                       (lambda: self.choose_spins(3)))
+        self._draw_btn(surface, "7 SPINS", WIDTH // 2 + 10, choice_y, 70, choice_h, col_7,
+                       (lambda: self.choose_spins(7)))
         if emergency_spin:
-            self._draw_btn(surface, "1 SPIN 0M", WIDTH//2 - 45, HEIGHT - 116, 90, 30, GOLD, (lambda: self.choose_spins(1)))
+            self._draw_btn(surface, "1 SPIN 0M", WIDTH // 2 - 45, HEIGHT - 116, 90, 30, GOLD,
+                           (lambda: self.choose_spins(1)))
         skip_btn = GREEN if self.round_in_deadline < 3 else (100, 100, 100)
-        self._draw_btn(surface, "SKIP", WIDTH//2 - 25, skip_y, 50, skip_h, skip_btn, self._skip_spin_phase if self.round_in_deadline < 3 else (lambda: None))
+        self._draw_btn(surface, "SKIP", WIDTH // 2 - 25, skip_y, 50, skip_h, skip_btn,
+                       self._skip_spin_phase if self.round_in_deadline < 3 else (lambda: None))
         self._draw_btn(surface, "WAARDES", 5, HEIGHT - 45, 70, 35, (0, 110, 120), self.values_menu)
         self._draw_btn(surface, "CHARMS", WIDTH - 110, HEIGHT - 45, 60, 35, (180, 100, 200), self.charms_menu)
         self._draw_btn(surface, "SHOP", WIDTH - 55, HEIGHT - 45, 50, 35, GOLD, self.shop)
@@ -1865,9 +1805,9 @@ class PixelspinGame(Scene):
         for c in range(GRID_W):
             for r in range(GRID_H):
                 self._draw_cell(surface, self.grid[c][r],
-                               start_x + c * (cell_w + grid_margin),
-                               start_y + r * (cell_h + grid_margin),
-                               cell_w, cell_h, c, r)
+                                start_x + c * (cell_w + grid_margin),
+                                start_y + r * (cell_h + grid_margin),
+                                cell_w, cell_h, c, r)
 
         if self.winning_patterns:
             self._draw_winning_lines(surface, start_x, start_y, cell_w, cell_h, grid_margin)
@@ -1875,7 +1815,7 @@ class PixelspinGame(Scene):
         btn_y = HEIGHT - 45
         round_done = self.spins_left == 0 and not self.spinning
         if round_done:
-            self._draw_btn(surface, "NAAR ATM", WIDTH//2 - 45, btn_y, 90, 40, BLUE, self._end_round)
+            self._draw_btn(surface, "NAAR ATM", WIDTH // 2 - 45, btn_y, 90, 40, BLUE, self._end_round)
         else:
             spin_color = GREEN if (self.spins_left > 0 and not self.spinning) else DARK_GRAY
             red_ready = any(
@@ -1884,19 +1824,19 @@ class PixelspinGame(Scene):
                 for charm in self._owned_charms()
             )
             red_color = RED if red_ready else DARK_GRAY
-            self._draw_btn(surface, "RED", WIDTH//2 - 58, btn_y, 50, 40, red_color, self._trigger_usables)
-            self._draw_btn(surface, "SPIN", WIDTH//2 + 8, btn_y, 50, 40, spin_color, self.spin)
+            self._draw_btn(surface, "RED", WIDTH // 2 - 58, btn_y, 50, 40, red_color, self._trigger_usables)
+            self._draw_btn(surface, "SPIN", WIDTH // 2 + 8, btn_y, 50, 40, spin_color, self.spin)
 
         if self.total_win_anim > 0:
             win_txt = sf.render(f"WINST: +{self.total_win_anim}", True, GREEN)
-            surface.blit(win_txt, (WIDTH//2 - win_txt.get_width()//2, btn_y - 36))
+            surface.blit(win_txt, (WIDTH // 2 - win_txt.get_width() // 2, btn_y - 36))
             for i, log in enumerate(self.last_wins[-2:]):
                 lt = pygame.font.SysFont("monospace", 11, bold=True).render(log[:28], True, WHITE)
                 surface.blit(lt, (5, btn_y - 36 + 16 + i * 14))
 
         if round_done:
             done_txt = sf.render("Laatste spin klaar", True, GOLD)
-            surface.blit(done_txt, (WIDTH//2 - done_txt.get_width()//2, btn_y - 20))
+            surface.blit(done_txt, (WIDTH // 2 - done_txt.get_width() // 2, btn_y - 20))
 
     # ── ATM PHASE ────────────────────────────────────────────────────────────
     def _draw_atm_phase_screen(self, surface):
@@ -1904,13 +1844,13 @@ class PixelspinGame(Scene):
         target = self._deadline_cost_for(self.deadline_number)
         chunk = max(1, int(target * 0.20))
         is_final = self._is_final_round()
-        sf  = pygame.font.SysFont("monospace", 13, bold=True)
-        mf  = pygame.font.SysFont("monospace", 16, bold=True)
+        sf = pygame.font.SysFont("monospace", 13, bold=True)
+        mf = pygame.font.SysFont("monospace", 16, bold=True)
 
         header_color = RED if is_final else GOLD
         header_txt = f"DEADLINE {self.deadline_number}  —  Ronde {self.round_in_deadline}/3"
         h = mf.render(header_txt, True, header_color)
-        surface.blit(h, (WIDTH//2 - h.get_width()//2, 6))
+        surface.blit(h, (WIDTH // 2 - h.get_width() // 2, 6))
 
         tickets_info = ""
         if not is_final:
@@ -1920,12 +1860,12 @@ class PixelspinGame(Scene):
                 tickets_info = "SKIP → +4 tickets"
             else:
                 tickets_info = "SKIP → +0 tickets"
-        
+
         sub_text = "Stort in ATM voor de deadline" if not is_final else "Laatste ronde — betaal nu!"
         if tickets_info:
             sub_text += f"  |  {tickets_info}"
         sub = sf.render(sub_text, True, WHITE)
-        surface.blit(sub, (WIDTH//2 - sub.get_width()//2, 26))
+        surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, 26))
 
         bar_x, bar_y, bar_w, bar_h = 10, 46, WIDTH - 20, 18
         pygame.draw.rect(surface, (40, 40, 40), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
@@ -1934,13 +1874,13 @@ class PixelspinGame(Scene):
         if fill > 0:
             pygame.draw.rect(surface, fill_color, (bar_x, bar_y, int(bar_w * fill), bar_h), border_radius=4)
         pygame.draw.rect(surface, WHITE, (bar_x, bar_y, bar_w, bar_h), 1, border_radius=4)
-        pct_txt = sf.render(f"{int(fill*100)}%  {self.atm}/{target}", True, WHITE)
-        surface.blit(pct_txt, (bar_x + bar_w//2 - pct_txt.get_width()//2, bar_y + 2))
+        pct_txt = sf.render(f"{int(fill * 100)}%  {self.atm}/{target}", True, WHITE)
+        surface.blit(pct_txt, (bar_x + bar_w // 2 - pct_txt.get_width() // 2, bar_y + 2))
 
         box_y = 74
         boxes = [
-            ("IN HAND",   str(self.coins), GOLD),
-            ("IN ATM",    str(self.atm),   BLUE),
+            ("IN HAND", str(self.coins), GOLD),
+            ("IN ATM", str(self.atm), BLUE),
             ("NOG NODIG", str(max(0, target - self.atm)), RED if self.atm < target else GREEN),
         ]
         box_w = (WIDTH - 20) // 3
@@ -1948,51 +1888,54 @@ class PixelspinGame(Scene):
             bx = 10 + i * (box_w + 0)
             pygame.draw.rect(surface, (25, 25, 35), (bx, box_y, box_w - 4, 44), border_radius=5)
             pygame.draw.rect(surface, col, (bx, box_y, box_w - 4, 44), 1, border_radius=5)
-            lbl = pygame.font.SysFont("monospace", 10, bold=True).render(label, True, (160,160,160))
-            surface.blit(lbl, (bx + (box_w-4)//2 - lbl.get_width()//2, box_y + 4))
+            lbl = pygame.font.SysFont("monospace", 10, bold=True).render(label, True, (160, 160, 160))
+            surface.blit(lbl, (bx + (box_w - 4) // 2 - lbl.get_width() // 2, box_y + 4))
             vt = mf.render(val, True, col)
-            surface.blit(vt, (bx + (box_w-4)//2 - vt.get_width()//2, box_y + 20))
-        
+            surface.blit(vt, (bx + (box_w - 4) // 2 - vt.get_width() // 2, box_y + 20))
+
         tickets_txt = sf.render(f"TICKETS: {self.tickets}", True, (255, 200, 100))
         surface.blit(tickets_txt, (10, 120))
 
         btn_y = 130
         chunk_label = f"+{chunk} (20%)"
-        self._draw_btn(surface, chunk_label, 10,        btn_y, (WIDTH-24)//2, 40, GREEN, self._atm_deposit_chunk)
-        self._draw_btn(surface, "ALLES",    10 + (WIDTH-24)//2 + 4, btn_y, (WIDTH-24)//2, 40, (0,140,80), self._atm_deposit_all)
+        self._draw_btn(surface, chunk_label, 10, btn_y, (WIDTH - 24) // 2, 40, GREEN, self._atm_deposit_chunk)
+        self._draw_btn(surface, "ALLES", 10 + (WIDTH - 24) // 2 + 4, btn_y, (WIDTH - 24) // 2, 40, (0, 140, 80),
+                       self._atm_deposit_all)
 
         if is_final:
             can_pay = self.atm >= target
             pay_col = GREEN if can_pay else (70, 70, 70)
-            self._draw_btn(surface, "BETAAL DEADLINE", WIDTH//2 - 100, HEIGHT - 95, 200, 40, pay_col, self._try_next_deadline)
+            self._draw_btn(surface, "BETAAL DEADLINE", WIDTH // 2 - 100, HEIGHT - 95, 200, 40, pay_col,
+                           self._try_next_deadline)
         else:
             can_skip = self.atm >= target
             if can_skip:
                 btn_w = 96
                 gap = 8
-                left_x = WIDTH//2 - btn_w - gap//2
-                right_x = WIDTH//2 + gap//2
+                left_x = WIDTH // 2 - btn_w - gap // 2
+                right_x = WIDTH // 2 + gap // 2
                 self._draw_btn(surface, "SPIN", left_x, HEIGHT - 95, btn_w, 40, BLUE, self._continue_to_spin_choice)
                 self._draw_btn(surface, "SKIP", right_x, HEIGHT - 95, btn_w, 40, (180, 120, 0), self._skip_spin_phase)
                 skip_hint = sf.render("Doel gehaald — sla ronde over!", True, GOLD)
-                surface.blit(skip_hint, (WIDTH//2 - skip_hint.get_width()//2, HEIGHT - 130))
+                surface.blit(skip_hint, (WIDTH // 2 - skip_hint.get_width() // 2, HEIGHT - 130))
             else:
-                self._draw_btn(surface, "VOLGENDE RONDE >", WIDTH//2 - 100, HEIGHT - 95, 200, 40, BLUE, self._continue_to_spin_choice)
+                self._draw_btn(surface, "VOLGENDE RONDE >", WIDTH // 2 - 100, HEIGHT - 95, 200, 40, BLUE,
+                               self._continue_to_spin_choice)
 
-        self._draw_btn(surface, "WAARDE", 5,         HEIGHT - 46, 64, 36, (0, 110, 120), self.values_menu)
-        self._draw_btn(surface, "CHARMS", 72,        HEIGHT - 46, 64, 36, (180, 100, 200), self.charms_menu)
-        self._draw_btn(surface, "SHOP",  WIDTH - 62, HEIGHT - 46, 56, 36, (140,100,0),  self.shop)
+        self._draw_btn(surface, "WAARDE", 5, HEIGHT - 46, 64, 36, (0, 110, 120), self.values_menu)
+        self._draw_btn(surface, "CHARMS", 72, HEIGHT - 46, 64, 36, (180, 100, 200), self.charms_menu)
+        self._draw_btn(surface, "SHOP", WIDTH - 62, HEIGHT - 46, 56, 36, (140, 100, 0), self.shop)
 
     # ── ATM SCREEN ──────────────────────────────────────────────────────────
     def _draw_atm_screen(self, surface):
         surface.fill(BLACK)
         target = self._deadline_cost_for(self.deadline_number)
         chunk = max(1, int(target * 0.20))
-        sf  = pygame.font.SysFont("monospace", 13, bold=True)
-        mf  = pygame.font.SysFont("monospace", 16, bold=True)
+        sf = pygame.font.SysFont("monospace", 13, bold=True)
+        mf = pygame.font.SysFont("monospace", 16, bold=True)
 
         title = mf.render("ATM", True, BLUE)
-        surface.blit(title, (WIDTH//2 - title.get_width()//2, 8))
+        surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 8))
 
         bar_x, bar_y, bar_w, bar_h = 10, 30, WIDTH - 20, 16
         pygame.draw.rect(surface, (40, 40, 40), (bar_x, bar_y, bar_w, bar_h), border_radius=4)
@@ -2002,26 +1945,27 @@ class PixelspinGame(Scene):
             pygame.draw.rect(surface, fill_color, (bar_x, bar_y, int(bar_w * fill), bar_h), border_radius=4)
         pygame.draw.rect(surface, WHITE, (bar_x, bar_y, bar_w, bar_h), 1, border_radius=4)
         pt = sf.render(f"{self.atm}/{target}", True, WHITE)
-        surface.blit(pt, (bar_x + bar_w//2 - pt.get_width()//2, bar_y + 1))
+        surface.blit(pt, (bar_x + bar_w // 2 - pt.get_width() // 2, bar_y + 1))
 
         rows = [
-            ("IN HAND",   self.coins,  GOLD),
-            ("IN ATM",    self.atm,    BLUE),
-            ("DOEL",      target,      RED if self.atm < target else GREEN),
-            ("RENTE",     int(self.atm * self.atm_interest_rate), WHITE),
+            ("IN HAND", self.coins, GOLD),
+            ("IN ATM", self.atm, BLUE),
+            ("DOEL", target, RED if self.atm < target else GREEN),
+            ("RENTE", int(self.atm * self.atm_interest_rate), WHITE),
         ]
         for i, (label, val, col) in enumerate(rows):
             row_y = 56 + i * 26
-            lbl = sf.render(label, True, (160,160,160))
+            lbl = sf.render(label, True, (160, 160, 160))
             surface.blit(lbl, (14, row_y))
             vt = sf.render(str(val), True, col)
             surface.blit(vt, (WIDTH - 14 - vt.get_width(), row_y))
-            pygame.draw.line(surface, (40,40,40), (14, row_y+18), (WIDTH-14, row_y+18))
+            pygame.draw.line(surface, (40, 40, 40), (14, row_y + 18), (WIDTH - 14, row_y + 18))
 
         chunk_label = f"+{chunk} (20%)"
-        self._draw_btn(surface, chunk_label, 10,        162, (WIDTH-24)//2, 32, GREEN, self._atm_deposit_chunk)
-        self._draw_btn(surface, "ALLES",    10+(WIDTH-24)//2+4, 162, (WIDTH-24)//2, 32, (0,140,80), self._atm_deposit_all)
-        self._draw_btn(surface, "BACK", WIDTH//2 - 28, HEIGHT - 46, 56, 36, WHITE, self.back_to_game)
+        self._draw_btn(surface, chunk_label, 10, 162, (WIDTH - 24) // 2, 32, GREEN, self._atm_deposit_chunk)
+        self._draw_btn(surface, "ALLES", 10 + (WIDTH - 24) // 2 + 4, 162, (WIDTH - 24) // 2, 32, (0, 140, 80),
+                       self._atm_deposit_all)
+        self._draw_btn(surface, "BACK", WIDTH // 2 - 28, HEIGHT - 46, 56, 36, WHITE, self.back_to_game)
 
     # ── CHARMS INVENTORY SCREEN ───────────────────────────────────────────────
     # --- VALUES SCREEN ---
@@ -2074,7 +2018,7 @@ class PixelspinGame(Scene):
         self._sync_shop_scroll()
 
         title = pygame.font.SysFont("monospace", 18, bold=True).render("GEKOCHTE CHARMS", True, GOLD)
-        surface.blit(title, (WIDTH//2 - title.get_width()//2, 5))
+        surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 5))
 
         stats_txt = small_font.render(f"Tickets: {self.tickets}", True, GOLD)
         surface.blit(stats_txt, (5, 25))
@@ -2098,11 +2042,11 @@ class PixelspinGame(Scene):
             charm_data = SHOP_ITEMS.get("charms", {}).get(charm_name, {})
             cost = charm_data.get("cost", 0)
             refund = max(1, cost // 2)  # 50% terug voor verkoop
-            
+
             label = f"{charm_name[:12]} (Refund: +{refund}T)"
-            
+
             _name = charm_name
-            
+
             # Knoppen afmetingen
             sell_btn_w = WIDTH - 45
             info_btn_w = 30
@@ -2110,21 +2054,22 @@ class PixelspinGame(Scene):
             # Verkoop knop
             sell_action = (lambda n=_name: lambda: self._sell_charm(n))
             self._draw_btn(surface, label, 5, y_offset, sell_btn_w, 28, (200, 80, 80), sell_action, clip_rect=list_clip)
-            
+
             # Info knop
             info_action = (lambda n=_name, d=charm_data: self._open_info(n, d))
-            self._draw_btn(surface, "?", 5 + sell_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action, clip_rect=list_clip)
-            
+            self._draw_btn(surface, "?", 5 + sell_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action,
+                           clip_rect=list_clip)
+
             y_offset += 32
             item_count += 1
-        
+
         if item_count == 0:
             empty_txt = small_font.render("Geen charms gekocht", True, (100, 100, 100))
-            surface.blit(empty_txt, (WIDTH//2 - empty_txt.get_width()//2, list_top + 50))
-            
+            surface.blit(empty_txt, (WIDTH // 2 - empty_txt.get_width() // 2, list_top + 50))
+
         surface.set_clip(old_clip)
 
-        self._draw_btn(surface, "BACK", WIDTH//2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
+        self._draw_btn(surface, "BACK", WIDTH // 2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
 
     # ── SHOP SCREEN ──────────────────────────────────────────────────────────
     def _draw_shop_screen(self, surface):
@@ -2137,7 +2082,7 @@ class PixelspinGame(Scene):
         self._sync_shop_scroll()
 
         title = pygame.font.SysFont("monospace", 18, bold=True).render("SHOP", True, GOLD)
-        surface.blit(title, (WIDTH//2 - title.get_width()//2, 5))
+        surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 5))
 
         stats_txt = small_font.render(f"T: {self.tickets} | M: {self.coins} | R: {self.free_restock_count}", True, GOLD)
         surface.blit(stats_txt, (5, 25))
@@ -2156,11 +2101,11 @@ class PixelspinGame(Scene):
 
         for category, item_name, item_data in self.shop_items_for_phase:
             purchased = (
-                item_name in self.purchased_items.get(category, set())
-                and item_name not in REPEATABLE_SHOP_ITEMS
+                    item_name in self.purchased_items.get(category, set())
+                    and item_name not in REPEATABLE_SHOP_ITEMS
             )
             cost = item_data.get("cost", 0)
-            
+
             actual_cost = cost
             if category == "charms" and self.charm_discount_active:
                 actual_cost = max(0, actual_cost - 2)
@@ -2172,9 +2117,9 @@ class PixelspinGame(Scene):
             status = "✓" if purchased else f"{actual_cost}T"
             label = f"{item_name[:12]} ({status})"
             btn_color = GREEN if purchased else (60, 60, 60)
-            
+
             _name, _cost, _cat = item_name, cost, category
-            
+
             # Knoppen afmetingen
             buy_btn_w = WIDTH - 45
             info_btn_w = 30
@@ -2182,21 +2127,22 @@ class PixelspinGame(Scene):
             # Koop knop
             buy_action = (lambda n, c, t: lambda: self._buy_item(n, c, t))(_name, _cost, _cat)
             self._draw_btn(surface, label, 5, y_offset, buy_btn_w, 28, btn_color, buy_action, clip_rect=list_clip)
-            
+
             # Info knop
             info_action = (lambda n=_name, d=item_data: self._open_info(n, d))
-            self._draw_btn(surface, "?", 5 + buy_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action, clip_rect=list_clip)
-            
+            self._draw_btn(surface, "?", 5 + buy_btn_w + 5, y_offset, info_btn_w, 28, BLUE, info_action,
+                           clip_rect=list_clip)
+
             y_offset += 32
             item_count += 1
-            
+
         surface.set_clip(old_clip)
 
-        self._draw_btn(surface, "BACK", WIDTH//2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
-        
+        self._draw_btn(surface, "BACK", WIDTH // 2 - 70, HEIGHT - 45, 50, 40, BLUE, self.back_to_game)
+
         refresh_label = "REROLL (FREE)" if self.free_restock_count > 0 else f"REROLL ({self.shop_refresh_cost}M)"
         refresh_color = GOLD if self.free_restock_count > 0 or self.coins >= self.shop_refresh_cost else DARK_GRAY
-        self._draw_btn(surface, refresh_label, WIDTH//2 - 10, HEIGHT - 45, 90, 40, refresh_color, self._refresh_shop)
+        self._draw_btn(surface, refresh_label, WIDTH // 2 - 10, HEIGHT - 45, 90, 40, refresh_color, self._refresh_shop)
 
     # --- INFO SCHERM METHODES ---
     def _open_info(self, name, data):
@@ -2224,7 +2170,7 @@ class PixelspinGame(Scene):
                 current_line = [word]
         if current_line:
             lines.append(' '.join(current_line))
-        
+
         y = rect.y
         for line in lines:
             surface.blit(font.render(line, True, color), (rect.x, y))
@@ -2234,18 +2180,18 @@ class PixelspinGame(Scene):
         surface.fill(BLACK)
         mf = pygame.font.SysFont("monospace", 16, bold=True)
         sf = pygame.font.SysFont("monospace", 12)
-        
+
         # Titel (Naam van Charm)
         title = mf.render(self.show_info_for["name"], True, GOLD)
         surface.blit(title, (WIDTH // 2 - title.get_width() // 2, 30))
-        
+
         # Subtitel / Decoratie lijn
         pygame.draw.line(surface, DARK_GRAY, (20, 55), (WIDTH - 20, 55), 2)
-        
+
         # Text (De Effect beschrijving - Word Wrapped)
         text_rect = pygame.Rect(20, 70, WIDTH - 40, HEIGHT - 140)
         self._draw_text_wrapped(surface, self.show_info_for["desc"], sf, WHITE, text_rect)
-        
+
         # Terug knop
         self._draw_btn(surface, "TERUG", WIDTH // 2 - 40, HEIGHT - 50, 80, 36, RED, self._close_info)
 
@@ -2256,29 +2202,22 @@ class PixelspinGame(Scene):
         sf = pygame.font.SysFont("monospace", 14, bold=True)
 
         go = lf.render("GAME OVER", True, RED)
-        surface.blit(go, (WIDTH//2 - go.get_width()//2, HEIGHT//2 - 60))
+        surface.blit(go, (WIDTH // 2 - go.get_width() // 2, HEIGHT // 2 - 60))
 
         for i, msg in enumerate(self.last_wins):
             t = sf.render(msg, True, WHITE)
-            surface.blit(t, (WIDTH//2 - t.get_width()//2, HEIGHT//2 - 20 + i * 22))
+            surface.blit(t, (WIDTH // 2 - t.get_width() // 2, HEIGHT // 2 - 20 + i * 22))
 
-        reached = sf.render(f"Deadline gehaald: {self.deadlines_reached}", True, GOLD)
-        surface.blit(reached, (WIDTH//2 - reached.get_width()//2, HEIGHT//2 + 35))
-
-        best_label = "NIEUWE BEST!" if self.new_highscore else "Beste deadline"
-        best = sf.render(f"{best_label}: {self.highscore}", True, GREEN)
-        surface.blit(best, (WIDTH//2 - best.get_width()//2, HEIGHT//2 + 57))
-
-        self._draw_btn(surface, "OPNIEUW", WIDTH//2 - 40, HEIGHT - 60, 80, 40, GREEN, self.reset_game)
+        self._draw_btn(surface, "OPNIEUW", WIDTH // 2 - 40, HEIGHT - 60, 80, 40, GREEN, self.reset_game)
 
     def _draw_cell(self, surface, name, x, y, w, h, c, r):
         color = SYMBOLS[name]["color"]
-        icon  = SYMBOLS[name].get("icon", name[:2].upper())
-        
+        icon = SYMBOLS[name].get("icon", name[:2].upper())
+
         is_winning = (c, r) in self.winning_coords
         cell_modifiers = getattr(self, "modifier_coords", {}).get((c, r), set())
         modifier_color = self._modifier_display_color(cell_modifiers)
-        
+
         if is_winning and (self.flash_counter // 5) % 2 == 0:
             flash_fill = (100, 85, 20) if "golden" in cell_modifiers else (100, 100, 100)
             pygame.draw.rect(surface, flash_fill, (x, y, w, h), border_radius=3)
@@ -2286,14 +2225,14 @@ class PixelspinGame(Scene):
         else:
             pygame.draw.rect(surface, DARK_GRAY, (x, y, w, h), border_radius=3)
             pygame.draw.rect(surface, modifier_color if cell_modifiers else color, (x, y, w, h), 1, border_radius=3)
-        
+
         cell_font = pygame.font.SysFont("monospace", max(8, w // 6), bold=True)
         try:
             emoji_font = pygame.font.SysFont("segoeuiemoji", max(10, w // 4))
             txt = emoji_font.render(icon, True, color)
         except Exception:
             txt = cell_font.render(icon, True, color)
-        surface.blit(txt, (x + (w - txt.get_width())//2, y + (h - txt.get_height())//2))
+        surface.blit(txt, (x + (w - txt.get_width()) // 2, y + (h - txt.get_height()) // 2))
 
         if cell_modifiers:
             label = self._modifier_display_label(cell_modifiers)
@@ -2314,23 +2253,23 @@ class PixelspinGame(Scene):
             if modifier in modifiers:
                 return MODIFIER_LABELS[modifier]
         return ""
-    
+
     def _draw_winning_lines(self, surface, start_x, start_y, cell_w, cell_h, grid_margin):
         for pattern in self.winning_patterns:
             coords = pattern["coords"]
             if len(coords) < 2:
                 continue
             line_color = self._modifier_display_color(pattern.get("modifiers", []))
-            
+
             centers = []
             for c, r in coords:
                 center_x = start_x + c * (cell_w + grid_margin) + cell_w // 2
                 center_y = start_y + r * (cell_h + grid_margin) + cell_h // 2
                 centers.append((center_x, center_y))
-            
+
             for i in range(len(centers) - 1):
-                pygame.draw.line(surface, line_color, centers[i], centers[i+1], 3)
-    
+                pygame.draw.line(surface, line_color, centers[i], centers[i + 1], 3)
+
     def _draw_btn(self, surface, text, x, y, w, h, color, action, clip_rect=None):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()

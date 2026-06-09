@@ -5,12 +5,15 @@ from datetime import datetime
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 from config import styles
+from ui.vierkantjes import vierkantjes
+from ui.status import draw_time_and_battery
 
 
 class ChangePassword(Scene):
     def __init__(self, manager, current_user, parent_scene):
         super().__init__(manager)
         self.styles = styles
+        self.sq = vierkantjes
         self.current_user = current_user
         self.parent_scene = parent_scene
 
@@ -47,6 +50,24 @@ class ChangePassword(Scene):
         self.name_font = self.styles.create_font(self.styles.FONT_LOCK_NAME_SIZE)
         self.input_font = self.styles.create_font(self.styles.FONT_LOCK_INPUT_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_LOCK_TIME_SIZE)
+
+    def draw_gradient(self, surface):
+        for y in range(BASE_HEIGHT):
+            ratio = y / BASE_HEIGHT
+            r = int(self.styles.BG_TOP[0] * (1 - ratio) + self.styles.BG_BOTTOM[0] * ratio)
+            g = int(self.styles.BG_TOP[1] * (1 - ratio) + self.styles.BG_BOTTOM[1] * ratio)
+            b = int(self.styles.BG_TOP[2] * (1 - ratio) + self.styles.BG_BOTTOM[2] * ratio)
+            pygame.draw.line(surface, (r, g, b), (0, y), (BASE_WIDTH, y))
+
+    def draw_card(self, surface, rect: pygame.Rect, text: str, is_selected: bool):
+        pygame.draw.rect(surface, (0, 0, 0, 40), rect.move(3, 3), border_radius=12)
+        color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
+        pygame.draw.rect(surface, color, rect, border_radius=12)
+        if is_selected:
+            pygame.draw.rect(surface, self.styles.TEXT_COLOR, rect, 2, border_radius=12)
+        opt_font = self.styles.create_font(self.styles.FONT_SETTINGS_MENU_SIZE, bold=is_selected)
+        lbl = opt_font.render(text, True, self.styles.TEXT_SET)
+        surface.blit(lbl, lbl.get_rect(center=rect.center))
 
     def setup_menu(self):
         """Setup menu options based on whether user has a password"""
@@ -236,7 +257,8 @@ class ChangePassword(Scene):
         self.manager.set_scene(self.parent_scene)
 
     def draw(self, surface):
-        surface.fill(self.styles.BACKGROUND)
+        self.draw_gradient(surface)
+        self.sq.vierkantjes(self)
         self.draw_top(surface)
 
         shake_x = 0
@@ -253,22 +275,19 @@ class ChangePassword(Scene):
             self.draw_confirm_password_screen(surface, shake_x)
 
     def draw_top(self, surface):
-        title = self.title_font.render("WinMan", True, self.styles.TEXT_SET)
+        title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         surface.blit(title, (15, 15))
-
-        now = datetime.now().strftime("%H:%M")
-        t = self.time_font.render(now, True, self.styles.TEXT_SET)
-        surface.blit(t, t.get_rect(topright=(BASE_WIDTH - 15, 15)))
+        draw_time_and_battery(surface, self.time_font, self.styles.TEXT_COLOR, y=15, margin_right=15)
 
     def draw_menu(self, surface):
         """Draw menu for password management"""
         cx = BASE_WIDTH // 2
         
-        title = self.name_font.render("WACHTWOORD BEHEREN", True, self.styles.TEXT_SET)
+        title = self.name_font.render("WACHTWOORD BEHEREN", True, self.styles.TEXT_COLOR)
         # Make title scroll with the menu
         surface.blit(title, title.get_rect(center=(cx, 50 - self.scroll_y)))
         
-        card_width = 200
+        card_width = 260
         
         # Add more top padding so buttons start lower
         start_y = 120 - self.scroll_y
@@ -281,25 +300,15 @@ class ChangePassword(Scene):
             
             # Only draw if visible
             if -self.card_height < y < BASE_HEIGHT:
-                # Highlight selected option
-                if i == self.menu_selected:
-                    pygame.draw.rect(surface, (0, 120, 215), rect, 3, border_radius=6)
-                
-                # Draw background
-                pygame.draw.rect(surface, self.styles.CARD_COLOR, rect, border_radius=6)
-                
-                # Draw text
-                opt_font = self.styles.create_font(20, bold=(i == self.menu_selected))
-                lbl = opt_font.render(option, True, self.styles.TEXT_SET)
-                surface.blit(lbl, lbl.get_rect(center=rect.center))
+                self.draw_card(surface, rect, option, i == self.menu_selected)
 
     def draw_verify_screen(self, surface, shake_x):
         cx = BASE_WIDTH // 2 + shake_x
 
         if self.action_type == "remove":
-            label = self.name_font.render("VOER PINCODE IN OM TE VERWIJDEREN", True, self.styles.TEXT_SET)
+            label = self.name_font.render("VOER PINCODE IN OM TE VERWIJDEREN", True, self.styles.TEXT_COLOR)
         else:
-            label = self.name_font.render("VOER HUDIG PINCODE IN", True, self.styles.TEXT_SET)
+            label = self.name_font.render("VOER HUDIG PINCODE IN", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         # Draw user color circle
@@ -318,9 +327,9 @@ class ChangePassword(Scene):
         cx = BASE_WIDTH // 2 + shake_x
 
         if self.action_type == "set":
-            label = self.name_font.render("VOER PINCODE IN", True, self.styles.TEXT_SET)
+            label = self.name_font.render("VOER PINCODE IN", True, self.styles.TEXT_COLOR)
         else:
-            label = self.name_font.render("VOER NIEUWE PINCODE IN", True, self.styles.TEXT_SET)
+            label = self.name_font.render("VOER NIEUWE PINCODE IN", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         self.draw_dots(surface, self.new_password, cx)
@@ -328,7 +337,7 @@ class ChangePassword(Scene):
     def draw_confirm_password_screen(self, surface, shake_x):
         cx = BASE_WIDTH // 2 + shake_x
 
-        label = self.name_font.render("BEVESTIG PINCODE", True, self.styles.TEXT_SET)
+        label = self.name_font.render("BEVESTIG PINCODE", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         self.draw_dots(surface, self.confirm_password, cx)

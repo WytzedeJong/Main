@@ -9,9 +9,6 @@ import json
 from ui.lockscreen import LockScreen
 from core.input_manager import InputHandler
 
-def game_name():
-   return f"Pengu Slider", AdventureGame
-
 pygame.init()
 
 FPS = 60
@@ -24,7 +21,6 @@ MAX_SPEED = 40  # Reduced from 60 for more manageable gameplay
 FRICTION = 0.96  # Increased from 0.98 for better control
 ACCELERATION = 5  # Slightly reduced from 6
 MAX_PLAYERS = 50  # Support many players
-
 
 class GameState(Enum):
     START_SCREEN = 0
@@ -202,7 +198,7 @@ class Player:
 class AdventureGame(Scene):
     def __init__(self, manager, num_players=4):
         super().__init__(manager)
-        self.input = InputHandler()
+        self.input = self.manager.input_handler
         
         # Use base surface dimensions for scaling consistency
         if num_players is None:
@@ -470,7 +466,7 @@ class AdventureGame(Scene):
         
         # Instructions text (keyboard only)
         font_small = pygame.font.Font(None, 28)
-        instructions = font_small.render("Press B to play again", True, (200, 230, 255))
+        instructions = font_small.render("Press L to play again", True, (200, 230, 255))
         instructions_rect = instructions.get_rect(center=(self.window_width // 2, overlay_y + 170))
         self.screen.blit(instructions, instructions_rect)
     
@@ -498,7 +494,7 @@ class AdventureGame(Scene):
         self.screen.blit(title, title_rect)
         
         # Instructions text
-        instructions = font_medium.render("Press B to continue", True, (200, 230, 255))
+        instructions = font_medium.render("Press L to continue", True, (200, 230, 255))
         instructions_rect = instructions.get_rect(center=(self.window_width // 2, self.window_height // 2 + 100))
         self.screen.blit(instructions, instructions_rect)
     
@@ -670,7 +666,6 @@ class AdventureGame(Scene):
     
     def update(self, dt):
         """Update game state"""
-        self.input.update()
         self._handle_input_actions()
 
         if self.state == GameState.MOVING:
@@ -753,7 +748,7 @@ class AdventureGame(Scene):
         self.wave_offset += 0.02
 
     def _handle_input_actions(self):
-        if self.input.just_pressed("ESCAPE") and self.state != GameState.WINNER_SCREEN:
+        if (self.input.just_pressed("B") or self.input.just_pressed("ESC")) and self.state != GameState.WINNER_SCREEN:
             from ui.home_menu import HomeMenu
             self.manager.set_scene(HomeMenu(self.manager))
             return
@@ -763,19 +758,19 @@ class AdventureGame(Scene):
                 self.selected_players = max(2, self.selected_players - 1)
             elif self.input.just_pressed("RIGHT"):
                 self.selected_players = min(MAX_PLAYERS, self.selected_players + 1)
-            elif self.input.just_pressed("B"):
+            elif self.input.just_pressed("L"):
                 self.start_game()
             return
 
         if self.state == GameState.WAITING_FOR_INPUT:
             human_player = next((p for p in self.get_alive_players() if p.is_human), None)
-            if human_player and self.input.just_pressed("B"):
+            if human_player and self.input.just_pressed("L"):
                 human_player.scheduled_force = self.current_force
                 human_player.scheduled_direction = self.direction_angle
             return
 
         if self.state == GameState.WINNER_SCREEN:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self.state = GameState.START_SCREEN
     
     def handle_events(self, event):
@@ -876,7 +871,7 @@ class AdventureGame(Scene):
                     force_pct = int(self.current_force * 100)
                     angle_txt = int(self.direction_angle)
                     instruction = small_font.render(
-                        f"LEFT/RIGHT to rotate ({angle_txt} deg) | UP/DOWN for power ({force_pct}%) | B to push", 
+                        f"LEFT/RIGHT to rotate ({angle_txt} deg) | UP/DOWN for power ({force_pct}%) | L to push", 
                         True, (255, 255, 255)
                     )
                     text_rect = instruction.get_rect()

@@ -5,9 +5,13 @@ class SceneManager:
         self.scene = None
         self.current_user = None
         self.styles = styles
+        self.input_block_frames = 0
+        self.game_menu_selected = 0
 
     def set_scene(self, scene):
         self.scene = scene
+        # Ignore L/B confirm/back briefly so the same press doesn't hit the new scene
+        self.input_block_frames = 2
 
     def handle_events(self, event):
         if self.scene:

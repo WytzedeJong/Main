@@ -36,13 +36,13 @@ class SettingsMenu(Scene):
 
         self.options = [
             "Profile customization",
-            "Language",
-            "Text size",
-            "Brightness",
-            "Volume",
+            # "Language",
+            # "Text size",
+            # "Brightness",
+            # "Volume",
             "Version",
             "Manage password",
-            "Set to default",
+            # "Set to default",
             "Back"
         ]
 
@@ -80,8 +80,8 @@ class SettingsMenu(Scene):
             profile_submenu = SubMenu(
                 self.manager,
                 "Profile Customization",
-                ["Profile picture", "Change username", "Change theme",
-                 "Delete profile", "Switch profile", "Back"],
+                ["Switch profile", "Change theme", "Profile picture", "Change username",
+                 "Delete profile", "Back"],
                 self,
                 action_callback=self.handle_profile_customization
             )
@@ -116,6 +116,11 @@ class SettingsMenu(Scene):
 
 
     def handle_profile_customization(self, option):
+        if option == "Profile picture":
+            from ui.profile_picture_picker import ProfilePicturePicker
+            self.manager.set_scene(ProfilePicturePicker(self.manager, self))
+            return True
+
         if option == "Change username":
             current_user = self.manager.current_user
             if current_user:

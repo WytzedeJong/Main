@@ -8,12 +8,12 @@ from ui.Games_menu import Game_Menu
 from ui.lockscreen import LockScreen
 from ui.Highscore import Highscore
 from ui.vierkantjes import vierkantjes
+from ui.status import draw_time_and_battery
 
 
 class HomeMenu(Scene):
     def __init__(self, manager):
         super().__init__(manager)
-        # Use shared styles instance so theme changes apply across scenes
         self.styles = styles
         self.sq = vierkantjes
         self.games = [
@@ -32,6 +32,26 @@ class HomeMenu(Scene):
         self.card_height = self.styles.CARD_HEIGHT
         self.spacing = self.styles.CARD_SPACING
 
+        self.icons_scaled = {}
+        icon_paths = {
+            "Games": "ui/images/games.png",
+            "Settings": "ui/images/settings.png",
+            "High Scores": "ui/images/highscores.png",
+        }
+        max_icon_w = int(self.card_width * 0.5)
+        max_icon_h = int(self.card_height * 0.55)
+        for label, path in icon_paths.items():
+            try:
+                icon = pygame.image.load(path).convert_alpha()
+            except Exception:
+                continue
+            iw, ih = icon.get_size()
+            scale = min(max_icon_w / iw, max_icon_h / ih) if iw and ih else 0
+            if scale <= 0:
+                continue
+            target_size = (max(1, int(iw * scale)), max(1, int(ih * scale)))
+            self.icons_scaled[label] = pygame.transform.scale(icon, target_size)
+
 
 
     def handle_events(self, event):
@@ -49,9 +69,7 @@ class HomeMenu(Scene):
             if event.key == pygame.K_ESCAPE:
                 self.manager.set_scene(LockScreen(self.manager))
 
-    # -----------------------
-    # Draw helpers
-    # -----------------------
+
     def draw_gradient(self, surface):
         for y in range(BASE_HEIGHT):
             ratio = y / BASE_HEIGHT
@@ -67,6 +85,11 @@ class HomeMenu(Scene):
 
         color = self.styles.CARD_SELECTED if is_selected else self.styles.CARD_COLOR
         pygame.draw.rect(surface, color, (x, y, width, height), border_radius=12)
+
+        icon = self.icons_scaled.get(text)
+        if icon is not None:
+            icon_rect = icon.get_rect(center=(x + width // 2, y + int(height * 0.45)))
+            surface.blit(icon, icon_rect)
 
         label = self.card_font.render(text, True, self.styles.TEXT_SET)
         label_rect = label.get_rect(center=(x + width // 2, y + height - 20))
@@ -84,9 +107,7 @@ class HomeMenu(Scene):
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
 
-        now = datetime.datetime.now().strftime("%H:%M")
-        time_text = self.time_font.render(now, True, self.styles.TEXT_COLOR)
-        base_surface.blit(time_text, (BASE_WIDTH - 90, 25))
+        draw_time_and_battery(base_surface, self.time_font, self.styles.TEXT_COLOR, y=25, margin_right=15)
 
 
         total_width = len(self.games) * self.card_width + (len(self.games) - 1) * self.spacing
