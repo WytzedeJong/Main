@@ -66,13 +66,13 @@
       "360_degree_attack": true
     },
     "mine placer": {
-        "range": 37.5,
-        "fire_rate": 1.0,
-        "cost": 250,
-        "360_degree_attack": true,
-        "trigger_radius": 30,
-        "max_mines_per_tower": 4,
-        "detect_stealth": true
+      "range": 37.5,
+      "fire_rate": 1.0,
+      "cost": 250,
+      "360_degree_attack": true,
+      "trigger_radius": 30,
+      "max_mines_per_tower": 4,
+      "detect_stealth": true
     },
     "laser": {
       "damage": 15,
