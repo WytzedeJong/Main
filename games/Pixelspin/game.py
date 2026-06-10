@@ -22,6 +22,9 @@ WHITE = (220, 220, 220)
 GREEN = (50, 180, 50)
 BLUE = (0, 120, 255)
 
+def game_name():
+    return f"Pixelspin", PixelspinGame
+
 MODIFIER_COLORS = {
     "golden": GOLD,
     "repetition": (170, 120, 255),
@@ -1387,8 +1390,8 @@ class PixelspinGame(Scene):
 
     def _handle_input_actions(self):
         if self.input.just_pressed("B") or self.input.just_pressed("ESC"):
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if self.input.just_pressed("SPACE"):

@@ -11,7 +11,7 @@ from core.input_manager import InputHandler
 
 # functie voor automatisch toevoegen game
 def game_name():
-    return f"Dungeon", DungeonGame
+    return f"1 Minute Dungeon", DungeonGame
 
 
 class DungeonGame(Scene):
@@ -544,8 +544,8 @@ class DungeonGame(Scene):
         pass
 
     def _return_to_menu(self):
-        from ui.home_menu import HomeMenu
-        self.manager.set_scene(HomeMenu(self.manager))
+        from ui.Games_menu import Game_Menu
+        self.manager.set_scene(Game_Menu(self.manager))
 
     def _handle_input_actions(self):
         if self.show_instructions:

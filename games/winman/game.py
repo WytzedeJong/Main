@@ -5,6 +5,8 @@ import os
 from core.scene import Scene
 from settings import BASE_WIDTH, BASE_HEIGHT
 
+def game_name():
+    return f"System Purge", WinMan
 
 class DamageNumber:
     def __init__(self, x, y, text, color, font):
@@ -371,8 +373,8 @@ class WinMan(Scene):
                     self.timing_dir = 1
                     self.soul_pos = [self.box_rect.centerx, self.box_rect.centery]
                 elif self.selected_btn == 2:
-                    from ui.home_menu import HomeMenu
-                    self.manager.set_scene(HomeMenu(self.manager))
+                    from ui.Games_menu import Game_Menu
+                    self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if self.state == "TUTORIAL":
@@ -449,8 +451,8 @@ class WinMan(Scene):
             return
 
         if event.key == pygame.K_ESCAPE and self.state == "MAIN_MENU":
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if self.state == "MONOLOGUE":
@@ -584,20 +586,20 @@ class WinMan(Scene):
                 self.reset_battle()
                 self.state = "MONOLOGUE"
             elif event.key == pygame.K_ESCAPE:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
 
         elif self.state == "WIN":
             if event.key == pygame.K_RETURN:
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
 
 
     def update(self, dt):
         # Handle B button or ESC to return to menu from any state
         if self.manager.input_handler.just_pressed("B") or self.manager.input_handler.just_pressed("ESC"):
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if self.invuln_timer > 0:
@@ -1340,7 +1342,7 @@ class WinMan(Scene):
                               pygame.Rect(bx, 175, btn_w, btn_h),
                               "RETRY", self.font_main, True, f)
             esc_col = (160, 160, 160)
-            esc_txt = self.font_ui.render("ESC  →  main menu", True, esc_col)
+            esc_txt = self.font_ui.render("ESC  ->  games menu", True, esc_col)
             surface.blit(esc_txt, (BASE_WIDTH // 2 - esc_txt.get_width() // 2, 210))
 
             self._draw_scanlines(surface, 30)

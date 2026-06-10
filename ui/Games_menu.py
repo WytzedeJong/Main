@@ -1,18 +1,10 @@
 import pygame
 import datetime
+import importlib.util
+from pathlib import Path
 from core.scene import Scene
 from settings import base_surface, screen, BASE_WIDTH, BASE_HEIGHT
 from config import styles
-from games.puzzle.game import PuzzleGame
-from games.Pengu_Slider.game import AdventureGame
-from games.Space.game import SpaceGame
-from games.dungeon.game import DungeonGame
-from games.monkey_stacker.game import MonkeyStacker
-from games.tower_defense.game import TowerGame
-from games.Pixelspin.game import PixelspinGame
-from games.winman.game import WinMan
-from games.farm_nation.game import FarmNationGame
-from games.racer.game import RacerGame
 from ui.settings_menu import SettingsMenu
 from ui.vierkantjes import vierkantjes
 from ui.status import draw_time_and_battery
@@ -23,21 +15,11 @@ class Game_Menu(Scene):
         super().__init__(manager)
         self.styles = styles
         self.sq = vierkantjes
-        self.games = [
-            ("Puzzle", PuzzleGame),
-            ("1 Minute Dungeon", DungeonGame),
-            ("Pengu Slider", AdventureGame),
-            ("Space", SpaceGame),
-            ("Monkey Stacker", MonkeyStacker),
-            ("Tower Defense", TowerGame),
-            ("Farm Nation", FarmNationGame),
-            ("Speed Racer", RacerGame),
-            ("Pixelspin", PixelspinGame),
-            ("System Purge", WinMan),
-        ]
+        self.games = []
+        self._load_games_dynamically()
 
-        self.selected = 0
-        self.current_scroll = 0
+        self.selected = getattr(self.manager, 'game_menu_selected', 0)
+        self.current_scroll = self.selected
 
         self.title_font = self.styles.create_font(self.styles.FONT_HOME_TITLE_SIZE, bold=True)
         self.time_font = self.styles.create_font(self.styles.FONT_HOME_TIME_SIZE)
@@ -64,6 +46,31 @@ class Game_Menu(Scene):
             self.game_icons["Farm Nation"] = pygame.image.load("ui/images/farm.png").convert_alpha()
         except Exception:
             pass
+
+    def _load_games_dynamically(self):
+        games_dir = Path(__file__).parent.parent / "games"
+
+        for game_folder in sorted(games_dir.iterdir()):
+            if not game_folder.is_dir() or game_folder.name.startswith('_'):
+                continue
+
+            game_file = game_folder / "game.py"
+            if not game_file.exists():
+                continue
+
+            try:
+                spec = importlib.util.spec_from_file_location(
+                    f"games.{game_folder.name}.game",
+                    game_file
+                )
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+
+                if hasattr(module, 'game_name'):
+                    name, game_class = module.game_name()
+                    self.games.append((name, game_class))
+            except Exception as e:
+                print(f"Game laden mislukt uit {game_folder.name}: {e}")
 
     def handle_events(self, event):
         if event.type == pygame.KEYDOWN:
@@ -124,19 +131,17 @@ class Game_Menu(Scene):
         if is_selected:
             label = self.font_cache[scaled_font_size].render(text, True, self.styles.TEXT_SET)
             label_rect = label.get_rect(center=(rect.centerx, rect.bottom + 18))
-        
+
         if is_selected and label_rect.width > rect.width - 4:
             label_rect.width = rect.width - 4
             label_rect.centerx = rect.centerx
-        
+
         if is_selected:
             surface.blit(label, label_rect)
-
 
     def update(self, dt):
         diff = self.selected - self.current_scroll
         self.current_scroll += diff * 0.1
-
 
     def draw(self, surface):
         base_surface.fill((0, 0, 0))
@@ -144,7 +149,6 @@ class Game_Menu(Scene):
 
         self.sq.vierkantjes(self)
 
-        
         title = self.title_font.render("WinMan", True, self.styles.TEXT_COLOR)
         base_surface.blit(title, (30, 25))
 
@@ -160,10 +164,8 @@ class Game_Menu(Scene):
             distance = (i - self.current_scroll + n / 2) % n - n / 2
             standard_radius = 12
 
-            
-        
             scale = max(0.55, 1.0 - abs(distance) * 0.2)
-            border_radius = standard_radius*(2 -scale)
+            border_radius = standard_radius * (2 - scale)
             new_width = self.card_width * scale
             new_height = self.card_height * scale
             x = start_x + (distance * (self.card_width + (self.spacing * (scale ** 8)))) - (new_width // 2)
@@ -172,12 +174,12 @@ class Game_Menu(Scene):
             is_active = (i == real_selected)
             base_color = pygame.Color(self.styles.CARD_COLOR)
             afstand = abs(start_x - x)
-            factor = max(0.0, 1.0 - (afstand / BASE_WIDTH))     
+            factor = max(0.0, 1.0 - (afstand / BASE_WIDTH))
             r = int(base_color.r * factor)
             g = int(base_color.g * factor)
             b = int(base_color.b * factor)
 
-            vervaging_kleur = (r,g,b)
+            vervaging_kleur = (r, g, b)
             color = self.styles.CARD_SELECTED if is_active else vervaging_kleur
 
             self.draw_card(base_surface, color, x, curr_y, new_width, new_height, name, scale, border_radius, is_active)

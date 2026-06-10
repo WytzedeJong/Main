@@ -22,6 +22,9 @@ FRICTION = 0.96  # Increased from 0.98 for better control
 ACCELERATION = 5  # Slightly reduced from 6
 MAX_PLAYERS = 50  # Support many players
 
+def game_name():
+    return f"Pengu Slider", AdventureGame
+
 class GameState(Enum):
     START_SCREEN = 0
     WAITING_FOR_INPUT = 1
@@ -749,8 +752,8 @@ class AdventureGame(Scene):
 
     def _handle_input_actions(self):
         if (self.input.just_pressed("B") or self.input.just_pressed("ESC")) and self.state != GameState.WINNER_SCREEN:
-            from ui.home_menu import HomeMenu
-            self.manager.set_scene(HomeMenu(self.manager))
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
             return
 
         if self.state == GameState.START_SCREEN:

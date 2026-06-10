@@ -553,8 +553,8 @@ class SpaceGame(Scene):
             self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
         elif self.input.just_pressed("B"):
             if self.quit_options[self.quit_dialog_index] == "Stoppen":
-                from ui.home_menu import HomeMenu
-                self.manager.set_scene(HomeMenu(self.manager))
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
             else:
                 self.close_quit_dialog()
 

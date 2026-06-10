@@ -14,6 +14,9 @@ from core.input_manager import InputHandler
 FPS = 60
 TITLE = "SPEED RACER"
 
+def game_name():
+    return f"Speed Racer", RacerGame
+
 # Lanes
 NUM_LANES = 3
 LANE_Y = [80, 135, 180]   # y-centre of each lane  ← adjust to reposition lanes

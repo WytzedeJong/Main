@@ -8,6 +8,9 @@ from settings import BASE_WIDTH, BASE_HEIGHT
 from config import AppStyles
 from core.input_manager import InputHandler
 
+def game_name():
+    return f"Monkey Stacker", MonkeyStacker
+
 
 def lerp(a, b, t):
     return a + (b - a) * t
@@ -461,8 +464,8 @@ class MonkeyStacker(Scene):
         self._update_camera(dt)
 
     def _go_to_home(self):
-        from ui.home_menu import HomeMenu
-        self.manager.set_scene(HomeMenu(self.manager))
+        from ui.Games_menu import Game_Menu
+        self.manager.set_scene(Game_Menu(self.manager))
 
     def _update_swing_speed(self):
         if not self.placed_tiles:
