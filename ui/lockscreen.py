@@ -13,6 +13,7 @@ from ui.profile_images import list_profile_images, draw_profile_avatar
 
 
 class LockScreen(Scene):
+    PROFILE_IMAGES_PER_ROW = 5
 
     def __init__(self, manager):
         super().__init__(manager)
@@ -319,6 +320,16 @@ class LockScreen(Scene):
         elif event.key == pygame.K_LEFT:
             self.select_grid_index = (self.select_grid_index - 1) % len(self.profile_images)
 
+        elif event.key == pygame.K_DOWN:
+            next_index = self.select_grid_index + self.PROFILE_IMAGES_PER_ROW
+            if next_index < len(self.profile_images):
+                self.select_grid_index = next_index
+
+        elif event.key == pygame.K_UP:
+            next_index = self.select_grid_index - self.PROFILE_IMAGES_PER_ROW
+            if next_index >= 0:
+                self.select_grid_index = next_index
+
         elif event.key == pygame.K_RETURN:
             self.new_profile_image = self.profile_images[self.select_grid_index]
             self.state = "password_optional"
@@ -594,21 +605,25 @@ class LockScreen(Scene):
             surface.blit(skip, skip.get_rect(center=(cx, 150)))
             return
 
-        spacing = 70
-        start_x = cx - ((len(self.profile_images) - 1) * spacing) // 2
-        y = 120
+        spacing_x = 70
+        spacing_y = 92
+        start_y = 120
         preview_color = self.new_color or (200, 200, 200)
 
         for i, filename in enumerate(self.profile_images):
-            x = start_x + i * spacing
+            row = i // self.PROFILE_IMAGES_PER_ROW
+            col = i % self.PROFILE_IMAGES_PER_ROW
+            images_in_row = min(
+                self.PROFILE_IMAGES_PER_ROW,
+                len(self.profile_images) - row * self.PROFILE_IMAGES_PER_ROW,
+            )
+            start_x = cx - ((images_in_row - 1) * spacing_x) // 2
+            x = start_x + col * spacing_x
+            y = start_y + row * spacing_y
             preview_user = {"color": preview_color, "profile_image": filename}
             draw_profile_avatar(
                 surface, preview_user, (x, y), 56, selected=(i == self.select_grid_index)
             )
-            label = self.name_font.render(
-                os.path.splitext(filename)[0], True, self.styles.TEXT_SET
-            )
-            surface.blit(label, label.get_rect(center=(x, y + 48)))
 
 
     def draw_password_screen(self, surface, shake_x, creating=False, confirm=False):
