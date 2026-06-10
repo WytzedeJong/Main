@@ -1,51 +1,7 @@
 {
     "users": [
         {
-            "name": "MAX",
-            "color": [
-                69,
-                148,
-                211
-            ],
-            "theme": "green",
-            "text_size": 20,
-            "profile_image": "monkey.png",
-            "highscores": {
-                "Monkey": 1001,
-                "Puzzle": {
-                    "Easy": "00:31"
-                },
-                "Racer": 28,
-                "Pengu": 2,
-                "Space": 2,
-                "Dungeon": 44,
-                "Farm Nation": {
-                    "money": 111972661248.58093,
-                    "total_clicks": 2320,
-                    "rebirths": 0
-                }
-            }
-        },
-        {
-            "name": "Thijs",
-            "color": [
-                241,
-                102,
-                130
-            ],
-            "theme": "standard",
-            "text_size": 20,
-            "profile_image": "monkey.png",
-            "password": [
-                "UP",
-                "UP",
-                "UP",
-                "UP"
-            ],
-            "highscores": {}
-        },
-        {
-            "name": "QQQ",
+            "name": "WinMan",
             "color": [
                 255,
                 203,
@@ -53,7 +9,13 @@
             ],
             "theme": "standard",
             "text_size": 20,
-            "profile_image": "racer.png"
+            "profile_image": "monkey.png",
+            "password": [
+                "UP",
+                "LEFT",
+                "DOWN",
+                "RIGHT"
+            ]
         }
     ]
 }
