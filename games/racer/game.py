@@ -287,7 +287,7 @@ class Game:
             self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
         elif input_handler.just_pressed("RIGHT") or input_handler.just_pressed("DOWN"):
             self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
-        elif input_handler.just_pressed("B"):
+        elif input_handler.just_pressed("L"):
             if self.quit_options[self.quit_dialog_index] == "Stoppen":
                 if self.on_quit:
                     self.on_quit()
@@ -488,7 +488,7 @@ class Game:
         pygame.draw.rect(self.screen, C_HUD_HI, panel, 3)
 
         title = self.fonts["med"].render("STOPPEN?", True, C_HUD_HI)
-        hint = self.fonts["small"].render("B bevestigt   ESC annuleert", True, C_HUD_TEXT)
+        hint = self.fonts["small"].render("L bevestigt   ESC annuleert", True, C_HUD_TEXT)
         self.screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 32)))
         self.screen.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 58)))
 

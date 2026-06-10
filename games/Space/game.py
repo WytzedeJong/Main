@@ -551,7 +551,7 @@ class SpaceGame(Scene):
             self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
         elif self.input.just_pressed("DOWN") or self.input.just_pressed("RIGHT"):
             self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
-        elif self.input.just_pressed("B"):
+        elif self.input.just_pressed("L"):
             if self.quit_options[self.quit_dialog_index] == "Stoppen":
                 from ui.Games_menu import Game_Menu
                 self.manager.set_scene(Game_Menu(self.manager))
@@ -1078,7 +1078,7 @@ class SpaceGame(Scene):
         pygame.draw.rect(surface, (180, 220, 255), panel, 2, border_radius=12)
 
         title = self.big_font.render("Stoppen?", True, (255, 240, 180))
-        hint = self.small_font.render("B bevestigt, Esc annuleert", True, (210, 235, 255))
+        hint = self.small_font.render("L bevestigt, Esc annuleert", True, (210, 235, 255))
         surface.blit(title, title.get_rect(center=(panel.centerx, panel.y + 24)))
         surface.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 45)))
 
