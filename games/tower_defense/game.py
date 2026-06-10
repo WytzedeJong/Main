@@ -290,7 +290,7 @@ class TowerGame(Scene):
         self.held_move_delay = 0.1
         self.held_move_interval = 0.07
 
-        self.money = 200000
+        self.money = 200
         self.lives = 100
         self.round = 0
         self.preparing = True
@@ -1470,9 +1470,9 @@ class TowerGame(Scene):
                 pygame.draw.rect(surface, (160, 225, 255), rect, 2, border_radius=3)
             if tower.flash_timer > 0:
                 pygame.draw.circle(surface, (255, 245, 180), tower.center, 3)
-            pygame.draw.rect(surface, (12, 16, 18), (x + 4, y + 3, 9, 9), border_radius=2)
+            pygame.draw.rect(surface, (12, 16, 18), (x + 4, y + 3, 4, 8), border_radius=2)
             level = self.small_font.render(str(tower.level), True, (255, 255, 255))
-            surface.blit(level, (x + 5, y + 3))
+            surface.blit(level, (x + 4, y + 2.5))
 
     def _draw_enemies(self, surface):
         for enemy in self.enemies:
