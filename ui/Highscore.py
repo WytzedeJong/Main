@@ -369,7 +369,7 @@ class Highscore(Scene):
                 unit = "Score"
             elif game_name == "Pengu":
                 unit = "Wins"
-            elif game_name == "Dungeon":
+            elif game_name == "Dungeon" or game_name == "Racer":
                 unit = "Points"
             else:
                 unit = "Round"

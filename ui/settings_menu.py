@@ -116,15 +116,17 @@ class SettingsMenu(Scene):
 
 
     def handle_profile_customization(self, option):
+        profile_parent = self.current_profile_submenu or self
+
         if option == "Profile picture":
             from ui.profile_picture_picker import ProfilePicturePicker
-            self.manager.set_scene(ProfilePicturePicker(self.manager, self))
+            self.manager.set_scene(ProfilePicturePicker(self.manager, profile_parent))
             return True
 
         if option == "Change username":
             current_user = self.manager.current_user
             if current_user:
-                edit_scene = EditUsername(self.manager, current_user, self)
+                edit_scene = EditUsername(self.manager, current_user, profile_parent)
                 self.manager.set_scene(edit_scene)
             return True
 
