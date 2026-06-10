@@ -8,6 +8,7 @@ from ui.profile_images import list_profile_images, draw_profile_avatar
 
 
 class ProfilePicturePicker(Scene):
+    IMAGES_PER_ROW = 5
 
     def __init__(self, manager, parent_scene):
         super().__init__(manager)
@@ -32,6 +33,14 @@ class ProfilePicturePicker(Scene):
             self.selected = (self.selected + 1) % len(self.images)
         elif event.key == pygame.K_LEFT:
             self.selected = (self.selected - 1) % len(self.images)
+        elif event.key == pygame.K_DOWN:
+            next_selected = self.selected + self.IMAGES_PER_ROW
+            if next_selected < len(self.images):
+                self.selected = next_selected
+        elif event.key == pygame.K_UP:
+            next_selected = self.selected - self.IMAGES_PER_ROW
+            if next_selected >= 0:
+                self.selected = next_selected
         elif event.key == pygame.K_RETURN:
             self._save_selection()
             self.manager.set_scene(self.parent_scene)
@@ -85,12 +94,20 @@ class ProfilePicturePicker(Scene):
             surface.blit(msg, msg.get_rect(center=(cx, BASE_HEIGHT // 2)))
             return
 
-        spacing = 70
-        start_x = cx - ((len(self.images) - 1) * spacing) // 2
-        y = 120
+        spacing_x = 70
+        spacing_y = 92
+        start_y = 120
 
         for i, filename in enumerate(self.images):
-            x = start_x + i * spacing
+            row = i // self.IMAGES_PER_ROW
+            col = i % self.IMAGES_PER_ROW
+            images_in_row = min(
+                self.IMAGES_PER_ROW,
+                len(self.images) - row * self.IMAGES_PER_ROW,
+            )
+            start_x = cx - ((images_in_row - 1) * spacing_x) // 2
+            x = start_x + col * spacing_x
+            y = start_y + row * spacing_y
             preview_user = {
                 "color": self.manager.current_user.get("color", (200, 200, 200))
                 if self.manager.current_user
@@ -101,7 +118,3 @@ class ProfilePicturePicker(Scene):
                 surface, preview_user, (x, y), 56, selected=(i == self.selected)
             )
 
-            label = self.name_font.render(
-                os.path.splitext(filename)[0], True, self.styles.TEXT_SET
-            )
-            surface.blit(label, label.get_rect(center=(x, y + 48)))
