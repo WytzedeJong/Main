@@ -247,20 +247,17 @@ class Game:
             self._handle_quit_dialog_input(input_handler)
             return
 
-        if input_handler.just_pressed("ESC"):
+        if input_handler.just_pressed("ESC") or input_handler.just_pressed("B"):
             self.open_quit_dialog()
             return
 
         if self.game_over:
-            if input_handler.just_pressed("B"):
-                self.reset()
-                self.running = True
-            elif input_handler.just_pressed("L"):
+            if input_handler.just_pressed("L"):
                 self.reset()
             return
 
         if not self.running:
-            if input_handler.just_pressed("B"):
+            if input_handler.just_pressed("L"):
                 self.reset()
                 self.running = True
             return
@@ -281,13 +278,13 @@ class Game:
         self.quit_dialog_index = 1
 
     def _handle_quit_dialog_input(self, input_handler):
-        if input_handler.just_pressed("ESC"):
+        if input_handler.just_pressed("ESC") or input_handler.just_pressed("B"):
             self.close_quit_dialog()
         elif input_handler.just_pressed("LEFT") or input_handler.just_pressed("UP"):
             self.quit_dialog_index = (self.quit_dialog_index - 1) % len(self.quit_options)
         elif input_handler.just_pressed("RIGHT") or input_handler.just_pressed("DOWN"):
             self.quit_dialog_index = (self.quit_dialog_index + 1) % len(self.quit_options)
-        elif input_handler.just_pressed("B"):
+        elif input_handler.just_pressed("L"):
             if self.quit_options[self.quit_dialog_index] == "Stoppen":
                 if self.on_quit:
                     self.on_quit()
@@ -468,14 +465,14 @@ class Game:
         self._draw_overlay([
             ("SPEED RACER",  'big',   C_HUD_HI),
             ("dodge everything", 'small', C_HUD_TEXT),
-        ], sub="B to start   |   UP / DOWN to switch lanes   |   ESC menu")
+        ], sub="L to start   |   UP / DOWN to switch lanes   |   B / ESC menu")
 
     def _draw_game_over_screen(self):
         self._draw_overlay([
             ("GAME OVER",              'big',   C_HEART),
             (f"SCORE  {int(self.score)}", 'med', C_HUD_TEXT),
             (f"BEST   {self.best}",      'med',  C_HUD_HI),
-        ], sub="B play again   |   L title screen   |   ESC menu")
+        ], sub="L title screen   |   B / ESC menu")
 
     def _draw_quit_dialog(self):
         overlay = pygame.Surface((BASE_WIDTH, BASE_HEIGHT), pygame.SRCALPHA)
@@ -488,7 +485,7 @@ class Game:
         pygame.draw.rect(self.screen, C_HUD_HI, panel, 3)
 
         title = self.fonts["med"].render("STOPPEN?", True, C_HUD_HI)
-        hint = self.fonts["small"].render("B bevestigt   ESC annuleert", True, C_HUD_TEXT)
+        hint = self.fonts["small"].render("L bevestigt   B / ESC annuleert", True, C_HUD_TEXT)
         self.screen.blit(title, title.get_rect(center=(panel.centerx, panel.y + 32)))
         self.screen.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 58)))
 
