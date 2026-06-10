@@ -177,7 +177,7 @@ class ChangePassword(Scene):
                     self.input_sequence = []
                     self.anim_dots = []
                     self.shake_timer = 0.4
-                    self.error_message = "WACHTWOORD ONJUIST"
+                    self.error_message = "Password incorrect"
                     self.error_timer = 1.5
 
     def handle_new_password(self, event):
@@ -221,7 +221,7 @@ class ChangePassword(Scene):
                     self.confirm_password = []
                     self.anim_dots = []
                     self.shake_timer = 0.4
-                    self.error_message = "PINCODES KOMEN NIET OVEREEN"
+                    self.error_message = "Password doesnt match"
                     self.error_timer = 1.5
 
     def save_password(self, remove=False):
@@ -241,19 +241,18 @@ class ChangePassword(Scene):
                             del user["password"]
                         if "password" in self.current_user:
                             del self.current_user["password"]
-                        self.error_message = "WACHTWOORD VERWIJDERD"
+                        self.error_message = "Password deleted"
                     else:
                         # Set or change password
                         user["password"] = self.new_password
                         self.current_user["password"] = self.new_password
-                        self.error_message = "WACHTWOORD OPGESLAGEN"
+                        self.error_message = "Password saved"
                     break
             
             with open(path, "w") as f:
                 json.dump(data, f, indent=4)
 
     def password_changed_success(self):
-        """Redirects to parent scene after successful password change"""
         self.manager.set_scene(self.parent_scene)
 
     def draw(self, surface):
@@ -280,10 +279,9 @@ class ChangePassword(Scene):
         draw_time_and_battery(surface, self.time_font, self.styles.TEXT_COLOR, y=15, margin_right=15)
 
     def draw_menu(self, surface):
-        """Draw menu for password management"""
         cx = BASE_WIDTH // 2
         
-        title = self.name_font.render("WACHTWOORD BEHEREN", True, self.styles.TEXT_COLOR)
+        title = self.name_font.render("Manage Password", True, self.styles.TEXT_COLOR)
         # Make title scroll with the menu
         surface.blit(title, title.get_rect(center=(cx, 50 - self.scroll_y)))
         
@@ -306,9 +304,9 @@ class ChangePassword(Scene):
         cx = BASE_WIDTH // 2 + shake_x
 
         if self.action_type == "remove":
-            label = self.name_font.render("VOER PINCODE IN OM TE VERWIJDEREN", True, self.styles.TEXT_COLOR)
+            label = self.name_font.render("Enter current password to change it", True, self.styles.TEXT_COLOR)
         else:
-            label = self.name_font.render("VOER HUDIG PINCODE IN", True, self.styles.TEXT_COLOR)
+            label = self.name_font.render("Enter current password", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         # Draw user color circle
@@ -327,9 +325,9 @@ class ChangePassword(Scene):
         cx = BASE_WIDTH // 2 + shake_x
 
         if self.action_type == "set":
-            label = self.name_font.render("VOER PINCODE IN", True, self.styles.TEXT_COLOR)
+            label = self.name_font.render("Enter new password", True, self.styles.TEXT_COLOR)
         else:
-            label = self.name_font.render("VOER NIEUWE PINCODE IN", True, self.styles.TEXT_COLOR)
+            label = self.name_font.render("Enter new password", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         self.draw_dots(surface, self.new_password, cx)
@@ -337,7 +335,7 @@ class ChangePassword(Scene):
     def draw_confirm_password_screen(self, surface, shake_x):
         cx = BASE_WIDTH // 2 + shake_x
 
-        label = self.name_font.render("BEVESTIG PINCODE", True, self.styles.TEXT_COLOR)
+        label = self.name_font.render("Confirm password", True, self.styles.TEXT_COLOR)
         surface.blit(label, label.get_rect(center=(cx, 60)))
 
         self.draw_dots(surface, self.confirm_password, cx)
