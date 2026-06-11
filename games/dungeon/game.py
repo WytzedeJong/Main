@@ -549,22 +549,20 @@ class DungeonGame(Scene):
 
     def _handle_input_actions(self):
         if self.show_instructions:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self.show_instructions = False
-            elif self.input.just_pressed("ESC"):
+            elif self.input.just_pressed("ESC") or self.input.just_pressed("B"):
                 self._return_to_menu()
             return
 
         if self.game_over:
             if self.input.just_pressed("L"):
                 self.reset_game()
-            elif self.input.just_pressed("B"):
-                self.reset_game()
-            elif self.input.just_pressed("ESC"):
+            elif self.input.just_pressed("ESC") or self.input.just_pressed("B"):
                 self._return_to_menu()
             return
 
-        if self.input.just_pressed("B") or self.input.just_pressed("ESC"):
+        if self.input.just_pressed("ESC") or self.input.just_pressed("B"):
             self._return_to_menu()
 
     def update(self, dt):
@@ -756,10 +754,10 @@ class DungeonGame(Scene):
         ui_surface.blit(arrow_text, (100, y_pos))
         y_pos += 45
 
-        esc_text = small_font.render("ESC to return to menu", True, (200, 200, 200))
+        esc_text = small_font.render("B / ESC to return to menu", True, (200, 200, 200))
         ui_surface.blit(esc_text, (100, y_pos))
 
-        start_text = text_font.render("Press B to start", True, (100, 255, 100))
+        start_text = text_font.render("Press L to start", True, (100, 255, 100))
         ui_surface.blit(
             start_text,
             (
@@ -832,7 +830,7 @@ class DungeonGame(Scene):
             )
 
         instruction_text = self.font.render(
-            "Press B to play again", True, (200, 200, 200)
+            "Press L to play again", True, (200, 200, 200)
         )
 
         ui_surface.blit(

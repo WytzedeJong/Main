@@ -505,7 +505,7 @@ class SpaceGame(Scene):
         pass
 
     def update(self, dt):
-        if self.input.just_pressed("ESC"):
+        if self.input.just_pressed("ESC") or self.input.just_pressed("B"):
             if self.quit_dialog_open:
                 self.close_quit_dialog()
             else:
@@ -517,12 +517,12 @@ class SpaceGame(Scene):
             return
 
         if self.show_instructions:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self.show_instructions = False
             return
 
         if self.game_over:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self.reset_game()
             return
 
@@ -1037,7 +1037,7 @@ class SpaceGame(Scene):
 
             y += 3
 
-        start_text = self.small_font.render("B om te starten", True, (120, 255, 160))
+        start_text = self.small_font.render("L om te starten  |  B = menu", True, (120, 255, 160))
         surface.blit(start_text, (panel.x + 18, panel.bottom - 22))
 
     def draw_game_over(self, surface):
@@ -1059,7 +1059,7 @@ class SpaceGame(Scene):
             best_text = f"Beste ronde: {self.highscore}"
             best_color = (210, 235, 255)
         best = self.text_font.render(best_text, True, best_color)
-        retry = self.text_font.render("B = opnieuw  |  ESC = menu", True, (120, 255, 160))
+        retry = self.text_font.render("L = opnieuw  |  B = menu", True, (120, 255, 160))
 
         surface.blit(title, title.get_rect(center=(BASE_WIDTH // 2, 92)))
         surface.blit(score, score.get_rect(center=(BASE_WIDTH // 2, 119)))
@@ -1078,7 +1078,7 @@ class SpaceGame(Scene):
         pygame.draw.rect(surface, (180, 220, 255), panel, 2, border_radius=12)
 
         title = self.big_font.render("Stoppen?", True, (255, 240, 180))
-        hint = self.small_font.render("L bevestigt, Esc annuleert", True, (210, 235, 255))
+        hint = self.small_font.render("L bevestigt, B annuleert", True, (210, 235, 255))
         surface.blit(title, title.get_rect(center=(panel.centerx, panel.y + 24)))
         surface.blit(hint, hint.get_rect(center=(panel.centerx, panel.y + 45)))
 

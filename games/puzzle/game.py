@@ -124,8 +124,8 @@ class PuzzleGame(Scene):
             self._handle_l_action()
             return
 
-        if event.key == pygame.K_b:
-            self._handle_b_action()
+        if event.key == pygame.K_a:
+            self._handle_a_action()
             return
 
         if event.key in (pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN):
@@ -161,11 +161,11 @@ class PuzzleGame(Scene):
             self.selected_difficulty = self._move_difficulty_selection(
                 self.selected_difficulty, key
             )
-        elif key == pygame.K_b:
+        elif key == pygame.K_l:
             self._start_game(self.selected_difficulty)
 
     def _handle_won_events(self, key):
-        if key == pygame.K_b:
+        if key == pygame.K_l:
             self._start_game(self.selected_difficulty)
         elif key in (
             pygame.K_UP,
@@ -182,11 +182,11 @@ class PuzzleGame(Scene):
         direction = self._just_pressed_direction()
 
         if self.exit_dialog_open:
-            if self.input.just_pressed("B"):
+            if self.input.just_pressed("L"):
                 self._confirm_exit_dialog_choice()
             elif direction:
                 self._handle_exit_dialog_events(direction)
-            elif self.input.just_pressed("ESC"):
+            elif self.input.just_pressed("ESC") or self.input.just_pressed("B"):
                 self._close_exit_dialog()
             return
 
@@ -208,26 +208,44 @@ class PuzzleGame(Scene):
             self.manager.set_scene(Game_Menu(self.manager))
             return
 
+        if self.input.just_pressed("B"):
+            if self.state == "won":
+                self.timer_running = False
+                from ui.Games_menu import Game_Menu
+                self.manager.set_scene(Game_Menu(self.manager))
+                return
+
+            if self.state == "playing":
+                if self._remove_selected_or_focused_piece_from_board():
+                    return
+
+                self._open_exit_dialog()
+                return
+
+            from ui.Games_menu import Game_Menu
+            self.manager.set_scene(Game_Menu(self.manager))
+            return
+
         if self.state == "difficulty":
             if direction:
                 self._handle_difficulty_events(direction)
-            elif self.input.just_pressed("B"):
-                self._handle_difficulty_events(pygame.K_b)
+            elif self.input.just_pressed("L"):
+                self._handle_difficulty_events(pygame.K_l)
             return
 
         if self.state == "won":
             if direction:
                 self._handle_won_events(direction)
-            elif self.input.just_pressed("B"):
-                self._handle_won_events(pygame.K_b)
+            elif self.input.just_pressed("L"):
+                self._handle_won_events(pygame.K_l)
+            return
+
+        if self.input.just_pressed("A"):
+            self._handle_a_action()
             return
 
         if self.input.just_pressed("L"):
             self._handle_l_action()
-            return
-
-        if self.input.just_pressed("B"):
-            self._handle_b_action()
             return
 
         if direction:
@@ -327,9 +345,9 @@ class PuzzleGame(Scene):
             self.exit_dialog_index = (self.exit_dialog_index - 1) % len(self.exit_options)
         elif key == pygame.K_DOWN:
             self.exit_dialog_index = (self.exit_dialog_index + 1) % len(self.exit_options)
-        elif key == pygame.K_b:
+        elif key == pygame.K_l:
             self._confirm_exit_dialog_choice()
-        elif key == pygame.K_ESCAPE:
+        elif key in (pygame.K_ESCAPE, pygame.K_b):
             self._close_exit_dialog()
 
     def _open_exit_dialog(self):
@@ -362,7 +380,7 @@ class PuzzleGame(Scene):
         self.selected_origin_anchor = None
         self.exit_dialog_open = False
         self.exit_dialog_index = 0
-        self.message = "Pick a block with L, move it with the D-pad, rotate with L, place with B."
+        self.message = "Pick or place with L, rotate with A, remove placed blocks with B."
         self.win_message = ""
 
         self.cell_size = config["cell_size"]
@@ -563,14 +581,14 @@ class PuzzleGame(Scene):
         self.active_anchor[1] += dy
         self._clamp_anchor(piece)
 
-    def _handle_b_action(self):
-        if self.selected_piece_id is not None:
-            self._place_selected_piece()
-
     def _handle_l_action(self):
         if self.selected_piece_id is None:
             self._select_piece_from_tray()
         else:
+            self._place_selected_piece()
+
+    def _handle_a_action(self):
+        if self.selected_piece_id is not None:
             self._rotate_selected_piece()
 
     def _select_piece_from_tray(self):
@@ -582,10 +600,10 @@ class PuzzleGame(Scene):
         if piece["placed_at"] is not None:
             self.active_anchor = [piece["placed_at"][0], piece["placed_at"][1]]
             self._remove_piece(piece)
-            self.message = "Placed block picked up. Move it with the D-pad, L rotates, B places."
+            self.message = "Placed block picked up. Move it with the D-pad, A rotates, L places."
         else:
             self.active_anchor = [0, 0]
-            self.message = "Block selected. Move it with the D-pad, L rotates, B places."
+            self.message = "Block selected. Move it with the D-pad, A rotates, L places."
 
         self.selected_piece_id = piece["id"]
         self._clamp_anchor(piece)
@@ -607,7 +625,7 @@ class PuzzleGame(Scene):
                 self.win_message = (
                     f"{self.current_difficulty['name']} puzzle solved in "
                     f"{minutes:02d}:{seconds:02d}. "
-                    "Press B to play again."
+                    "Press L to play again."
                 )
                 # Save time for this difficulty
                 difficulty_name = self.current_difficulty['name']
@@ -634,6 +652,25 @@ class PuzzleGame(Scene):
         self.selected_piece_id = None
         self.selected_origin_anchor = None
         self.message = "Selection closed."
+
+    def _remove_selected_or_focused_piece_from_board(self):
+        if self.selected_piece_id is not None:
+            was_from_board = self.selected_origin_anchor is not None
+            self.selected_piece_id = None
+            self.selected_origin_anchor = None
+            self.message = "Block removed from the board." if was_from_board else "Selection closed."
+            return True
+
+        if not self.pieces:
+            return False
+
+        piece = self.pieces[self.tray_index]
+        if piece["placed_at"] is None:
+            return False
+
+        self._remove_piece(piece)
+        self.message = "Block removed from the board."
+        return True
 
     def _reset_tray(self):
         for piece in self.pieces:
@@ -775,7 +812,7 @@ class PuzzleGame(Scene):
 
         hint_lines = [
             "Use the D-pad to choose a difficulty.",
-            "Press B to start. Esc returns to the games menu.",
+            "Press L to start. B returns to the games menu.",
         ]
         for index, line in enumerate(hint_lines):
             hint = self.body_font.render(line, True, (0, 0, 0)) #245, 248, 250
@@ -928,9 +965,9 @@ class PuzzleGame(Scene):
     def _draw_controls(self, surface):
         lines = [
             "D-pad: choose a block or move the selected block",
-            "L: pick up from tray / rotate selected block",
-            "B: place the selected block",
-            "Esc: close selection or open leave menu",
+            "L: pick up from tray / place selected block",
+            "A: rotate selected block",
+            "B: remove placed block or open leave menu",
         ]
 
         for index, line in enumerate(lines):
@@ -939,7 +976,7 @@ class PuzzleGame(Scene):
 
     def _status_text(self):
         if self.selected_piece_id is not None:
-            return "Selected block: move with D-pad, L rotates, B places it"
+            return "Selected block: move with D-pad, A rotates, L places it"
         return "Tray: yellow is current, green blocks are already placed"
 
     def _draw_win_overlay(self, surface):
@@ -963,7 +1000,7 @@ class PuzzleGame(Scene):
         time_label = self.subtitle_font.render(time_text, True, (76, 129, 183))  # mooie blauwe kleur
         
         hint = self.small_font.render(
-            "Press B to replay, use the D-pad to switch difficulty, Esc to leave.",
+            "Press L to replay, use the D-pad to switch difficulty, B to leave.",
             True, (62, 70, 83)
         )
 
@@ -984,7 +1021,7 @@ class PuzzleGame(Scene):
 
         title = self.subtitle_font.render("Leave puzzle?", True, (31, 40, 53))
         hint = self.small_font.render(
-            "Up/Down choose, B confirms, Esc cancels.",
+            "Up/Down choose, L confirms, B cancels.",
             True,
             (62, 70, 83),
         )
