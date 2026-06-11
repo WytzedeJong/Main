@@ -272,6 +272,10 @@ class TowerGame(Scene):
         self.new_highscore = False
         self._load_highscore()
 
+        self._reset_game_state()
+
+    def _reset_game_state(self):
+        """Reset all mutable game state. Call this instead of __init__ on restart."""
         self.path = self._generate_path()
         self.path_cells = self._build_path_cells()
 
@@ -536,8 +540,8 @@ class TowerGame(Scene):
 
         if self.game_over:
             if self.input.just_pressed(BUTTON_CONFIRM):
-                self.input.close()
-                self.__init__(self.manager)
+                self._load_highscore()
+                self._reset_game_state() 
                 return True
             return False
 
@@ -573,7 +577,7 @@ class TowerGame(Scene):
         elif self.input.just_pressed(BUTTON_CONFIRM):
             if self.quit_options[self.quit_dialog_index] == "Stoppen":
                 from ui.Games_menu import Game_Menu
-                self.input.close()
+                # ← self.input.close() verwijderd: manager beheert de input handler
                 self.manager.set_scene(Game_Menu(self.manager))
             else:
                 self._close_quit_dialog()

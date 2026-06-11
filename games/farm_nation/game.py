@@ -670,14 +670,7 @@ class FarmNationGame(Scene):
                 self.selected_row += 1
                 self._clamp_selection()
 
-        if inp.just_pressed("B"):
-            if self.tab == TAB_CLICK:
-                self._save_game()
-                from ui.Games_menu import Game_Menu
-
-                self.manager.set_scene(Game_Menu(self.manager))
-                return
-
+        if inp.just_pressed("L"):
             if self.tab == TAB_REBIRTH and self.rebirth_confirm:
                 self.rebirth_confirm = False
             self.tab = TAB_CLICK
@@ -686,7 +679,7 @@ class FarmNationGame(Scene):
             self._save_game()
             return
 
-        if inp.just_pressed("L") or inp.just_pressed("SPACE"):
+        if inp.just_pressed("B") or inp.just_pressed("SPACE"):
             self._action_confirm()
 
     def _action_confirm(self):
@@ -708,7 +701,7 @@ class FarmNationGame(Scene):
         self.buy_mode_index = (self.buy_mode_index + direction) % len(BUY_MODES)
 
     def update(self, dt):
-        self.input_handler.update()
+       
         self._handle_input()
 
         self._autosave_timer += dt
@@ -799,7 +792,7 @@ class FarmNationGame(Scene):
             label = self.big_font.render("KLIK!", True, color("white"))
             surface.blit(label, label.get_rect(center=(rect.centerx, rect.centery + 20)))
 
-        hint = self.small_font.render("SPACE / L = klikken", True, color("click_hint"))
+        hint = self.small_font.render("SPACE / B = klikken", True, color("click_hint"))
         surface.blit(hint, (rect.x + 8, rect.bottom - 18))
 
         stats_rect = self.list_rect
