@@ -1005,6 +1005,8 @@ class AdventureGame(Scene):
                 current_username = user_to_find['name'] 
                 
                 if user_entry['name'] == current_username:
+                    if 'highscores' not in user_entry:
+                        user_entry['highscores'] = {}
                     score = user_entry['highscores'].get('Pengu', 0)
                     user_entry['highscores']['Pengu'] = score + 1
                     
